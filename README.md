@@ -1,2 +1,2 @@
 # fluent
-Java implementation of Mozilla Project Fluent localization system 
+Java implementation of the Mozilla Project Fluent localization system 
