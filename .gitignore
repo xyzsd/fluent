@@ -40,3 +40,8 @@ gradle-app.setting
 
 # Gradle Patch #
 **/build/
+
+### misc ###
+.notes
+.todo
+
