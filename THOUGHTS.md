@@ -10,10 +10,8 @@ Near-term TODOs
     - more tests!
     - more detailed parser-level tests
     - more detailed function tests
+    - better test organization
     - JSON serializer for checking AST?
-- Global Options
-    - basics in place within FluentBundle and Builder
-    - need to enable in methods/Scope, and test
 - Message rendering:
     - e.g., StringBuilder initial size; look at best defaults for general case
     - perhaps allow paramter tuning in FluentBundle.Builder 
