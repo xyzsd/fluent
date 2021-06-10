@@ -53,7 +53,7 @@ plugins {
 
 allprojects {
     group = "net.xyzsd.fluent"
-    version = "0.70-SNAPSHOT"          // NOTE: publish will fail if 'staging' in name
+    version = "0.70"          // NOTE: publish will fail if 'staging' in name
     // use 'rootProject.name' (from settings.gradle.kts) for base name
 
     repositories {
@@ -121,7 +121,7 @@ configure(subprojects) {
     tasks.withType<Jar>().configureEach {
         // using automatic modules for now
         manifest {
-            val moduleName = "${rootProject.group}.${project.name}";
+            val moduleName = "${rootProject.group}.${project.name}"
             attributes.set("Automatic-Module-Name", moduleName)
         }
         includeEmptyDirs = false
