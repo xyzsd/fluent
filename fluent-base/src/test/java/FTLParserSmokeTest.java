@@ -130,6 +130,29 @@ class FTLParserSmokeTest {
     }
 
     @Test
+    void blankUnicodeTest() {
+        // These tests use string concatenation because triple-quotes strip trailing whitespace
+        String thinSpace = String.valueOf(Character.toChars(0x2009));
+
+        assertEquals(
+                thinSpace,
+                msg( "quote =" + thinSpace, "quote" )
+        );
+
+        assertEquals(
+                thinSpace,
+                msg( "-t =" + thinSpace + "\nquote = { -t }", "quote" )
+        );
+
+        String s1 = "example = { NUMBER($cnt) ->\n    [one] hello\n    *[other]" + thinSpace + "\n}";
+
+        assertEquals(
+                thinSpace,
+                msg( s1, "example", Map.of("cnt", 0) )
+        );
+    }
+
+    @Test
     void literalTest() {
         String s1 = """
                 literal-string = {"abc123"}

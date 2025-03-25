@@ -174,7 +174,16 @@ class FTLPatternParser {
                     String text = ps.subString( start, textElement.end() );
 
                     if (lastNonBlank == count) {
-                        text = text.stripTrailing();
+                        int length = text.length();
+                        int endIndex = length;
+                        while (0 < endIndex) {
+                            int codepoint = text.codePointBefore(endIndex);
+                            if (codepoint != ' ' && codepoint != '\t' && codepoint != '\r' && codepoint != '\n') {
+                                break;
+                            }
+                            endIndex -= Character.charCount(codepoint);
+                        }
+                        text = text.substring(0, endIndex);
                     }
 
                     patternElements.add( new PatternElement.TextElement( text ) );
