@@ -31,7 +31,7 @@ We can use it as follows:
 FluentResource resource = FTLParser.parse( FTLStream.of( Files.readString("hello.ftl") ) );
 
 // create the FluentBundle, which is used to manipulate the data model and perform localization
-FluentBundle bundle = FluentBundle.builder( Locale.US, CLDRFunctionFactory.INSTANCE )
+FluentBundle bundle = FluentBundle.builder( Locale.US, ICUFunctionFactory.INSTANCE )
         .addResource( resource )
         .build();
 
@@ -72,9 +72,7 @@ System.out.println( bundle.format("shared-photos", args3) );
 
 Status
 ------
- - [x] currently targeting JDK 16
-   - no preview features used
-   - targeting of older JDK versions will be evaluated depending on interest
+ - [x] currently targeting JDK 17
  - [x] Usable&mdash;though not optimal&mdash;API. 
    - overall API shape may change. 
    - the goal is to keep easy things easy, and difficult things possible.
@@ -87,7 +85,6 @@ Status
       - not all classes have the documentation they deserve (... such as FluentBundle)
  - [ ] illustrative examples
    
-Please refer to `THOUGHTS.md` for more information.
 
 
 
