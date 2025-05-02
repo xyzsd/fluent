@@ -28,7 +28,7 @@ plugins {
 
 dependencies {
     compileOnly("org.jetbrains:annotations:20.1.0")
-    implementation("com.ibm.icu:icu4j-charset:69.1")
+    implementation("com.ibm.icu:icu4j-charset:77.1")
     api(project(":fluent-base"))
 
     //

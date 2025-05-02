@@ -46,14 +46,13 @@
 plugins {
     id("java-library")
     id("maven-publish")
-    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
+    id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
     id("signing")
-    id("com.github.spotbugs") version "4.7.1"
 }
 
 allprojects {
     group = "net.xyzsd.fluent"
-    version = "0.70"          // NOTE: publish will fail if 'staging' in name
+    version = "0.71"          // NOTE: publish will fail if 'staging' in name
     // use 'rootProject.name' (from settings.gradle.kts) for base name
 
     repositories {
@@ -70,21 +69,6 @@ allprojects {
         archiveVersion.set("${project.version}")
     }
 
-    apply<com.github.spotbugs.snom.SpotBugsPlugin>()
-
-    configure<com.github.spotbugs.snom.SpotBugsExtension> {
-        // note: for plugin version 4.7.1 (spotbugs 4.2.2),
-        //       SpotBugs will flag record class equals() methods as 'unusual'
-        setEffort("default")
-        setReportLevel("high")
-        ignoreFailures.set(false)
-    }
-
-    tasks.withType<com.github.spotbugs.snom.SpotBugsTask>().configureEach {
-        reports.create("xml").setEnabled(false)
-        reports.create("html").setEnabled(true)
-    }
-
 }
 
 
@@ -98,7 +82,7 @@ configure(subprojects) {
         configure<JavaPluginExtension> {
             withSourcesJar()
             withJavadocJar()
-            toolchain.languageVersion.set(JavaLanguageVersion.of(16))
+            toolchain.languageVersion.set(JavaLanguageVersion.of(17))
         }
     }
 
@@ -112,7 +96,7 @@ configure(subprojects) {
     tasks.withType<Javadoc>().configureEach {
         val javadocOptions = options as CoreJavadocOptions
         //javadocOptions.addBooleanOption("-enable-preview", true)
-        javadocOptions.addStringOption("source", "16")
+        javadocOptions.addStringOption("source", "17")
         javadocOptions.addStringOption("Xdoclint:none", "-quiet")
         javadocOptions.addBooleanOption("html5",true)
         options.encoding = "UTF-8"
@@ -122,7 +106,9 @@ configure(subprojects) {
         // using automatic modules for now
         manifest {
             val moduleName = "${rootProject.group}.${project.name}"
-            attributes.set("Automatic-Module-Name", moduleName)
+            // Hyphens are not allowed in modules names. Replace with underscores for now.
+            val moduleNameFixed = moduleName.replace('-','_')
+            attributes.set("Automatic-Module-Name", moduleNameFixed)
         }
         includeEmptyDirs = false
     }

@@ -34,4 +34,4 @@ rootProject.name = "fluent"
 include("fluent-base")
 include("fluent-functions-cldr")
 include("fluent-functions-icu")
-
+include("fluent-examples")
