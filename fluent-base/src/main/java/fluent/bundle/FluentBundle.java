@@ -349,13 +349,10 @@ public class FluentBundle {
     /**
      * Build a FluentBundle
      * <p>
-     * Only a Locale is required for a the builder to successfully build a FluentBundle, though such a created
-     * bundle would not have any useful functionality.
-     * </p>
+     * If required parameters are not set, an exception will be thrown during build.
      * <p>
-     * If Functions are to be added/changed/removed outside of a FluentFunctionFactory, the factory should
-     * be set prior to changing functions.
-     * </p>
+     * If Functions are to be added, replaced, or removed outside of a FluentFunctionFactory, the factory must
+     * be set in this Builder prior to adding/replacing/removing functions.
      * <p>
      * Builders can be re-used. Builders are not guaranteed to be threadsafe.
      * </p>

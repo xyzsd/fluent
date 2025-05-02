@@ -23,7 +23,7 @@
 
 import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
-import fluent.functions.cldr.CLDRFunctionFactory;
+import fluent.functions.icu.ICUFunctionFactory;
 import fluent.syntax.AST.Pattern;
 import fluent.syntax.parser.FTLParser;
 import fluent.syntax.parser.FTLStream;
@@ -599,7 +599,7 @@ class FTLParserSmokeTest {
         if(parse.hasErrors()) {
             System.err.println("errors on parse: "+parse.errors());
         }
-        return FluentBundle.builder( Locale.US, CLDRFunctionFactory.INSTANCE )
+        return FluentBundle.builder( Locale.US, ICUFunctionFactory.INSTANCE )
                 .addResource( parse )
                 .build();
     }

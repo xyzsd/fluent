@@ -108,11 +108,13 @@ public class CLDRListFns {
                 fn1 = { NUMSORT($list) } 
                 fn2 = { NUMSORT($list, order:"descending") }
                 fn3 = { NUMBER(NUMSORT($list), minimumFractionDigits:2, useGrouping:"true") }
+                fn4 = { NUMBER(NUMSORT($list, order:"descending"), minimumFractionDigits:2, useGrouping:"true") }
                 """;
 
         assertEquals( "{NUMSORT()}", t.msg( ftl, "fn0" ) );
 
         // implicit number formatter omits '.0' and keeps decimals to 3 places max
+        // defaults for Locale.US: minimumFractionDigits = 0, maximumFractionDigits = 3
         assertEquals(
                 "-10, 0, 0, 0, 1,734.349, 3,184, 193,547.378, 193,547.378, 538,754",
                 t.msg( ftl, "fn1", args )
@@ -129,6 +131,16 @@ public class CLDRListFns {
                 t.msg( ftl, "fn3", args )
         );
 
+        // composed with number formatter, descending
+        assertEquals(
+                "-10.00, 0.00, 0.00, 0.00, 1,734.349, 3,184.00, 193,547.378, 193,547.378, 538,754.00",
+                t.msg( ftl, "fn3", args )
+        );
+
+        assertEquals(
+                "538,754.00, 193,547.378, 193,547.378, 3,184.00, 1,734.349, 0.00, 0.00, 0.00, -10.00",
+                t.msg( ftl, "fn4", args )
+        );
     }
 
 

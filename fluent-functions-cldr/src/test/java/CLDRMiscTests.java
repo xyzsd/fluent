@@ -58,6 +58,7 @@ public class CLDRMiscTests {
 
         // ABS() and SIGN() are permissive; non-numeric values are passed through:
         assertEquals( "notanumber", t.msg( ftl, "fn2" ) );
+
         // but errors are not, and we want to fail on the function that actually
         // causes the error, even when nested
         assertEquals( "{ABS()}", t.msg( ftl, "fn3" ) );

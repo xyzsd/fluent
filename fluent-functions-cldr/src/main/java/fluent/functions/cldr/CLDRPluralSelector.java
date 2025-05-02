@@ -34,6 +34,7 @@ import java.util.Locale;
 /**
  * Bridge implementation of plural selection logic, specific to the CLDR library.
  */
+@Deprecated(since = "0.71", forRemoval = true)
 public class CLDRPluralSelector implements FunctionResources {
 
     private final PluralRule cardinalRule;

@@ -50,10 +50,10 @@ import java.util.Set;
  *
  *
  */
+@Deprecated(since = "0.71", forRemoval = true)
 public enum CLDRFunctionFactory implements FluentFunctionFactory {
 
     INSTANCE;
-
 
     final private Set<FluentImplicit> implicits;
     final private Set<FluentFunction> functions;
