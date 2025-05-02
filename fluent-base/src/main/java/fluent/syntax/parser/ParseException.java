@@ -51,16 +51,15 @@ public class ParseException extends RuntimeException {
         this.ch = ch;
     }
 
-
-    static ParseException create(@NotNull ErrorCode errorCode, @NotNull String arg, int line) {
+    public static ParseException create(@NotNull ErrorCode errorCode, @NotNull String arg, int line) {
         return new ParseException( errorCode, arg, line, null );
     }
 
-    static ParseException create(@NotNull ErrorCode errorCode, @NotNull String arg, int line, @Nullable String received) {
+    public static ParseException create(@NotNull ErrorCode errorCode, @NotNull String arg, int line, @Nullable String received) {
         return new ParseException( errorCode, arg, line, received );
     }
 
-    static ParseException create(@NotNull ErrorCode errorCode, FTLStream stream) {
+    public static ParseException create(@NotNull ErrorCode errorCode, FTLStream stream) {
         return new ParseException(
                 errorCode,
                 UNSPECIFIED,
@@ -69,7 +68,7 @@ public class ParseException extends RuntimeException {
         );
     }
 
-    static ParseException create(@NotNull ErrorCode errorCode, @NotNull String argument, @NotNull FTLStream stream) {
+    public static ParseException create(@NotNull ErrorCode errorCode, @NotNull String argument, @NotNull FTLStream stream) {
         return new ParseException(
                 errorCode,
                 argument,
