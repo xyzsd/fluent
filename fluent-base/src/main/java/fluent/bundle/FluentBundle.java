@@ -163,10 +163,24 @@ public class FluentBundle {
     }
 
     /**
+     * Returns all Messages
+     */
+    public Map<String, Message> getMessages() {
+        return messages;
+    }
+
+    /**
      * Returns the Term for the given id
      */
     public Optional<Term> getTerm(@NotNull final String id) {
         return Optional.ofNullable( terms.get( id ) );
+    }
+
+    /**
+     * Returns all Terms
+     */
+    public Map<String, Term> getTerms() {
+        return terms;
     }
 
     /**
