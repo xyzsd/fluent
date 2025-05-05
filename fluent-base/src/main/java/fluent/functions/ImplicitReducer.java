@@ -29,7 +29,7 @@ import fluent.types.FluentValue;
 import java.util.List;
 
 /**
- * Reduce a list of {@codeFluentValue<>} to a String.
+ * Reduce a list of {@code FluentValue<>} to a String.
  * <p>
  * Refer to the JOIN() Implicit implementation for more information.
  */
