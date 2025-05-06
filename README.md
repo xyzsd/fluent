@@ -83,7 +83,9 @@ Status
       - better test organization
  - [ ] Documentation
       - not all classes have the documentation they deserve (... such as FluentBundle)
- - [ ] illustrative examples
+- [ ] Examples
+  - Single simple example included currently
+   
    
 
 
@@ -273,7 +275,40 @@ implementation("net.xyzsd.fluent:fluent-functions-icu:0.70")
 
 Only one of the `fluent-functions-...` packages is required along with `fluent-base`.
 
-Aggregated documentation is [also available][aggDocs]
+### Working with `-SNAPSHOT` Versions
+Snapshot versions may be available from Maven central repository. 
+
+The specific snapshot must be specifically requested. Please note that -SNAPSHOT releases
+are for development only, may not be stable, and will be automatically removed 90 days after
+creation.
+
+To use a snapshot, setup your `build.gradle.kts` file as so:
+```kotlin
+repositories {
+    maven {
+        setUrl("https://central.sonatype.com/repository/maven-snapshots/")
+        name = "Central Portal Snapshots"
+
+        // Only search this repository for the specific dependency
+        content {
+            includeModule("net.xyzsd.fluent", "fluent-base")
+            includeModule("net.xyzsd.fluent", "fluent-functions-icu")
+        }
+    }
+
+    mavenCentral()
+}
+```
+and then in the dependencies section specify the snapshot:
+```kotlin
+dependencies {
+    implementation("net.xyzsd.fluent:fluent-base:0.72-SNAPSHOT")
+    // ... etc.
+    // ...
+}
+```
+
+
 
 Acknowledgements
 ----------------
@@ -281,7 +316,7 @@ Portions of this project are based on `fluent-rs`.
 
 License
 -------
-Copyright 2021, xyzsd
+Copyright 2021, 2025 xyzsd
 
 Licensed under either of
 
@@ -296,7 +331,7 @@ at your option.
 [icuPlurals]: https://github.com/unicode-org/icu/tree/main/icu4j
 [mozFluentGH]: https://github.com/projectfluent/fluent/
 [mozProjectFluent]:  https://projectfluent.org/
-[dlJAR]: https://github.com/xyzsd/fluent/releases/tag/v0.70
+[dlJAR]: https://github.com/xyzsd/fluent/releases
 [aggDocs]: https://github.com/xyzsd/fluent/releases/download/v0.70/fluent-0.70-aggregated-javadoc.zip
 [dlMavenCentral]: https://repo1.maven.org/maven2/net/xyzsd/fluent/fluent-base/0.70/
 [docsOnlineBase]: https://javadoc.io/doc/net.xyzsd.fluent/fluent-base/latest/index.html
