@@ -232,7 +232,7 @@ System.out.println(result);
 
 Documentation
 -------------
-Available for [download][dlMavenCentral], with aggregated documentation for all packages [available here][aggDocs].
+Available for [download][dlMavenCentral_base], (functions: [download here][dlMavenCentral_functions_icu]).
 
 Online:
 - [fluent-base][docsOnlineBase]
@@ -247,7 +247,7 @@ Download
 <dependency>
    <groupId>net.xyzsd.fluent</groupId>
    <artifactId>fluent-base</artifactId>
-   <version>0.70</version>
+   <version>0.72</version>
    <type>module</type>
 </dependency>
 ```
@@ -255,22 +255,22 @@ Download
 <dependency>
     <groupId>net.xyzsd.fluent</groupId>
     <artifactId>fluent-functions-cldr</artifactId>
-    <version>0.70</version>
+    <version>0.72</version>
 </dependency>
 ```
 ```xml
 <dependency>
     <groupId>net.xyzsd.fluent</groupId>
     <artifactId>fluent-functions-icu</artifactId>
-    <version>0.70</version>
+    <version>0.72</version>
 </dependency>
 
 ```
 or Gradle:
 ```kotlin
-implementation("net.xyzsd.fluent:fluent-base:0.70")
-implementation("net.xyzsd.fluent:fluent-functions-cldr:0.70")
-implementation("net.xyzsd.fluent:fluent-functions-icu:0.70")
+implementation("net.xyzsd.fluent:fluent-base:0.72")
+implementation("net.xyzsd.fluent:fluent-functions-cldr:0.72")
+implementation("net.xyzsd.fluent:fluent-functions-icu:0.72")
 ```
 
 Only one of the `fluent-functions-...` packages is required along with `fluent-base`.
@@ -332,8 +332,8 @@ at your option.
 [mozFluentGH]: https://github.com/projectfluent/fluent/
 [mozProjectFluent]:  https://projectfluent.org/
 [dlJAR]: https://github.com/xyzsd/fluent/releases
-[aggDocs]: https://github.com/xyzsd/fluent/releases/download/v0.70/fluent-0.70-aggregated-javadoc.zip
-[dlMavenCentral]: https://repo1.maven.org/maven2/net/xyzsd/fluent/fluent-base/0.70/
+[dlMavenCentral_base]: https://central.sonatype.com/artifact/net.xyzsd.fluent/fluent-base/versions
+[dlMavenCentral_functions_icu]: https://central.sonatype.com/artifact/net.xyzsd.fluent/fluent-functions-icu/versions
 [docsOnlineBase]: https://javadoc.io/doc/net.xyzsd.fluent/fluent-base/latest/index.html
 [docsOnlineCLDR]: https://javadoc.io/doc/net.xyzsd.fluent/fluent-functions-cldr
 [docsOnlineICU]: https://javadoc.io/doc/net.xyzsd.fluent/fluent-functions-icu
