@@ -21,6 +21,11 @@
  *
  */
 
-// root for multi-module project
-rootProject.name = "fluent"
-include("fluent-base", "fluent-functions-icu", "fluent-functions-cldr", "fluent-examples")
+plugins {
+    `kotlin-dsl`
+}
+
+repositories {
+    mavenCentral()
+
+}

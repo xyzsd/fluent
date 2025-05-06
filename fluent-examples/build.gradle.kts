@@ -21,6 +21,18 @@
  *
  */
 
-// root for multi-module project
-rootProject.name = "fluent"
-include("fluent-base", "fluent-functions-icu", "fluent-functions-cldr", "fluent-examples")
+plugins {
+    id("fluent.java-library-conventions")
+    id("application")
+}
+
+dependencies {
+    implementation(project(":fluent-base"))
+    implementation(project(":fluent-functions-icu"))
+
+}
+
+application {
+    mainModule = "fluent.examples.hello"
+    mainClass = "fluent.examples.hello.Hello"
+}

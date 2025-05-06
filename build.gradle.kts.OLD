@@ -42,13 +42,91 @@
 // FUTURE
 //      * aggregated javadocs should be published.
 
+import com.vanniktech.maven.publish.SonatypeHost
+import com.vanniktech.maven.publish.JavaLibrary
+import com.vanniktech.maven.publish.JavadocJar
 
 plugins {
     id("java-library")
-    id("maven-publish")
-    id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
+    //id("maven-publish")
+    //id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
+    id("com.vanniktech.maven.publish") version "0.31.0"
     id("signing")
 }
+
+
+
+
+// this must be in root; not under subprojects
+mavenPublishing {
+    configure(JavaLibrary(
+        javadocJar = JavadocJar.Javadoc(),
+        sourcesJar = true,
+    ))
+
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    signAllPublications()
+
+   // coordinates("net.xyzsd.fluent", "fluent-base", "0.71-SNAPSHOT")
+
+    /*
+    Current status (5/2/2025)
+        publishing to central works, but only for the 'main' project (which is nothing).
+        need to publish sub-projects; figure out how to do that.
+        firewall on permissive
+     see:
+        https://github.com/vanniktech/gradle-maven-publish-plugin/issues/740
+   https://github.com/vanniktech/gradle-maven-publish-plugin/issues/806
+   https://github.com/vanniktech/gradle-maven-publish-plugin/issues/780             ***
+
+   https://docs.gradle.org/current/userguide/intro_multi_project_builds.html
+   https://docs.gradle.org/current/samples/sample_java_modules_multi_project.html
+    see 'kotlin dsl' for .zip download
+
+https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_modular
+    tasks.jar {
+    manifest {
+        attributes("Automatic-Module-Name" to "org.gradle.sample")
+    }
+
+    https://the-pi-guy.com/blog/gradle_multimodule_builds_and_dependencies/
+}
+
+     */
+    pom {
+
+        name.set("Project Fluent for Java")
+        description.set("A Java implementation of the Mozilla Project Fluent ")
+        url.set("https://github.com/xyzsd/fluent")
+        inceptionYear.set("2021")
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                comments.set("A business-friendly OSS license")
+            }
+            license {
+                name.set("The MIT License")
+                url.set("https://opensource.org/licenses/MIT")
+                comments.set("A GPL/LGPL compatible OSS license")
+            }
+        }
+        developers {
+            developer {
+                id.set("xyzsd")
+                name.set("Zach Del")
+                email.set("xyzsd@xyzsd.net")
+            }
+        }
+        scm {
+            connection.set("scm:git:git://github.com/xyzsd/fluent.git")
+            developerConnection.set("scm:git:ssh://git@github.com:xyzsd/fluent.git")
+            url.set("https://github.com/xyzsd/fluent")
+        }
+    }
+}
+
+
 
 allprojects {
     group = "net.xyzsd.fluent"
@@ -64,17 +142,17 @@ allprojects {
     tasks.withType<AbstractArchiveTask>().configureEach {
         isReproducibleFileOrder = true
         isPreserveFileTimestamps = false
-        dirMode = 775
-        fileMode = 664
         archiveVersion.set("${project.version}")
     }
+
+
 
 }
 
 
 configure(subprojects) {
 
-    apply<MavenPublishPlugin>()
+   // apply<MavenPublishPlugin>()
     apply<JavaLibraryPlugin>()
     apply<SigningPlugin>()
 
@@ -119,6 +197,7 @@ configure(subprojects) {
     }
 
     // if not working ('no actions') try publish to maven local for testing
+    /*
     configure<PublishingExtension> {
         publications {
             val main by creating(MavenPublication::class) {
@@ -161,8 +240,11 @@ configure(subprojects) {
 
         repositories {
             maven {
-                name = "OSSRH"
-                setUrl("https://oss.sonatype.org/service/local/staging/deploy/maven2")
+               // setName("Central Portal")
+               // setUrl("https://oss.sonatype.org/service/local/staging/deploy/maven2")
+
+                name = "mavenCentral"
+                setUrl("https://central.sonatype.com/api/v1/publisher")
 
                 credentials {
                     // obtained from gradle.properties in GRADLE_USER_HOME
@@ -173,7 +255,7 @@ configure(subprojects) {
 
 
     }
-
+*/
     // if 'no signatory' error, make sure GRADLE_USER_HOME is set to point to the
     // the gradle.properties file containing keyID/password/etc (usually in user home dir)
     configure<SigningExtension> {

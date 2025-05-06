@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2021, xyzsd (Zach Del)
+ *  Copyright (C) 2025, xyzsd (Zach Del)
  *
  *  Licensed under either of:
  *
@@ -21,23 +21,67 @@
  *
  */
 
-plugins {
-    id("java-library")
-}
+import com.vanniktech.maven.publish.SonatypeHost
+import com.vanniktech.maven.publish.JavaLibrary
+import com.vanniktech.maven.publish.JavadocJar
 
+plugins {
+    id("fluent.java-library-conventions")
+    id("com.vanniktech.maven.publish") version "0.31.0"
+    `java-library`
+}
 
 dependencies {
-    compileOnly("org.jetbrains:annotations:20.1.0")
-    implementation("net.xyzsd.plurals:cldr-plural-rules:3.0")
+    implementation("net.xyzsd.plurals:cldr-plural-rules:41")
     api(project(":fluent-base"))
-
-    //
-    testCompileOnly("org.jetbrains:annotations:20.1.0")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.0")
 }
 
+tasks.jar {
+    val fullModuleName = ((project.group as String) + "." + project.name)
+        .replace("-", "_")
 
+    manifest {
+        attributes("Automatic-Module-Name" to fullModuleName)
+    }
+}
 
+mavenPublishing {
+    configure(JavaLibrary( JavadocJar.Javadoc(), true))
 
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    signAllPublications()
 
+    pom {
+        name.set("Project Fluent for Java")
+        description.set("A Java implementation of the Mozilla Project Fluent ")
+        url.set("https://github.com/xyzsd/fluent")
+        inceptionYear.set("2021")
+
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                comments.set("A business-friendly OSS license")
+            }
+            license {
+                name.set("The MIT License")
+                url.set("https://opensource.org/licenses/MIT")
+                comments.set("A GPL/LGPL compatible OSS license")
+            }
+        }
+
+        developers {
+            developer {
+                id.set("xyzsd")
+                name.set("Zach Del")
+                email.set("xyzsd@xyzsd.net")
+            }
+        }
+
+        scm {
+            connection.set("scm:git:git://github.com/xyzsd/fluent.git")
+            developerConnection.set("scm:git:ssh://git@github.com:xyzsd/fluent.git")
+            url.set("https://github.com/xyzsd/fluent")
+        }
+    }
+}
