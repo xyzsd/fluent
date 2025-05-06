@@ -26,7 +26,7 @@ plugins {
     id("signing")
 }
 
-version = "0.72-SNAPSHOT"
+version = "0.72"
 group = "net.xyzsd.fluent"
 
 repositories {
