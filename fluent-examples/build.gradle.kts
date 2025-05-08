@@ -27,8 +27,14 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":fluent-base"))
-    implementation(project(":fluent-functions-icu"))
+    // we are not using project dependencies like so:
+    // implementation(project(":fluent-base"))
+    //
+    // instead, we are using Central Repository dependencies as we would for a
+    // standalone project.
+    // TODO: ** update with proper version
+    implementation("net.xyzsd.fluent:fluent-base:0.72")
+    implementation("net.xyzsd.fluent:fluent-functions-icu:0.72")
 
 }
 
