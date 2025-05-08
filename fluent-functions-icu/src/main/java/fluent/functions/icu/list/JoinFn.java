@@ -23,6 +23,7 @@
 
 package fluent.functions.icu.list;
 
+import com.ibm.icu.text.ListFormatter;
 import fluent.functions.FluentImplicit;
 import fluent.functions.ImplicitReducer;
 import fluent.functions.ResolvedParameters;
@@ -34,8 +35,6 @@ import fluent.types.FluentValue;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 
 /**
@@ -46,16 +45,12 @@ import java.util.stream.Collectors;
  * <p>
  * JOIN() options are as follows:
  *     <ul>
- *         <li>{@code separator:} String value to insert between items. The default separator is {@code ", "}</li>
- *         <li>{@code junction:} Optional String value (and separator) to insert before the final item (e.g., ", and " or " and ")</li>
- *         <li>{@code pairSeparator:} Optional; only applies if there are 2 values (and has precedence over 'junction').
- *         String value to separate items. (e.g., " and ")</li>
+ *         <li>{@code type:} valid types are {@code "and", "or", "unit"}. {@code "and"} is the default type.
+ *         <li>{@code width:} {@code "narrow", "short", or "wide"}. {@code "narrow"} is the default.
+ *         Examples: (English locale): narrow:"A, B, C"; short:"A, B & C"; wide:"A, B, and C"
  *     </ul>
  */
 public class JoinFn implements FluentImplicit, ImplicitReducer {
-
-    private static final String DEFAULT_SEPARATOR = ", ";
-
 
     @Override
     public Implicit id() {
@@ -120,46 +115,22 @@ public class JoinFn implements FluentImplicit, ImplicitReducer {
             }
         }
 
-        // simple case: use default separator and join [reduce]
-        // also handles the single-argument case
-        if (params.options().isEmpty()) {
-            return params.valuesAll()
-                    .map( v -> v.format( scope ) )
-                    .filter( Predicate.not( String::isEmpty ) )     // TODO: possibly superfluous
-                    .collect( Collectors.joining( DEFAULT_SEPARATOR ) );
-        }
+        // use options.asEnum(), but if not provided, use default
+        // 'type'; 'width'  [unit type not supported? or should it be]
+        // consider caching the default listformatter (?)
+        // ICU does maintain a cache
+        final ListFormatter.Type type = params.options()
+                .asEnum(ListFormatter.Type.class, "type")
+                .orElse(ListFormatter.Type.AND  );
 
+        // for English locale: NARROW:'1, 2, 3' vs. SHORT:'1, 2, & 3' or WIDE:'1, 2, and 3'
+        final ListFormatter.Width width = params.options()
+                .asEnum(ListFormatter.Width.class, "width")
+                .orElse(ListFormatter.Width.NARROW  );
 
-        // all other cases
-        final String separator = params.options().asString( "separator" )
-                .orElse( DEFAULT_SEPARATOR );
-        final String junction = params.options().asString( "junction" )
-                .orElse( DEFAULT_SEPARATOR );
-        final String pairSeparator = params.options().asString( "pairSeparator" )
-                .orElse( junction );
-
-        final List<FluentValue<?>> list = params.valuesAll().toList();
-
-        assert (list.size() > 1);
-
-        StringBuilder sb = new StringBuilder( 128 );   // TODO: sizing
-
-        if (list.size() == 2) {
-            sb.append( list.get( 0 ).format( scope ) );
-            sb.append( pairSeparator );
-            sb.append( list.get( 1 ).format( scope ) );
-        } else {
-            final int sizeM2 = list.size() - 2;
-            for (int i = 0; i < sizeM2; i++) {
-                sb.append( list.get( i ).format( scope ) );
-                sb.append( separator );
-            }
-            sb.append( list.get( sizeM2 ).format( scope ) );
-            sb.append( junction );
-            sb.append( list.get( sizeM2 + 1 ).format( scope ) );
-        }
-
-        return sb.toString();
+        final ListFormatter listFormatter = ListFormatter.getInstance(scope.bundle().locale(), type, width);
+        final List<String> formattedItems = params.valuesAll().map( v -> v.format( scope ) ).toList();
+        return listFormatter.format( formattedItems );
     }
 
     private static @Nullable FluentValue<?> hasSinglePositional(ResolvedParameters params) {

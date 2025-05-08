@@ -175,18 +175,11 @@ public class ICUImplicitTests {
                 t.msg( ftl, "hello", map )
         );
 
-        // junction and pair
-        // here we use 'and', but 'or' could be used if appropriate
-        // note:
-        //      junction:", and "   // use a serial comma (a.k.a. 'Harvard' or 'Oxford' comma)
-        //              A, B, and C
-        //      junction:" and "   // omit serial comma
-        //              A, B and C
-        //      junction:", "      // just use a comma + space
-        //              A, B, C
+        // list formatting
+        // if we know there is a list, we can use the type and width options.
         //
         ftl = """
-            hello = Hello: {JOIN($name, junction:", and ", pairSeparator:" and ")}!
+            hello = Hello: {JOIN($name, width:"wide")}!
             """;
 
         assertEquals(
@@ -199,6 +192,36 @@ public class ICUImplicitTests {
 
         assertEquals(
                 "Hello: alpha and beta!",
+                t.msg( ftl, "hello", pair )
+        );
+
+        // uses '&' instead of 'and'
+        ftl = """
+            hello = Hello: {JOIN($name, width:"short")}!
+            """;
+
+        assertEquals(
+                "Hello: alpha, beta, & gamma!",
+                t.msg( ftl, "hello", map )
+        );
+
+        // uses 'or' instead of 'and'
+        ftl = """
+            hello = Hello: {JOIN($name, type:"or")}!
+            """;
+
+        assertEquals(
+                "Hello: alpha, beta, or gamma!",
+                t.msg( ftl, "hello", map )
+        );
+
+        // pair test: uses 'or' instead of 'and'
+        ftl = """
+            hello = Hello: {JOIN($name, type:"or")}!
+            """;
+
+        assertEquals(
+                "Hello: alpha or beta!",
                 t.msg( ftl, "hello", pair )
         );
     }
