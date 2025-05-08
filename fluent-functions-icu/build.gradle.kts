@@ -27,6 +27,7 @@ import com.vanniktech.maven.publish.JavadocJar
 
 plugins {
     id("fluent.java-library-conventions")
+    id("com.github.spotbugs") version "6.1.11"
     id("com.vanniktech.maven.publish") version "0.31.0"
     `java-library`
 }
@@ -45,6 +46,12 @@ tasks.jar {
     }
 }
 
+spotbugs {
+    // for now, we won't break the build on failures.
+    ignoreFailures = true
+    // our format strings are specific, so will will disable "FormatStringChecker".
+    omitVisitors = listOf("FormatStringChecker")
+}
 
 mavenPublishing {
     configure(JavaLibrary( JavadocJar.Javadoc(), true))

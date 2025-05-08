@@ -24,9 +24,11 @@ import com.vanniktech.maven.publish.SonatypeHost
 import com.vanniktech.maven.publish.JavaLibrary
 import com.vanniktech.maven.publish.JavadocJar
 
+
 plugins {
     id("fluent.java-library-conventions")
     id("com.vanniktech.maven.publish") version "0.31.0"
+    id("com.github.spotbugs") version "6.1.11"
     `java-library`
 }
 
@@ -44,7 +46,13 @@ tasks.jar {
     }
 }
 
-
+spotbugs {
+    // for now, we won't break the build on failures.
+    ignoreFailures = true
+    // our format strings are specific, so will will disable "FormatStringChecker".
+    // "FindReturnRef": fails on Scope.java (which is mutable);
+    omitVisitors = listOf("FormatStringChecker")
+}
 
 mavenPublishing {
     configure(JavaLibrary( JavadocJar.Javadoc(), true))
