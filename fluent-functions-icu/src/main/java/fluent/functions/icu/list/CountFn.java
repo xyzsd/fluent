@@ -65,8 +65,11 @@ public class CountFn implements FluentFunction {
             return List.of( FluentNumber.of( 0L ) );
         }
 
+        // invalid values result in an exception
+        param.valuesAll().forEach( FluentFunction::validate );
+
         return List.of( FluentNumber.of(
-                param.valuesAll().peek( FluentFunction::validate ).count()
+            param.valuesAll().count()
         ) );
     }
 }
