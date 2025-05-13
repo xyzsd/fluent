@@ -23,7 +23,7 @@
 
 package fluent.types;
 
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.time.temporal.TemporalAccessor;
 import java.util.Collection;
@@ -72,7 +72,7 @@ public class DefaultFluentValueFactory implements FluentValueFactory {
      * @return
      */
     @Override
-    public <T> FluentValue<?> toFluentValue(@NotNull final T any) {
+    public <T> FluentValue<?> toFluentValue(final T any) {
         Objects.requireNonNull( any );
         if(any instanceof Collection<?> col) {
             throw new IllegalArgumentException("collection : "+col);
@@ -98,7 +98,7 @@ public class DefaultFluentValueFactory implements FluentValueFactory {
      * </p>
      */
     @Override
-    public <T> List<FluentValue<?>> toCollection(@NotNull final T in) {
+    public <T> List<FluentValue<?>> toCollection(final T in) {
         if(in instanceof Collection<?> collection) {
             if (in instanceof List || in instanceof Set) {
                 return collection.stream()

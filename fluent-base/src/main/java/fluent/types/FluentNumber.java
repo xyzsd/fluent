@@ -29,7 +29,8 @@ import fluent.functions.ResolvedParameters;
 import fluent.syntax.AST.SelectExpression;
 import fluent.syntax.AST.Variant;
 import fluent.bundle.resolver.Scope;
-import org.jetbrains.annotations.NotNull;
+
+import org.jspecify.annotations.NullMarked;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -43,7 +44,8 @@ import java.util.Objects;
  * </p>
  * @param <T>
  */
-public /*sealed*/ interface FluentNumber<T extends Number> extends FluentValue<T> {
+@NullMarked
+public sealed interface FluentNumber<T extends Number> extends FluentValue<T> {
 
 
     /**
@@ -54,7 +56,7 @@ public /*sealed*/ interface FluentNumber<T extends Number> extends FluentValue<T
      * @throws IllegalArgumentException for unknown Number types
      * @throws NullPointerException if Number is null
      */
-    static FluentNumber<?> from(@NotNull final Number n) {
+    static FluentNumber<?> from(final Number n) {
         Objects.requireNonNull(n);
 
         if (n instanceof Integer || n instanceof Long) {
@@ -74,12 +76,12 @@ public /*sealed*/ interface FluentNumber<T extends Number> extends FluentValue<T
     }
 
     /** Create a FluentBigDecimal from a BigDecimal */
-    static FluentBigDecimal of(@NotNull BigDecimal bigDecimal) {
+    static FluentBigDecimal of(BigDecimal bigDecimal) {
         return new FluentBigDecimal( bigDecimal );
     }
 
     /** Create a FluentBigDecimal from a BigInteger */
-    static FluentBigDecimal of(@NotNull BigInteger bigInteger) {
+    static FluentBigDecimal of(BigInteger bigInteger) {
         return new FluentBigDecimal( new BigDecimal( bigInteger ) );
     }
 
@@ -117,33 +119,30 @@ public /*sealed*/ interface FluentNumber<T extends Number> extends FluentValue<T
     /**
      * Type as BigDecimal
      */
-    @NotNull BigDecimal asBigDecimal();
+    BigDecimal asBigDecimal();
 
 
 
     // Concrete types ---------------------------------------------------
 
 
-    record FluentLong(@NotNull Long value) implements FluentNumber<Long> {
+    record FluentLong(Long value) implements FluentNumber<Long> {
 
         @Override
-        @NotNull
         public BigDecimal asBigDecimal() {
             return BigDecimal.valueOf( value );
         }
     }
 
-    record FluentDouble(@NotNull Double value) implements FluentNumber<Double> {
+    record FluentDouble(Double value) implements FluentNumber<Double> {
         @Override
-        @NotNull
         public BigDecimal asBigDecimal() {
             return BigDecimal.valueOf( value );
         }
     }
 
-    record FluentBigDecimal(@NotNull BigDecimal value) implements FluentNumber<BigDecimal> {
+    record FluentBigDecimal(BigDecimal value) implements FluentNumber<BigDecimal> {
         @Override
-        @NotNull
         public BigDecimal asBigDecimal() {
             return value;
         }

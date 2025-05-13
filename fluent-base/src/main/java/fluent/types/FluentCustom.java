@@ -24,7 +24,7 @@
 package fluent.types;
 
 import fluent.bundle.resolver.Scope;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
 
@@ -38,41 +38,21 @@ import java.util.Objects;
  *
  *
  */
-public /*non-sealed*/ class FluentCustom<T> implements FluentValue<T> {
+@NullMarked
+public record FluentCustom<T>(T value) implements FluentValue<T> {
 
-    @NotNull protected final T value;
-
-    public FluentCustom(@NotNull T value) {
-        this.value = Objects.requireNonNull(value);
+    public FluentCustom {
+        Objects.requireNonNull(value);
     }
 
-    @Override
-    public T value() {
-        return value;
+    public static <V> FluentCustom<V> of(V value) {
+        return new FluentCustom<>( value );
     }
+
 
     @Override
     public String format(Scope scope) {
         return String.valueOf(value());
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        FluentCustom<?> that = (FluentCustom<?>) o;
-        return value.equals( that.value );
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash( value );
-    }
-
-    @Override
-    public String toString() {
-        return "FluentCustom{" +
-                "value=" + value +
-                '}';
-    }
 }

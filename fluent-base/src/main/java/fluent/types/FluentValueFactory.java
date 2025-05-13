@@ -23,8 +23,10 @@
 
 package fluent.types;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
+
 
 import java.util.List;
 
@@ -32,6 +34,7 @@ import java.util.List;
  *  Interface for factories used to create the appropriate FluentValue for a given Object
  *
  */
+@NullMarked
 public interface FluentValueFactory {
 
     /**
@@ -46,7 +49,7 @@ public interface FluentValueFactory {
      * @param <T> type
      * @return FluentValue
      */
-    <T> FluentValue<?> toFluentValue(@NotNull final T any);
+    <T> FluentValue<?> toFluentValue(final T any);
 
     /**
      * Nullsafe mapper.
@@ -69,6 +72,6 @@ public interface FluentValueFactory {
      * Collection mapper.
      * @return return the Collection as a List of FluentValues.
      */
-    <T> List<FluentValue<?>> toCollection(@NotNull final T in);
+    <T> List<FluentValue<?>> toCollection(final T in);
 
 }

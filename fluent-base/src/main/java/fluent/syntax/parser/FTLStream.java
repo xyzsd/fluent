@@ -23,7 +23,7 @@
 
 package fluent.syntax.parser;
 
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
 import org.jetbrains.annotations.Range;
 
 /**
@@ -75,7 +75,7 @@ public final class FTLStream {
      * @param in Data to parse
      * @return The stream, ready for parsing
      */
-    public static @NotNull FTLStream of(@NotNull final String in) {
+    public static FTLStream of(final String in) {
         if (in == null || in.isEmpty()) {
             throw new IllegalArgumentException( "null or zero length input" );
         }
@@ -96,7 +96,7 @@ public final class FTLStream {
      * @param array character array of length > 0
      * @return The stream, ready for parsing
      */
-    public static @NotNull FTLStream of(final char[] array) {
+    public static FTLStream of(final char[] array) {
         checkArray(array);
         return new FTLStream( array );  // no defensive copy made
     }
@@ -216,7 +216,7 @@ public final class FTLStream {
         return (position < seq.length) ? seq[position] : EOF;
     }
 
-    @NotNull String subString(final int startIndex, final int endIndex) {
+    String subString(final int startIndex, final int endIndex) {
         return new String( seq, startIndex, (endIndex - startIndex) );
     }
 

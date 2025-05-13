@@ -4,14 +4,13 @@
 
 Near-term TODOs
 ----------------
-- JDK 23/24 bump
-  - also may want to use primitive types in patterns/switch even though preview
-- Combine: base + icu functions
-  - and simplify
-- JSpecify
-- JPMS Modularization (instead of automatic module)
-  - determine accessibility of module internals
-  - start with 'export all' unless clearly internal
+- DONE: JDK bump
+- DONE: add JSpecify as dependency
+- DONE: merge ICU functions with base
+- DONE: JPMS module implementation (all exported for now)
+- DONE: remove old directories
+- JSpecify instead of JSR305 everywhere
+- JPMS Modularization accessibility: determine what shouldn't be exported (if anything)
 - Logging: System.logger (no dependencies)
 - Utility
   - easy way to read .ftl from file or resource -> stream

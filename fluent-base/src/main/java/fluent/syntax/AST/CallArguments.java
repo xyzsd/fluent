@@ -24,8 +24,10 @@
 package fluent.syntax.AST;
 
 import java.util.List;
+import org.jspecify.annotations.NullMarked;
 
-public final record CallArguments(List<? extends Expression> positional,
+@NullMarked
+public record CallArguments(List<? extends Expression> positional,
                             List<NamedArgument> named) implements SyntaxNode {
     public CallArguments {
         positional = List.copyOf( positional );

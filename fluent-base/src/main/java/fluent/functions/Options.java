@@ -26,8 +26,8 @@ package fluent.functions;
 import fluent.syntax.AST.CallArguments;
 import fluent.syntax.AST.Literal;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -131,7 +131,7 @@ public class Options {
      *
      * @param name option name to check; exact match required
      */
-    public boolean has(@NotNull String name) {
+    public boolean has(String name) {
         return opts.containsKey( name );
     }
 
@@ -144,7 +144,7 @@ public class Options {
      * Implementation note: this is optimized for cases where one--or both--of the Options may be empty.
      */
     @Contract(pure = true)
-    public Options mergeOverriding(@NotNull final Options toMergeAndOverride) {
+    public Options mergeOverriding(final Options toMergeAndOverride) {
         // fast-path
         if (toMergeAndOverride == EMPTY) {
             return this;
@@ -175,8 +175,8 @@ public class Options {
      * @param optionName option name (case sensitive)
      * @return option value (as above)
      */
-    @NotNull
-    public Optional<String> asString(@NotNull final String optionName) {
+
+    public Optional<String> asString(final String optionName) {
         return asType( optionName, String.class, null );
     }
 
@@ -193,7 +193,7 @@ public class Options {
      * @param optionName option name (case sensitive)
      * @return option value (as above)
      */
-    @NotNull
+
     public Optional<Boolean> asBoolean(final String optionName) {
         return asType( optionName, String.class, "Boolean" )
                 .map( s -> parseBoolStrict( optionName, s ) );
@@ -234,7 +234,7 @@ public class Options {
      * @param optionName option name (case sensitive)
      * @return option value (as above)
      */
-    @NotNull
+
     public OptionalInt asInt(final String optionName) {
         return asType( optionName, Long.class, "Integer" ).stream()
                 .flatMapToInt( v -> toIntStream( optionName, v ) )
@@ -251,7 +251,7 @@ public class Options {
      * @param optionName option name (case sensitive)
      * @return option value (as above)
      */
-    @NotNull
+
     public OptionalDouble asDouble(final String optionName) {
         return asType( optionName, Double.class, null ).stream()
                 .flatMapToDouble( DoubleStream::of )
@@ -267,7 +267,7 @@ public class Options {
      * @param optionName option name (case sensitive)
      * @return option value (as above)
      */
-    @NotNull
+
     public OptionalLong asLong(final String optionName) {
         return asType( optionName, Long.class, null ).stream()
                 .flatMapToLong( LongStream::of )
@@ -414,7 +414,7 @@ public class Options {
          * @return Builder
          * @throws NullPointerException if name or value is null
          */
-        public Builder set(@NotNull String name, @NotNull String value) {
+        public Builder set(String name, String value) {
             Objects.requireNonNull( name );
             Objects.requireNonNull( value );
             map.put( name, value );
@@ -433,7 +433,7 @@ public class Options {
          * @return Builder
          * @throws NullPointerException if name is null
          */
-        public Builder set(@NotNull String name, boolean value) {
+        public Builder set(String name, boolean value) {
             return set( name, Boolean.toString( value ) );
         }
 
@@ -449,7 +449,7 @@ public class Options {
          * @return Builder
          * @throws NullPointerException if name is null
          */
-        public Builder set(@NotNull String name, long value) {
+        public Builder set(String name, long value) {
             Objects.requireNonNull( name );
             map.put( name, value );
             return this;
@@ -468,7 +468,7 @@ public class Options {
          * @throws NullPointerException     if name is null
          * @throws IllegalArgumentException if value is not finite.
          */
-        public Builder set(@NotNull String name, double value) {
+        public Builder set(String name, double value) {
             Objects.requireNonNull( name );
             if (!Double.isFinite( value )) {
                 throw new IllegalArgumentException( "non-finite value: " + value );
@@ -484,7 +484,7 @@ public class Options {
          * @return Builder
          * @throws NullPointerException if options is null
          */
-        public Builder with(@NotNull Options options) {
+        public Builder with(Options options) {
             Objects.requireNonNull( options );
             map.putAll( options.opts );
             return this;
@@ -496,7 +496,7 @@ public class Options {
          * @param name name of option to remove
          * @return Builder
          */
-        public Builder remove(@NotNull String name) {
+        public Builder remove(String name) {
             Objects.requireNonNull( name );
             map.remove( name );
             return this;
@@ -504,7 +504,7 @@ public class Options {
 
 
         // internal use only for now
-        private Builder set(@NotNull String name, @NotNull Literal<?> literal) {
+        private Builder set(String name, Literal<?> literal) {
             // Literals are only String/Long/Double [this is assumed but not checked here]
             map.put( name, literal.value() );
             return this;

@@ -27,10 +27,13 @@ import fluent.bundle.resolver.Scope;
 import fluent.types.FluentValue;
 
 import java.util.List;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Parent of Placeable and TextElement
  */
+@NullMarked
 public /*sealed*/ interface PatternElement extends SyntaxNode {
 
     final record TextElement(String value) implements PatternElement {

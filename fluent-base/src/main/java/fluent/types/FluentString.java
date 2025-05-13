@@ -27,7 +27,9 @@ import fluent.functions.ResolvedParameters;
 import fluent.syntax.AST.SelectExpression;
 import fluent.syntax.AST.Variant;
 import fluent.bundle.resolver.Scope;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
+
+import java.util.Objects;
 
 /**
  * Wrapper for a String
@@ -36,7 +38,12 @@ import org.jetbrains.annotations.NotNull;
  * </p>
  *
  */
-public record FluentString(@NotNull String value) implements FluentValue<String> {
+@NullMarked
+public record FluentString(String value) implements FluentValue<String> {
+
+    public FluentString {
+        Objects.requireNonNull(value);
+    }
 
     // for now, this is package-protected
     static final FluentString FLUENT_NULL = new FluentString( "null" );
@@ -45,7 +52,7 @@ public record FluentString(@NotNull String value) implements FluentValue<String>
     /**
      * Create a FluentString
      */
-    public static FluentString of(@NotNull String s) {
+    public static FluentString of(String s) {
         return new FluentString( s );
     }
 

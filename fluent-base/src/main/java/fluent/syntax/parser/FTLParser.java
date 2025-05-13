@@ -26,8 +26,8 @@ package fluent.syntax.parser;
 
 import fluent.bundle.FluentResource;
 import fluent.syntax.AST.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +58,7 @@ public class FTLParser {
      * @param stream stream to parse
      * @return FluentResource
      */
-    public static @NotNull FluentResource parse(final FTLStream stream) {
+    public static FluentResource parse(final FTLStream stream) {
         return parseSimple( stream );
     }
 
@@ -73,7 +73,7 @@ public class FTLParser {
      * @param ignoreCommentsAndJunk if true, do not create Comment or Junk AST nodes
      * @return FluentResource
      */
-    public static @NotNull FluentResource parse(final FTLStream stream, final boolean ignoreCommentsAndJunk) {
+    public static FluentResource parse(final FTLStream stream, final boolean ignoreCommentsAndJunk) {
         return (ignoreCommentsAndJunk ? parseSimple( stream ) : parseComplete( stream ));
     }
 
@@ -429,7 +429,7 @@ public class FTLParser {
     }
 
 
-    private static @NotNull InlineExpression getInlineExpression(final FTLStream ps) {
+    private static InlineExpression getInlineExpression(final FTLStream ps) {
         final char initialChar = ps.at();
         if (initialChar == '"') {
             ps.inc();

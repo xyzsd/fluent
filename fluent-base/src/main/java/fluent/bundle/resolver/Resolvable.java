@@ -26,7 +26,7 @@ package fluent.bundle.resolver;
 
 import fluent.types.FluentError;
 import fluent.types.FluentValue;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 
@@ -59,7 +59,7 @@ public interface Resolvable {
      * @param text FluentError message
      * @return Single item list of containing a FluentError
      */
-    static List<FluentValue<?>> error(@NotNull String text) {
+    static List<FluentValue<?>> error(String text) {
         return List.of( FluentError.of( '{' + text + '}' ) );
     }
 

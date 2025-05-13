@@ -23,6 +23,9 @@
 
 package fluent.syntax.AST;
 
+import org.jspecify.annotations.NullMarked;
+
 // parent of Message, Term, and all Comments
+@NullMarked
 public /*sealed*/ interface Entry extends SyntaxNode /*permits Commentary, Term, Message*/ {
 }

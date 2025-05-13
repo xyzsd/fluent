@@ -29,6 +29,9 @@ package fluent.syntax.AST;
  * This permits this interface permits direct access to the name of the identifier as a String, and also
  * ensures uniformity of the method name ({@code identifier()} to access the identifier.
  */
+import org.jspecify.annotations.NullMarked;
+
+@NullMarked
 public interface Identifiable {
 
     /** The name of the Identifier, as a String */

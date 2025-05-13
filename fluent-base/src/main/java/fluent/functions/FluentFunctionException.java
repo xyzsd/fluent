@@ -23,8 +23,8 @@
 
 package fluent.functions;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -67,7 +67,7 @@ public class FluentFunctionException extends RuntimeException {
      * Add the function name to the exception, creating a new Exception (but maintaining the stack trace).
      * Subsequence calls to getMessage() will prepend the function name to the existing message.
      */
-    public FluentFunctionException withName(@NotNull String functionName) {
+    public FluentFunctionException withName(String functionName) {
         return new FluentFunctionException( functionName, this.getMessage(), this.getCause() );
     }
 
@@ -77,7 +77,7 @@ public class FluentFunctionException extends RuntimeException {
      * @param cause Throwable to wrap
      * @return FluentFunctionException
      */
-    public static FluentFunctionException wrap(@NotNull Throwable cause) {
+    public static FluentFunctionException wrap(Throwable cause) {
         return new FluentFunctionException( null, cause.getMessage(), cause );
     }
 
@@ -87,7 +87,7 @@ public class FluentFunctionException extends RuntimeException {
      * @param cause Throwable to wrap
      * @return FluentFunctionException
      */
-    public static FluentFunctionException wrap(@NotNull Throwable cause, @NotNull String formatString, Object... args) {
+    public static FluentFunctionException wrap(Throwable cause, String formatString, Object... args) {
         return new FluentFunctionException( null, String.format( formatString, args ), cause );
     }
 
@@ -98,7 +98,7 @@ public class FluentFunctionException extends RuntimeException {
      * @param args         (optional) arguments for the format string
      * @return FluentFunctionException
      */
-    public static FluentFunctionException create(@NotNull String formatString, Object... args) {
+    public static FluentFunctionException create(String formatString, Object... args) {
         return new FluentFunctionException( String.format( formatString, args ) );
     }
 }

@@ -45,7 +45,7 @@ tasks.test {
 
 dependencies {
     api("org.jspecify:jspecify:1.0.0")
-    compileOnly("org.jetbrains:annotations:20.1.0")     // TODO: remove
+    compileOnly("org.jetbrains:annotations:20.1.0")     // Used ONLY for @Contract, @Range
     implementation("com.ibm.icu:icu4j:77.1")
     //
     testCompileOnly("org.jetbrains:annotations:20.1.0")

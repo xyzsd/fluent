@@ -23,18 +23,18 @@
 
 package fluent.syntax.AST;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-
-public record Term(@NotNull Identifier identifier,
-                   @NotNull Pattern value,
-                   @NotNull List<Attribute> attributes,
-                   @Nullable Commentary.Comment _comment) implements Entry, Identifiable {
+@NullMarked
+public record Term(Identifier identifier,
+                   Pattern value,
+                   List<Attribute> attributes,
+                   Commentary.@Nullable Comment _comment) implements Entry, Identifiable {
 
 
     public Term {
@@ -43,14 +43,14 @@ public record Term(@NotNull Identifier identifier,
         attributes = List.copyOf( attributes );
     }
 
-    public Term(@NotNull Identifier id, @NotNull Pattern value, @NotNull List<Attribute> attributes) {
+    public Term(Identifier id, Pattern value, List<Attribute> attributes) {
         this( id, value, attributes, null );
     }
 
     /**
      * Create a new Term, replacing the existing Comment, if any.
      */
-    public Term withComment(@Nullable Commentary.Comment newComment) {
+    public Term withComment(Commentary.@Nullable Comment newComment) {
         return new Term( identifier, value, attributes, newComment );
     }
 

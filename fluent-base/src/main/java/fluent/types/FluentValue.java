@@ -27,6 +27,7 @@ import fluent.functions.ResolvedParameters;
 import fluent.syntax.AST.SelectExpression;
 import fluent.syntax.AST.Variant;
 import fluent.bundle.resolver.Scope;
+import org.jspecify.annotations.NullMarked;
 
 
 /**
@@ -41,8 +42,9 @@ import fluent.bundle.resolver.Scope;
  *
  * @param <T> type
  */
-public /*sealed*/ interface FluentValue<T>
-        /*permits FluentCustom, FluentNumber, FluentString, FluentTemporal, FluentError*/ {
+@NullMarked
+public sealed interface FluentValue<T>
+        permits FluentCustom, FluentNumber, FluentString, FluentTemporal, FluentError {
 
 
     T value();

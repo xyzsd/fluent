@@ -27,11 +27,12 @@ import fluent.bundle.resolver.Scope;
 import fluent.types.FluentNumber;
 import fluent.types.FluentString;
 import fluent.types.FluentValue;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 
 
+@NullMarked
 public /*sealed*/ interface Literal<T> extends InlineExpression {
 
     T value();
@@ -67,7 +68,7 @@ public /*sealed*/ interface Literal<T> extends InlineExpression {
          * @return a LongLiteral or DoubleLiteral as appropriate
          * @throws NumberFormatException if there is a parse exception
          */
-        static NumberLiteral<?> from(@NotNull final String s) throws NumberFormatException {
+        static NumberLiteral<?> from(final String s) throws NumberFormatException {
             if (s.indexOf( '.' ) > 0) {
                 return new DoubleLiteral( Double.valueOf( s ) );
             } else {

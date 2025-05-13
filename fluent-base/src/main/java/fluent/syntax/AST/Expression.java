@@ -24,7 +24,9 @@
 package fluent.syntax.AST;
 
 import fluent.bundle.resolver.Resolvable;
+import org.jspecify.annotations.NullMarked;
 
 // inlineexpression, selectexpression,
+@NullMarked
 public /*sealed*/ interface Expression extends SyntaxNode, Resolvable /*permits InlineExpression, SelectExpression*/ {
 }

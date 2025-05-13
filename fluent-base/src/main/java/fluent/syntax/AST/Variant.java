@@ -23,9 +23,10 @@
 
 package fluent.syntax.AST;
 
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
 
-public final record Variant(@NotNull VariantKey keyable, @NotNull Pattern value,
+@NullMarked
+public final record Variant(VariantKey keyable, Pattern value,
                             boolean isDefault) implements SyntaxNode {
 
     public String key() {

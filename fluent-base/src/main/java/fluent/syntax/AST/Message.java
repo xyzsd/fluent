@@ -22,20 +22,21 @@
  */
 
 package fluent.syntax.AST;
-
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+@NullMarked
 public final class Message implements Entry, Identifiable {
     private final Identifier identifier;
-    private @Nullable final Pattern pattern;
+    private final @Nullable Pattern pattern;
     private final List<Attribute> attributes;   // may be empty
-    private @Nullable final Commentary.Comment comment;
+    private final  Commentary.@Nullable Comment comment;
 
-    public Message(Identifier identifier, @Nullable Pattern pattern, List<Attribute> attributes, @Nullable Commentary.Comment comment) {
+    public Message(Identifier identifier, @Nullable Pattern pattern, List<Attribute> attributes,  Commentary.@Nullable Comment comment) {
         this.identifier = identifier;
         this.pattern = pattern;
         this.attributes = List.copyOf( attributes );
@@ -53,7 +54,7 @@ public final class Message implements Entry, Identifiable {
     }
 
     /** Create a new Message, with the given Comment. If null, the existing comment is removed (if present). */
-    public Message withComment(@Nullable Commentary.Comment newComment) {
+    public Message withComment(Commentary.@Nullable Comment newComment) {
         return new Message( identifier, pattern, attributes, newComment );
     }
 

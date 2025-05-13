@@ -28,8 +28,8 @@ import fluent.functions.*;
 import fluent.types.FluentString;
 import fluent.types.FluentTemporal;
 import fluent.types.FluentValue;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -105,7 +105,7 @@ public class TemporalFn implements FluentImplicit, ImplicitFormatter {
 
     // this class must be immutable if we want to cache it
     private static class CustomDTF {
-        @NotNull private final Locale locale;
+        private final Locale locale;
         @Nullable private final FormatStyle dateStyle;  // only null if dtf is NOT null
         @Nullable private final FormatStyle timeStyle;  // only null if dtf is NOT null
         @Nullable private final ZoneId tz;  // override zone for DateTimeFormatter; null is OK

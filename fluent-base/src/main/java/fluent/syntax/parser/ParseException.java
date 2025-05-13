@@ -23,8 +23,8 @@
 
 package fluent.syntax.parser;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -36,12 +36,12 @@ public class ParseException extends RuntimeException {
 
     private final static String UNSPECIFIED = "[*ARGUMENT UNSPECIFIED*]";
 
-    @NotNull private final ErrorCode errorCode;
-    @NotNull private final String arg;      // optional arguments
+    private final ErrorCode errorCode;
+    private final String arg;      // optional arguments
     private final int line;                 // 1-based, like a text editor
     @Nullable private final String ch;      // input received; may be null
 
-    private ParseException(@NotNull ErrorCode errorCode, @NotNull String arg, int line, @Nullable String ch) {
+    private ParseException(ErrorCode errorCode, String arg, int line, @Nullable String ch) {
         super( Objects.requireNonNull(errorCode).message() );
         Objects.requireNonNull( arg );
 
@@ -51,15 +51,15 @@ public class ParseException extends RuntimeException {
         this.ch = ch;
     }
 
-    public static ParseException create(@NotNull ErrorCode errorCode, @NotNull String arg, int line) {
+    public static ParseException create(ErrorCode errorCode, String arg, int line) {
         return new ParseException( errorCode, arg, line, null );
     }
 
-    public static ParseException create(@NotNull ErrorCode errorCode, @NotNull String arg, int line, @Nullable String received) {
+    public static ParseException create(ErrorCode errorCode, String arg, int line, @Nullable String received) {
         return new ParseException( errorCode, arg, line, received );
     }
 
-    public static ParseException create(@NotNull ErrorCode errorCode, FTLStream stream) {
+    public static ParseException create(ErrorCode errorCode, FTLStream stream) {
         return new ParseException(
                 errorCode,
                 UNSPECIFIED,
@@ -68,7 +68,7 @@ public class ParseException extends RuntimeException {
         );
     }
 
-    public static ParseException create(@NotNull ErrorCode errorCode, @NotNull String argument, @NotNull FTLStream stream) {
+    public static ParseException create(ErrorCode errorCode, String argument, FTLStream stream) {
         return new ParseException(
                 errorCode,
                 argument,

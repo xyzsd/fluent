@@ -25,7 +25,7 @@ package fluent.functions;
 
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentValue;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 import java.util.Objects;
@@ -85,7 +85,7 @@ public class ResolvedParameters {
 
 
     // could use a builder instead....
-    public static ResolvedParameters from(@NotNull final List<List<FluentValue<?>>> listIn, @NotNull final Options opts) {
+    public static ResolvedParameters from(final List<List<FluentValue<?>>> listIn, final Options opts) {
         Objects.requireNonNull( listIn );
         Objects.requireNonNull( opts );
 
@@ -105,11 +105,11 @@ public class ResolvedParameters {
 
     // typically used by FluentValue<> formatters
     // uses options supplied in scope -- if any
-    public static ResolvedParameters from(@NotNull FluentValue<?> value, @NotNull final Scope scope) {
+    public static ResolvedParameters from(FluentValue<?> value, final Scope scope) {
         return new ResolvedParameters( List.of(List.of(value)), scope.options() );
     }
 
-    public static ResolvedParameters from(@NotNull List<FluentValue<?>> list, @NotNull final Scope scope) {
+    public static ResolvedParameters from(List<FluentValue<?>> list, final Scope scope) {
         if(list.isEmpty()) {
             return new ResolvedParameters( List.of(), scope.options() );
         }
@@ -118,7 +118,7 @@ public class ResolvedParameters {
 
 
     // replace options with new options
-    public ResolvedParameters with(@NotNull Options options) {
+    public ResolvedParameters with(Options options) {
         return new ResolvedParameters( this.pos, Objects.requireNonNull( options ) );
     }
 

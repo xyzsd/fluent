@@ -28,9 +28,12 @@ import fluent.bundle.resolver.Scope;
 import fluent.types.FluentString;
 import fluent.types.FluentValue;
 
+import org.jspecify.annotations.NullMarked;
+
 import java.util.List;
 
-public final record Pattern(List<PatternElement> elements) implements SyntaxNode, Resolvable {
+@NullMarked
+public record Pattern(List<PatternElement> elements) implements SyntaxNode, Resolvable {
 
     // initial size of StringBuilder (todo: determine a good initial size or perhaps allow tuning)
     private static final int SB_SIZE = 128;

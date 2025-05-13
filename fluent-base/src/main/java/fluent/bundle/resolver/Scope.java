@@ -30,8 +30,8 @@ import fluent.syntax.AST.Expression;
 import fluent.syntax.AST.Identifiable;
 import fluent.syntax.AST.Pattern;
 import fluent.types.FluentValue;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -73,7 +73,7 @@ public class Scope {
 
     // developer-set options valid for entire life of this Scope (immutable)
     // never null
-    @NotNull private final Options options;
+    private final Options options;
 
     // name-variable map (immutable)
     private final ValueMapper valueMapper;
@@ -105,7 +105,7 @@ public class Scope {
 
     // with Options
     public Scope(FluentBundle bundle, FunctionResources res, Map<String, ?> args, List<Exception> errors,
-                 @NotNull Options options) {
+                 Options options) {
         this.bundle = bundle;
         this.fnResources = res;
         this.errors = errors;
@@ -131,14 +131,14 @@ public class Scope {
 
     // NOTE: this is a work in progress and is not currently used
     // this *may* be used in select clauses for lists, to capture the current item from the list
-    public Scope rescope(@NotNull ValueMapper vm) {
+    public Scope rescope(ValueMapper vm) {
         // this also has a new 'visited' stack
         return new Scope(this, vm);
     }
 
 
     // Convert raw values to FluentValues
-    private Map<String, List<FluentValue<?>>> remap(@NotNull final Map<String, ?> raw) {
+    private Map<String, List<FluentValue<?>>> remap(final Map<String, ?> raw) {
         if (raw.isEmpty()) {
             return Map.of();
         }
@@ -175,7 +175,7 @@ public class Scope {
     }
 
     // add an exception TODO: should rename to 'addException'
-    public void addError(@NotNull RuntimeException t) {
+    public void addError(RuntimeException t) {
         errors.add( t );
     }
 
@@ -237,7 +237,7 @@ public class Scope {
 
 
     // empty list if value not present
-    public List<FluentValue<?>> lookup(@NotNull final String name) {
+    public List<FluentValue<?>> lookup(final String name) {
         // first, lookup in supplied arguments
         final List<FluentValue<?>> value = valueMapper.lookup( name );
         if(value != null) {

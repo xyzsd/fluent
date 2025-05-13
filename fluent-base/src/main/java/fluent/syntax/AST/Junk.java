@@ -23,7 +23,8 @@
 
 package fluent.syntax.AST;
 
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
 
-public final record Junk(@NotNull String content) implements SyntaxNode {
+@NullMarked
+public record Junk(String content) implements SyntaxNode {
 }

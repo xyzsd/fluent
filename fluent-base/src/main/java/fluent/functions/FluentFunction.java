@@ -29,7 +29,7 @@ import fluent.types.FluentError;
 import fluent.types.FluentNumber;
 import fluent.types.FluentString;
 import fluent.types.FluentValue;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 import java.util.function.Function;
@@ -171,8 +171,8 @@ public interface FluentFunction {
      * @return FluentValue as requested Type
      * @throws FluentFunctionException if input is not of {@code type}
      */
-    static <T extends FluentValue<?>> T asFluentValue(@NotNull final Class<T> type,
-                                                      @NotNull final FluentValue<?> input) {
+    static <T extends FluentValue<?>> T asFluentValue(final Class<T> type,
+                                                      final FluentValue<?> input) {
         if (type.isInstance( input )) {
             return type.cast( input );
         }

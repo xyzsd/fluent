@@ -28,13 +28,14 @@ import fluent.functions.FluentImplicit;
 import fluent.functions.ResolvedParameters;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentValue;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 import java.util.Optional;
 
-public final record SelectExpression(@NotNull Expression selector,
-                                     @NotNull List<Variant> variants) implements Expression {
+@NullMarked
+public final record SelectExpression(Expression selector,
+                                     List<Variant> variants) implements Expression {
 
     public SelectExpression {
         variants = List.copyOf( variants );
@@ -43,7 +44,7 @@ public final record SelectExpression(@NotNull Expression selector,
     /**
      * Returns the default variant for this SelectExpression
      */
-    public @NotNull Variant defaultVariant() {
+    public Variant defaultVariant() {
         return variants.stream()
                 .filter( Variant::isDefault )
                 .findFirst()
@@ -69,7 +70,7 @@ public final record SelectExpression(@NotNull Expression selector,
      * @param name name to match (case sensitive)
      * @return matching variant, or default variant if there is no match
      */
-    public @NotNull Variant matchOrDefault(final String name) {
+    public Variant matchOrDefault(final String name) {
         Variant defaultVariant = null;
         for (Variant v : variants) {
             if (v.key().equals( name )) {

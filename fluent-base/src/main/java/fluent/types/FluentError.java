@@ -24,7 +24,7 @@
 package fluent.types;
 
 import fluent.bundle.resolver.Scope;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
 
@@ -32,13 +32,15 @@ import java.util.Objects;
  * An error value.
  *
  */
-public record FluentError(@NotNull String value) implements FluentValue<String> {
+@NullMarked
+public record FluentError(String value) implements FluentValue<String> {
+
 
     public FluentError {
         Objects.requireNonNull( value );
     }
 
-    public static FluentError of(@NotNull String s) {
+    public static FluentError of(String s) {
         return new FluentError( s );
     }
 

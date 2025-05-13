@@ -23,6 +23,9 @@
 
 package fluent.syntax.AST;
 
+import org.jspecify.annotations.NullMarked;
+
+@NullMarked
 public /*sealed*/ interface Commentary extends Entry {
 
     /** Comment text */

@@ -30,8 +30,8 @@ import fluent.bundle.resolver.ReferenceException;
 import fluent.bundle.resolver.Resolvable;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentValue;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
@@ -40,6 +40,7 @@ import java.util.Optional;
 
 
 // literal, placeable, messagereference, termreference, variablereference, functionreference
+@NullMarked
 public /*sealed*/ interface InlineExpression extends Expression /*permits InlineExpression.FunctionReference,
         InlineExpression.MessageReference, InlineExpression.TermReference, InlineExpression.VariableReference,
         Literal, PatternElement.Placeable*/ {
@@ -52,10 +53,10 @@ public /*sealed*/ interface InlineExpression extends Expression /*permits Inline
 
 
     final class MessageReference implements InlineExpression, Identifiable {
-        private final @NotNull Identifier msgID;
+        private final Identifier msgID;
         private final @Nullable Identifier attrID;
 
-        public MessageReference(@NotNull Identifier msgID, @Nullable Identifier attrID) {
+        public MessageReference(Identifier msgID, @Nullable Identifier attrID) {
             this.msgID = msgID;
             this.attrID = attrID;
         }
@@ -130,11 +131,11 @@ public /*sealed*/ interface InlineExpression extends Expression /*permits Inline
 
     // note: we use CallArguments BUT there are never any positionals.
     final class TermReference implements InlineExpression, Identifiable {
-        private final @NotNull Identifier termID;
+        private final Identifier termID;
         private final @Nullable Identifier attrID;
         private final @Nullable CallArguments arguments;
 
-        public TermReference(@NotNull Identifier termID, @Nullable Identifier attrID, @Nullable CallArguments args) {
+        public TermReference(Identifier termID, @Nullable Identifier attrID, @Nullable CallArguments args) {
             this.termID = termID;
             this.attrID = attrID;
             this.arguments = args;
@@ -225,10 +226,10 @@ public /*sealed*/ interface InlineExpression extends Expression /*permits Inline
     }
 
     final class FunctionReference implements InlineExpression, Identifiable {
-        @NotNull private final Identifier identifier;
+        private final Identifier identifier;
         @Nullable private final CallArguments arguments;
 
-        public FunctionReference(@NotNull Identifier identifier, @Nullable CallArguments args) {
+        public FunctionReference(Identifier identifier, @Nullable CallArguments args) {
             this.identifier = identifier;
             this.arguments = args;
         }

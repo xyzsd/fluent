@@ -27,11 +27,14 @@ import fluent.functions.FluentImplicit;
 import fluent.functions.ImplicitFormatter;
 import fluent.bundle.resolver.Scope;
 
+import org.jspecify.annotations.NullMarked;
+
 import java.time.temporal.TemporalAccessor;
 
 /**
  * Temporal type (date, time, ...)
  */
+@NullMarked
 public record FluentTemporal(TemporalAccessor value) implements FluentValue<TemporalAccessor> {
 
     /**

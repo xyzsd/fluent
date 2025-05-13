@@ -30,6 +30,9 @@ package fluent.syntax.AST;
  *  A kind of sum-type pseudo-reference to an Identifier or Literal.NumberLiteral.
  *  {@code Keyable := NumberLiteral | Identifier}
  */
+import org.jspecify.annotations.NullMarked;
+
+@NullMarked
 public /*sealed*/ interface VariantKey /*permits Identifier, Literal.NumberLiteral*/ {
 
     /**

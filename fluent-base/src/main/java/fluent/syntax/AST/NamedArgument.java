@@ -23,10 +23,11 @@
 
 package fluent.syntax.AST;
 
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
 
 
-public final record NamedArgument(@NotNull Identifier name,
-                            @NotNull Literal<?> value) implements SyntaxNode {
+@NullMarked
+public record NamedArgument(Identifier name,
+                            Literal<?> value) implements SyntaxNode {
 
 }

@@ -23,17 +23,18 @@
 
 package fluent.syntax.AST;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
 
-public final record Attribute(@NotNull Identifier identifier, @NotNull Pattern pattern)
+@NullMarked
+public record Attribute(Identifier identifier, Pattern pattern)
         implements SyntaxNode, Identifiable {
 
     /** Find matching attribute, if any */
-    public static Optional<Attribute> match(@NotNull final List<Attribute> attributeList,
+    public static Optional<Attribute> match(final List<Attribute> attributeList,
                                             @Nullable final String id) {
         return attributeList.stream()
                 .filter( attr -> attr.name().equals( id ) )
@@ -41,7 +42,7 @@ public final record Attribute(@NotNull Identifier identifier, @NotNull Pattern p
     }
 
     /** Find matching attribute, if any */
-    public static Optional<Attribute> match(@NotNull final List<Attribute> attributeList,
+    public static Optional<Attribute> match(final List<Attribute> attributeList,
                                             @Nullable final Identifier id) {
         return attributeList.stream()
                 .filter( attr -> attr.identifier().equals( id ) )

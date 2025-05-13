@@ -32,7 +32,7 @@ import fluent.syntax.AST.SelectExpression;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentString;
 import fluent.types.FluentValue;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
