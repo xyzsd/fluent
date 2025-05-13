@@ -53,6 +53,7 @@ public class DefaultFluentValueFactory implements FluentValueFactory {
 
     private static final DefaultFluentValueFactory INSTANCE = new DefaultFluentValueFactory();
 
+
     public static FluentValueFactory create() {
         return INSTANCE;
     }

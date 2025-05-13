@@ -24,26 +24,59 @@ import com.vanniktech.maven.publish.SonatypeHost
 import com.vanniktech.maven.publish.JavaLibrary
 import com.vanniktech.maven.publish.JavadocJar
 
-
 plugins {
-    id("fluent.java-library-conventions")
     id("com.vanniktech.maven.publish") version "0.31.0"
     id("com.github.spotbugs") version "6.1.11"
-    `java-library`
+    id("signing")
+    id("java-library")
+}
+
+version = "0.9NG-SNAPSHOT"
+group = "net.xyzsd.fluent"
+
+repositories {
+    mavenCentral()
+    gradlePluginPortal()
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 dependencies {
-    testImplementation(project(":fluent-functions-cldr"))
-    testImplementation(project(":fluent-functions-icu"))
+    compileOnly("org.jetbrains:annotations:20.1.0")
+    implementation("com.ibm.icu:icu4j-charset:77.1")
+    //
+    testCompileOnly("org.jetbrains:annotations:20.1.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.1")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+java {
+    // IMPORTANT!
+    // if withJavadocJar() or withSources() is configured here, the
+    // maven-publish plugin currently being used WILL NOT name files correctly,
+    // and publishing to maven central will fail (for subprojects)
+    // (com.vanniktech.maven.publish)
+    //
+
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(23)
+    }
 }
 
 tasks.jar {
-    val fullModuleName = ((project.group as String) + "." + project.name)
-        .replace("-", "_")
+    setPreserveFileTimestamps(false);
+    setReproducibleFileOrder(true);
+}
 
-    manifest {
-        attributes("Automatic-Module-Name" to fullModuleName)
-    }
+tasks.javadoc {
+    val javadocOptions = options as CoreJavadocOptions
+    //javadocOptions.addStringOption("source", "16")
+    //javadocOptions.addBooleanOption("-enable-preview", true)
+    javadocOptions.addStringOption("Xdoclint:none", "-quiet")   // for sanity
 }
 
 spotbugs {
