@@ -30,7 +30,8 @@ import fluent.bundle.resolver.Scope;
 import fluent.types.DefaultFluentValueFactory;
 import fluent.types.FluentValue;
 import fluent.types.FluentValueFactory;
-import org.jetbrains.annotations.NotNull;
+
+import org.jspecify.annotations.NullMarked;
 
 import java.util.*;
 
@@ -68,6 +69,7 @@ import java.util.*;
  *
  *
  */
+@NullMarked
 public class FluentBundle {
 
     private final Locale locale;
@@ -105,7 +107,7 @@ public class FluentBundle {
      * @param factory Factory supplying the functions for the bundle to be built
      * @return Builder
      */
-    public static Builder builder(@NotNull Locale locale, @NotNull FluentFunctionFactory factory) {
+    public static Builder builder(Locale locale, FluentFunctionFactory factory) {
         Objects.requireNonNull( locale );
         Objects.requireNonNull( factory );
         return new Builder( locale, factory );
@@ -128,7 +130,7 @@ public class FluentBundle {
     /**
      * Create a Builder to build a new FluentBundle, using an existing FluentBundle as a base.
      */
-    public static Builder builderFrom(@NotNull FluentBundle bundle) {
+    public static Builder builderFrom(FluentBundle bundle) {
         return new Builder( Objects.requireNonNull( bundle ) );
     }
 
@@ -157,7 +159,7 @@ public class FluentBundle {
     /**
      * Returns the Message for the given id
      */
-    public Optional<Message> getMessage(@NotNull final String id) {
+    public Optional<Message> getMessage(final String id) {
         return Optional.ofNullable( messages.get( id ) );
     }
 
@@ -171,7 +173,7 @@ public class FluentBundle {
     /**
      * Returns the Term for the given id
      */
-    public Optional<Term> getTerm(@NotNull final String id) {
+    public Optional<Term> getTerm(final String id) {
         return Optional.ofNullable( terms.get( id ) );
     }
 
@@ -185,14 +187,14 @@ public class FluentBundle {
     /**
      * Returns the Function for the given id
      */
-    public Optional<FluentFunction> getFunction(@NotNull final String id) {
+    public Optional<FluentFunction> getFunction(final String id) {
         return Optional.ofNullable( functions.get( id ) );
     }
 
     /**
      * Returns the implicit function
      */
-    public @NotNull FluentImplicit implicit(@NotNull final FluentImplicit.Implicit id) {
+    public FluentImplicit implicit(final FluentImplicit.Implicit id) {
         return implicits.get( id );
     }
 
@@ -205,7 +207,7 @@ public class FluentBundle {
      * @param messageID id
      * @return Pattern (if present)
      */
-    public Optional<Pattern> getMessagePattern(@NotNull final String messageID) {
+    public Optional<Pattern> getMessagePattern(final String messageID) {
         return Optional.ofNullable( messages.get( messageID ) )
                 .flatMap( Message::pattern );
     }
@@ -219,7 +221,7 @@ public class FluentBundle {
      * @param messageID id
      * @return Pattern (if present)
      */
-    public Optional<Pattern> getAttributePattern(@NotNull final String messageID, @NotNull final String attributeID) {
+    public Optional<Pattern> getAttributePattern(final String messageID, final String attributeID) {
         return Optional.ofNullable( messages.get( messageID ) )
                 .flatMap( msg -> Attribute.match( msg.attributes(), attributeID ) )
                 .map( Attribute::pattern );
@@ -234,7 +236,7 @@ public class FluentBundle {
      * @param pattern Pattern
      * @return formatted pattern
      */
-    public Optional<String> formatPattern(@NotNull Pattern pattern) {
+    public Optional<String> formatPattern(Pattern pattern) {
         return formatPattern( pattern, Map.of() );
     }
 
@@ -247,7 +249,7 @@ public class FluentBundle {
      * @param pattern Pattern
      * @return formatted pattern
      */
-    public Optional<String> formatPattern(@NotNull Pattern pattern, @NotNull Map<String, ?> args) {
+    public Optional<String> formatPattern(Pattern pattern, Map<String, ?> args) {
         List<Exception> errors = new ArrayList<>( 4 );
         String result = patternFormat( pattern, args, errors );
         if (errors.isEmpty()) {
@@ -266,7 +268,7 @@ public class FluentBundle {
      * @param pattern Pattern
      * @return formatted pattern
      */
-    public String formatPattern(@NotNull Pattern pattern, @NotNull List<Exception> errors) {
+    public String formatPattern(Pattern pattern, List<Exception> errors) {
         return patternFormat( pattern, Map.of(), errors );
     }
 
@@ -291,7 +293,7 @@ public class FluentBundle {
      * @param pattern Pattern
      * @return formatted pattern
      */
-    public String formatPattern(@NotNull Pattern pattern, @NotNull Map<String, ?> args, @NotNull List<Exception> errors) {
+    public String formatPattern(Pattern pattern, Map<String, ?> args, List<Exception> errors) {
         return patternFormat( pattern, args, errors );
     }
 
@@ -307,7 +309,7 @@ public class FluentBundle {
      *  @param messageID The name of the message to format.
      * @return the formatted message.
      */
-    public String format(@NotNull String messageID) {
+    public String format(String messageID) {
         return format(messageID, Map.of());
     }
 
@@ -322,7 +324,7 @@ public class FluentBundle {
      * @param args argument map (name-value pairs)
      * @return the formatted message.
      */
-    public String format(@NotNull String messageID, @NotNull Map<String, ?> args) {
+    public String format(String messageID, Map<String, ?> args) {
         List<Exception> errors = new ArrayList<>( 4 );
         return getMessagePattern(messageID)
                 .map( pattern -> patternFormat(pattern, args,  errors ) )
@@ -334,7 +336,7 @@ public class FluentBundle {
     // private
     ////////////////////////////////
 
-    private String patternFormat(@NotNull Pattern pattern, @NotNull Map<String, ?> args, @NotNull List<Exception> errors) {
+    private String patternFormat(Pattern pattern, Map<String, ?> args, List<Exception> errors) {
         final Scope scope = new Scope( this, this.fnResources, args, errors, globalOpts );
         final List<FluentValue<?>> resolved = pattern.resolve( scope );
         return scope.reduce( resolved );
@@ -374,7 +376,7 @@ public class FluentBundle {
 
 
         // Builder with Locale & Function Factory
-        private Builder(@NotNull Locale locale, @NotNull FluentFunctionFactory factory) {
+        private Builder(Locale locale, FluentFunctionFactory factory) {
             this.locale = locale;
             this.fnFactory = factory;
             mergeFunctions();
@@ -403,7 +405,7 @@ public class FluentBundle {
          * @param locale Locale
          * @return Builder
          */
-        public Builder withLocale(@NotNull Locale locale) {
+        public Builder withLocale(Locale locale) {
             this.locale = Objects.requireNonNull( locale );
             return this;
         }
@@ -417,7 +419,7 @@ public class FluentBundle {
          * @param factory FluentFunctionFactory
          * @return Builder
          */
-        public Builder withFunctionFactory(@NotNull FluentFunctionFactory factory) {
+        public Builder withFunctionFactory(FluentFunctionFactory factory) {
             this.fnFactory = Objects.requireNonNull( factory );
             mergeFunctions();
             return this;
@@ -437,7 +439,7 @@ public class FluentBundle {
          * @param creator FluentValueCreator
          * @return Builder
          */
-        public Builder withValueCreator(@NotNull FluentValueFactory creator) {
+        public Builder withValueCreator(FluentValueFactory creator) {
             fluentValueCreator = Objects.requireNonNull( creator );
             return this;
         }
@@ -450,7 +452,7 @@ public class FluentBundle {
          * @return Builder
          * @throws ReferenceException if term or message entry already exists
          */
-        public Builder addResource(@NotNull final FluentResource resource) {
+        public Builder addResource(final FluentResource resource) {
             return addResource( resource, true );
         }
 
@@ -465,12 +467,12 @@ public class FluentBundle {
          * @param resource FluentResource to add
          * @return Builder
          */
-        public Builder addResourceOverriding(@NotNull final FluentResource resource) {
+        public Builder addResourceOverriding(final FluentResource resource) {
             return addResource( resource, false );
         }
 
 
-        private Builder addResource(@NotNull final FluentResource resource, final boolean checkClash) {
+        private Builder addResource(final FluentResource resource, final boolean checkClash) {
             Objects.requireNonNull( resource );
 
             List<String> clashes = new ArrayList<>();
@@ -507,7 +509,7 @@ public class FluentBundle {
          * @param fn Initialized FluentFunction
          * @throws NullPointerException if FluentFunction is null
          */
-        public Builder addFunction(@NotNull final FluentFunction fn) {
+        public Builder addFunction(final FluentFunction fn) {
             Objects.requireNonNull( fn );
             functions.put( fn.name(), fn );
             return this;
@@ -521,7 +523,7 @@ public class FluentBundle {
          *
          * @throws NullPointerException if name is null
          */
-        public Builder removeFunction(@NotNull final String name) {
+        public Builder removeFunction(final String name) {
             functions.remove( Objects.requireNonNull( name ) );
             return this;
         }
@@ -529,7 +531,7 @@ public class FluentBundle {
         /**
          * Set an Implicit function.
          */
-        public Builder setImplicit(@NotNull final FluentImplicit fn) {
+        public Builder setImplicit(final FluentImplicit fn) {
             Objects.requireNonNull( fn );
 
             if (!fn.id().toString().equals( fn.name() )) {
@@ -543,7 +545,7 @@ public class FluentBundle {
         /**
          * Set global options / default options, that apply to all functions.
          */
-        public Builder setGlobalOptions(@NotNull Options options) {
+        public Builder setGlobalOptions(Options options) {
             this.globalOpts = Objects.requireNonNull( options );
             return this;
         }

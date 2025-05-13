@@ -22,6 +22,8 @@
  */
 package fluent.bundle;
 
+import org.jspecify.annotations.NullMarked;
+
 import fluent.syntax.AST.Entry;
 import fluent.syntax.AST.Junk;
 import fluent.syntax.parser.ParseException;
@@ -37,6 +39,7 @@ import java.util.List;
  *     FluentResources are used to create FluentBundles.
  * </p>
  */
+@NullMarked
 public record FluentResource(List<Entry> entries, List<ParseException> errors, List<Junk> junk) {
 
 
