@@ -44,8 +44,9 @@ tasks.test {
 }
 
 dependencies {
-    compileOnly("org.jetbrains:annotations:20.1.0")
-    implementation("com.ibm.icu:icu4j-charset:77.1")
+    api("org.jspecify:jspecify:1.0.0")
+    compileOnly("org.jetbrains:annotations:20.1.0")     // TODO: remove
+    implementation("com.ibm.icu:icu4j:77.1")
     //
     testCompileOnly("org.jetbrains:annotations:20.1.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
@@ -68,8 +69,8 @@ java {
 }
 
 tasks.jar {
-    setPreserveFileTimestamps(false);
-    setReproducibleFileOrder(true);
+    setPreserveFileTimestamps(false)
+    setReproducibleFileOrder(true)
 }
 
 tasks.javadoc {
