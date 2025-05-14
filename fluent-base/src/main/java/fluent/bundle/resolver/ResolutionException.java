@@ -23,16 +23,19 @@
 
 package fluent.bundle.resolver;
 
-/**
- * General exception that occurs during Resolution
- */
+import org.jspecify.annotations.NullMarked;
+
+import static java.util.Objects.requireNonNull;
+
+/// General exception that occurs during Resolution
+@NullMarked
 public class ResolutionException extends RuntimeException {
 
     public ResolutionException(String s) {
-        super( s );
+        super( requireNonNull(s) );
     }
 
     public ResolutionException(String s, Throwable cause) {
-        super( s, cause );
+        super( requireNonNull(s), cause );
     }
 }

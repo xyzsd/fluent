@@ -31,13 +31,14 @@ import org.jetbrains.annotations.Range;
  * <p>
  * Contains building blocks for parser implementation.
  */
+@NullMarked
 public final class FTLStream {
     /*
         Design notes:
             Reading UTF8 into a ByteBuffer was originally tried, with a few variations.
             However, reading UTF8 into a String and parsing the String UTF16 representation was
             more performant in all cases. This works, because the essential characters,
-            whitespace, etc. have the same representation in UTF8 as UTF16.
+            whitespace, etc. used in Fluent FTL have the same representation in both UTF8 and UTF16.
 
             This was pre-JDK16 (using 15), so it is possible that as things gel in JDK16/17
             the result could be different.
@@ -272,7 +273,7 @@ public final class FTLStream {
     // throw exception if byte not what expected; otherwise, increment
     void expectChar(final char ch) {
         if (at() != ch) {
-            throw ParseException.create( ParseException.ErrorCode.E0003,
+            throw ParseException.of( ParseException.ErrorCode.E0003,
                     FTLStream.toString( ch ), this );
         }
         pos++;
@@ -387,7 +388,7 @@ public final class FTLStream {
 
         if (((position() - start) != requiredLength) || !Character.isValidCodePoint( codePoint )) {
             final int end = (position() > requiredLength) ? position() : (position() + 1);
-            throw ParseException.create(
+            throw ParseException.of(
                     ParseException.ErrorCode.E0026,
                     subString( start, end ),
                     positionToLine()
@@ -417,7 +418,7 @@ public final class FTLStream {
             inc();
         }
         if (start == position()) {
-            throw ParseException.create( ParseException.ErrorCode.E0004,
+            throw ParseException.of( ParseException.ErrorCode.E0004,
                     "0-9",
                     this
             );

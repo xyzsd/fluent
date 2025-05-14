@@ -22,9 +22,5 @@
  *
  */
 
-/**
- *  Input Stream and Parsing classes to create ASTs from Fluent FTL-formatted input.
- *
- *
- */
+///  Input Stream and Parsing classes to create ASTs from Fluent FTL-formatted input.
 package fluent.syntax.parser;

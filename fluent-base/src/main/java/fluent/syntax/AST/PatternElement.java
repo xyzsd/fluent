@@ -23,11 +23,7 @@
 
 package fluent.syntax.AST;
 
-import fluent.bundle.resolver.Scope;
-import fluent.types.FluentValue;
 
-import java.util.List;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.NullMarked;
 
 /// Parent of Placeable and TextElement

@@ -28,16 +28,13 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * Exceptions encountered during parsing.
- */
+/// Exceptions encountered during parsing.
+@NullMarked
 public class ParseException extends RuntimeException {
-
-
     private final static String UNSPECIFIED = "[*ARGUMENT UNSPECIFIED*]";
 
     private final ErrorCode errorCode;
-    private final String arg;      // optional arguments
+    private final String arg;               // arguments
     private final int line;                 // 1-based, like a text editor
     @Nullable private final String ch;      // input received; may be null
 
@@ -51,15 +48,15 @@ public class ParseException extends RuntimeException {
         this.ch = ch;
     }
 
-    public static ParseException create(ErrorCode errorCode, String arg, int line) {
+    public static ParseException of(ErrorCode errorCode, String arg, int line) {
         return new ParseException( errorCode, arg, line, null );
     }
 
-    public static ParseException create(ErrorCode errorCode, String arg, int line, @Nullable String received) {
+    public static ParseException of(ErrorCode errorCode, String arg, int line, @Nullable String received) {
         return new ParseException( errorCode, arg, line, received );
     }
 
-    public static ParseException create(ErrorCode errorCode, FTLStream stream) {
+    public static ParseException of(ErrorCode errorCode, FTLStream stream) {
         return new ParseException(
                 errorCode,
                 UNSPECIFIED,
@@ -68,7 +65,7 @@ public class ParseException extends RuntimeException {
         );
     }
 
-    public static ParseException create(ErrorCode errorCode, String argument, FTLStream stream) {
+    public static ParseException of(ErrorCode errorCode, String argument, FTLStream stream) {
         return new ParseException(
                 errorCode,
                 argument,
@@ -106,16 +103,14 @@ public class ParseException extends RuntimeException {
     @Override
     public String getMessage() {
         return  errorCode +
-                (isEOF() ? " [at <EOF>" : " [line "+line) +
-                "]" +
+                (isEOF() ? " [at <EOF>" : " [line "+line) + ']' +
                 received() +
                 String.format( super.getMessage(), arg );
     }
 
 
-    /**
-     * ParseException error codes.
-     */
+    /// ParseException error codes.
+    @NullMarked
     public enum ErrorCode {
         E0001( "Generic error" ),
         E0002( "Expected an entry start" ),

@@ -27,6 +27,9 @@ package fluent.syntax.parser;
 import fluent.syntax.AST.Expression;
 import fluent.syntax.AST.Pattern;
 import fluent.syntax.AST.PatternElement;
+import fluent.syntax.parser.PEPlaceholder.PlaceableHolder;
+import fluent.syntax.parser.PEPlaceholder.TextElementHolder;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +38,7 @@ import java.util.Optional;
 /**
  * This breaks out Pattern parsing from the main parser, to improve code clarity
  */
+@NullMarked
 class FTLPatternParser {
 
 
@@ -69,7 +73,7 @@ class FTLPatternParser {
     }
 
     // A slice of text
-    private static record TextSlice(int start,
+    private record TextSlice(int start,
                                     int end,
                                     TextElementType textElementType,
                                     TextElementTermination terminationReason) {}
@@ -161,37 +165,33 @@ class FTLPatternParser {
 
             int count = 0;
             for (final PEPlaceholder placeholder : elements) {
-                if (placeholder instanceof PEPlaceholder.PlaceableHolder plHolder) {
-                    patternElements.add( plHolder.placeable() );
-                } else if (placeholder instanceof PEPlaceholder.TextElementHolder textElement) {
-                    int start = textElement.start();
-                    if(textElement.role() == TextElementPosition.LineStart) {
-                        start = (commonIndent == -1)
-                                ? (textElement.start() + textElement.indent())
-                                : (textElement.start() + Math.min( textElement.indent(), commonIndent ));
-                    }
-
-                    String text = ps.subString( start, textElement.end() );
-
-                    if (lastNonBlank == count) {
-                        int length = text.length();
-                        int endIndex = length;
-                        while (0 < endIndex) {
-                            int codepoint = text.codePointBefore(endIndex);
-                            if (codepoint != ' ' && codepoint != '\t' && codepoint != '\r' && codepoint != '\n') {
-                                break;
-                            }
-                            endIndex -= Character.charCount(codepoint);
+                switch(placeholder) {
+                    case PlaceableHolder(PatternElement.Placeable placeable) -> patternElements.add(placeable);
+                    case TextElementHolder(int start, int end, int indent, TextElementPosition role) -> {
+                        if(role == TextElementPosition.LineStart) {
+                            start = (commonIndent == -1)
+                                    ? (start + indent)
+                                    : (start + Math.min( indent, commonIndent ));
                         }
-                        text = text.substring(0, endIndex);
+
+                        String text = ps.subString( start, end );
+
+                        if (lastNonBlank == count) {
+                            int endIndex = text.length();
+                            while (0 < endIndex) {
+                                int codepoint = text.codePointBefore(endIndex);
+                                if (codepoint != ' ' && codepoint != '\t' && codepoint != '\r' && codepoint != '\n') {
+                                    break;
+                                }
+                                endIndex -= Character.charCount(codepoint);
+                            }
+                            text = text.substring(0, endIndex);
+                        }
+
+                        patternElements.add( new PatternElement.TextElement( text ) );
+
                     }
-
-                    patternElements.add( new PatternElement.TextElement( text ) );
-
-                } else {
-                    throw new IllegalStateException();
                 }
-
                 count++;
             }
 
@@ -225,7 +225,7 @@ class FTLPatternParser {
                 return new TextSlice( startPosition, ps.position(),
                         textElementType, TextElementTermination.PlaceableStart );
             } else if (cb == '}') {
-                throw ParseException.create( ParseException.ErrorCode.E0027, ps );
+                throw ParseException.of( ParseException.ErrorCode.E0027, ps );
             } else {
                 ps.inc();
                 textElementType = TextElementType.NonBlank;

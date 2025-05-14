@@ -390,6 +390,7 @@ class FTLParserSmokeTest {
                 msg( s, "output2" )
         );
 
+        // an error, because 'message' alone is invalid
         assertEquals(
                 "{message} has been sent.",
                 msg( s, "output" )

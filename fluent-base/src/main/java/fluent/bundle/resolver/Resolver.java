@@ -17,10 +17,11 @@ import fluent.types.FluentError;
 import fluent.types.FluentNumber;
 import fluent.types.FluentString;
 import fluent.types.FluentValue;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 
-
+@NullMarked
 public class Resolver {
 
     /** The maximum number of placeables which can be expanded in a single call to 'formatPattern' */
@@ -180,36 +181,10 @@ public class Resolver {
             return Resolver.error( name );
         }
 
-        // the Message can have an empty pattern, but only if there are attributes
-        // NOTE: this is an invariant for Message objects
-        /*
-        if (attributeID == null) {
-            // Pattern-only case (no attributes)
-            assert (message.pattern() != null);
-            return scope.track( message.pattern(), mr );
-        }
-        */
-        if (attributeID == null) {
-            if (message.pattern() == null) {
-                scope.addError( ReferenceException.noValue( name ) );
-                return Resolver.error( name );
-            } else {
-                return scope.track( message.pattern(), mr );
-            }
-        }
-
-        // non-null attribute +/- pattern
-        return message.attribute( attributeID )
-                    .map( Attribute::pattern )
-                    .map( pattern -> scope.track( pattern, mr ) )
-                    .orElseGet( () -> {
-                        scope.addError( ReferenceException.unknownAttribute( name, String.valueOf( attributeID ) ) );
-                        return Resolver.error( name + '.' + attributeID );
-                    } );
-
-        /*
         // the message can have an empty pattern, but only if there are attributes
         if (attributeID == null) {
+            // however, the pattern can be null if the there is no corresponding pattern
+            // for the base type (see smoke tests)
             if (message.pattern() == null) {
                 scope.addError( ReferenceException.noValue( name ) );
                 return Resolver.error( name );
@@ -225,8 +200,6 @@ public class Resolver {
                     scope.addError( ReferenceException.unknownAttribute( name, String.valueOf( attributeID ) ) );
                     return Resolver.error( name + '.' + attributeID );
                 } );
-
-         */
     }
 
 

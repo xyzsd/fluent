@@ -23,10 +23,12 @@
 
 package fluent.bundle.resolver;
 
-/**
- *  Exceptions encountered during processing of references.
- *
- */
+import org.jspecify.annotations.NullMarked;
+
+import static java.util.Objects.requireNonNull;
+
+///  Exceptions encountered during processing of references.
+@NullMarked
 public class ReferenceException extends RuntimeException {
 
 
@@ -41,30 +43,38 @@ public class ReferenceException extends RuntimeException {
 
 
     public static ReferenceException unknownMessage(String id) {
+        requireNonNull(id);
         return new ReferenceException( "Unknown message: " + id );
     }
 
     public static ReferenceException unknownTerm(String id) {
+        requireNonNull(id);
         return new ReferenceException( "Unknown term: -" + id );
     }
 
     public static ReferenceException unknownFn(String id) {
+        requireNonNull(id);
         return new ReferenceException( "Unknown function: " + id + "()" );
     }
 
     public static ReferenceException noValue(String id) {
+        requireNonNull(id);
         return new ReferenceException( "No value specified for message: " + id );
     }
 
     public static ReferenceException unknownAttribute(String msg, String attrib) {
+        requireNonNull(msg);
+        requireNonNull(attrib);
         return new ReferenceException( String.format( "Unknown attribute '%s' for '%s'", attrib, msg ) );
     }
 
     public static ReferenceException unknownVariable(String id) {
+        requireNonNull(id);
         return new ReferenceException( "Unknown variable: $" + id );
     }
 
     public static ReferenceException duplicateEntry(String id) {
+        requireNonNull(id);
         return new ReferenceException( "Duplicate Message or Term: " + id );
     }
 }

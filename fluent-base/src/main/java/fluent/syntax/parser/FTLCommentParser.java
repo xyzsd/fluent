@@ -24,10 +24,12 @@
 package fluent.syntax.parser;
 
 import fluent.syntax.AST.Commentary;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * This breaks out Comment parsing from the main parser, to improve code clarity
  */
+@NullMarked
 class FTLCommentParser {
 
     static Commentary getComment(FTLStream ps) {
@@ -58,8 +60,8 @@ class FTLCommentParser {
                 if (cb == ' ') {
                     ps.inc();
                 } else {
-                    if (sb.length() == 0) {
-                        throw ParseException.create( ParseException.ErrorCode.E0003,
+                    if (sb.isEmpty()) {
+                        throw ParseException.of( ParseException.ErrorCode.E0003,
                                 " ", ps );
                     } else {
                         ps.dec( lineLevel );
@@ -67,7 +69,7 @@ class FTLCommentParser {
                     }
                 }
                 String s = getCommentLine( ps );
-                if (sb.length() > 0) {
+                if (!sb.isEmpty()) {
                     sb.append( '\n' );
                 }
                 sb.append( s );

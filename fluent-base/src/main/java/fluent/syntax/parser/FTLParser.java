@@ -46,6 +46,7 @@ import static fluent.syntax.parser.FTLStream.isASCIIDigit;
  * Ignoring Comments (and Junk) makes for a smaller, more memory-efficient AST and can improve parsing performance.
  * </p>
  */
+@NullMarked
 public class FTLParser {
 
 
@@ -184,7 +185,7 @@ public class FTLParser {
 
         // but attributes and pattern cannot BOTH be empty
         if (pattern.isEmpty() && attributes.isEmpty()) {
-            throw ParseException.create(
+            throw ParseException.of(
                     ParseException.ErrorCode.E0005,
                     id.name(),
                     ps.positionToLine( entryStart )
@@ -209,7 +210,7 @@ public class FTLParser {
         final List<Attribute> attributes = getAttributes( ps );
 
         return value.map( v -> new Term( id, v, attributes ) )
-                .orElseThrow( () -> ParseException.create(
+                .orElseThrow( () -> ParseException.of(
                         ParseException.ErrorCode.E0006,
                         id.name(),
                         ps.positionToLine( entryStart )
@@ -261,7 +262,7 @@ public class FTLParser {
         if (isASCIIAlphabetic( ps.at( peekPos ) )) {
             peekPos += 1;
         } else {
-            throw ParseException.create(
+            throw ParseException.of(
                     ParseException.ErrorCode.E0004,
                     "a-zA-Z",
                     ps.positionToLine( peekPos ),
@@ -294,7 +295,7 @@ public class FTLParser {
 
     private static VariantKey getVariantKey(final FTLStream ps) {
         if (!ps.takeCharIf( '[' )) {
-            throw ParseException.create(
+            throw ParseException.of(
                     ParseException.ErrorCode.E0003,
                     "[",
                     ps
@@ -324,7 +325,7 @@ public class FTLParser {
 
             if (isDefault) {
                 if (hasDefault) {
-                    throw ParseException.create(
+                    throw ParseException.of(
                             ParseException.ErrorCode.E0015,
                             ps
                     );
@@ -335,14 +336,14 @@ public class FTLParser {
 
             final VariantKey key = getVariantKey( ps );
             final Pattern value = FTLPatternParser.getPattern( ps )
-                    .orElseThrow( () -> ParseException.create( ParseException.ErrorCode.E0012, ps ) );
+                    .orElseThrow( () -> ParseException.of( ParseException.ErrorCode.E0012, ps ) );
 
             variants.add( new Variant( key, value, isDefault ) );
             ps.skipBlank();
         }
 
         if (!hasDefault) {
-            throw ParseException.create(
+            throw ParseException.of(
                     ParseException.ErrorCode.E0010,
                     ps
             );
@@ -373,7 +374,7 @@ public class FTLParser {
         ps.expectChar( '}' );
         if (exp instanceof InlineExpression.TermReference termReference) {
             if (termReference.attributeID() != null) {
-                throw ParseException.create( ParseException.ErrorCode.E0019, ps );
+                throw ParseException.of( ParseException.ErrorCode.E0019, ps );
             }
         }
 
@@ -395,24 +396,27 @@ public class FTLParser {
         if (!ps.isCurrentChar( '-' ) || !ps.isNextChar( '>' )) {
             if (exp instanceof InlineExpression.TermReference ref) {
                 if (ref.attributeID() != null) {
-                    throw ParseException.create( ParseException.ErrorCode.E0019, ps );
+                    throw ParseException.of( ParseException.ErrorCode.E0019, ps );
                 }
             }
             return exp;
         }
 
-        if (exp instanceof InlineExpression.MessageReference ref) {
-            if (ref.attributeID() == null) {
-                throw ParseException.create( ParseException.ErrorCode.E0016, ps );
-            } else {
-                throw ParseException.create( ParseException.ErrorCode.E0018, ps );
+        switch (exp) {
+            case InlineExpression.MessageReference ref -> {
+                if (ref.attributeID() == null) {
+                    throw ParseException.of( ParseException.ErrorCode.E0016, ps );
+                } else {
+                    throw ParseException.of( ParseException.ErrorCode.E0018, ps );
+                }
             }
-        } else if (exp instanceof InlineExpression.TermReference ref) {
-            if (ref.attributeID() == null) {
-                throw ParseException.create( ParseException.ErrorCode.E0017, ps );
+            case InlineExpression.TermReference ref -> {
+                if (ref.attributeID() == null) {
+                    throw ParseException.of( ParseException.ErrorCode.E0017, ps );
+                }
             }
-        } else if (exp instanceof PatternElement.Placeable) {
-            throw ParseException.create( ParseException.ErrorCode.E0029, ps );
+            case PatternElement.Placeable _ -> throw ParseException.of( ParseException.ErrorCode.E0029, ps );
+            default -> { /* do nothing */ }
         }
 
         // skip over the '->' in selector (originally this was just a ps.inc(2))
@@ -422,7 +426,7 @@ public class FTLParser {
 
         ps.skipBlankInline();
         if (!ps.skipEOL()) {
-            throw ParseException.create( ParseException.ErrorCode.E0004, "'\\n' or '\\r\\n'", ps );
+            throw ParseException.of( ParseException.ErrorCode.E0004, "'\\n' or '\\r\\n'", ps );
         }
         ps.skipBlank();
         return new SelectExpression( exp, getVariants( ps ) );
@@ -464,7 +468,7 @@ public class FTLParser {
                             ps.inc( 2 );   // char after 'U'
                             sb.appendCodePoint( ps.getUnicodeEscape( 6 ) );
                         }
-                        default -> throw ParseException.create(
+                        default -> throw ParseException.of(
                                 ParseException.ErrorCode.E0025,
                                 "\\" + FTLStream.toString( ps.at( ps.position() + 1 ) ),
                                 ps
@@ -476,7 +480,7 @@ public class FTLParser {
                     }
                     break;
                 } else if (ch == '\n') {
-                    throw ParseException.create( ParseException.ErrorCode.E0020, ps );
+                    throw ParseException.of( ParseException.ErrorCode.E0020, ps );
                 } else {
                     sliceStart = (sliceStart == -1) ? ps.position() : sliceStart;
                     ps.inc();
@@ -522,14 +526,14 @@ public class FTLParser {
         } else if (initialChar == '{') {
             return new PatternElement.Placeable( getPlaceable( ps ) );
         } else {
-            throw ParseException.create( ParseException.ErrorCode.E0028, ps );
+            throw ParseException.of( ParseException.ErrorCode.E0028, ps );
         }
     }
 
     // terms with CallArguments should not have positional arguments.
     private static void validateTermCallArguments(final FTLStream ps, final Identifier id, @Nullable final CallArguments in) {
         if (in != null && !in.positional().isEmpty()) {
-            throw ParseException.create( ParseException.ErrorCode.E0031, id.name(), ps );
+            throw ParseException.of( ParseException.ErrorCode.E0031, id.name(), ps );
         }
     }
 
@@ -556,7 +560,7 @@ public class FTLParser {
                 ps.skipBlank();
                 if (ps.isCurrentChar( ':' )) {
                     if (argNames.contains( msgRef.name() )) {
-                        throw ParseException.create( ParseException.ErrorCode.E0022, ps );
+                        throw ParseException.of( ParseException.ErrorCode.E0022, ps );
                     }
                     ps.inc();
                     ps.skipBlank();
@@ -566,17 +570,17 @@ public class FTLParser {
                         argNames.add( msgRef.name() );
                         named.add( new NamedArgument( new Identifier( msgRef.name() ), literal ) );
                     } else {
-                        throw ParseException.create( ParseException.ErrorCode.E0032, ps );
+                        throw ParseException.of( ParseException.ErrorCode.E0032, ps );
                     }
                 } else {
                     if (!argNames.isEmpty()) {
-                        throw ParseException.create( ParseException.ErrorCode.E0021, ps );
+                        throw ParseException.of( ParseException.ErrorCode.E0021, ps );
                     }
                     positional.add( expr );
                 }
             } else {
                 if (!argNames.isEmpty()) {
-                    throw ParseException.create( ParseException.ErrorCode.E0021, ps );
+                    throw ParseException.of( ParseException.ErrorCode.E0021, ps );
                 }
                 positional.add( expr );
             }
@@ -603,7 +607,7 @@ public class FTLParser {
         try {
             return Literal.NumberLiteral.from( literalString );
         } catch (NumberFormatException e) {
-            throw ParseException.create( ParseException.ErrorCode.E0030, literalString, ps );
+            throw ParseException.of( ParseException.ErrorCode.E0030, literalString, ps );
         }
     }
 
@@ -613,7 +617,7 @@ public class FTLParser {
         final String name = identifier.name();
         for (int i = 0; i < name.length(); i++) {
             if (!FTLStream.isValidFnChar( name.charAt( i ) )) {
-                throw ParseException.create(
+                throw ParseException.of(
                         ParseException.ErrorCode.E0008,
                         name,
                         ps.positionToLine(),
