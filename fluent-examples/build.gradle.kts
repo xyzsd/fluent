@@ -22,7 +22,6 @@
  */
 
 plugins {
-    id("fluent.java-library-conventions")
     id("application")
 }
 

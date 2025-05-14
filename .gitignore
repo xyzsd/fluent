@@ -46,3 +46,6 @@ gradle-app.setting
 .todo
 
 /.idea/
+
+# Ignore Gradle build output directory
+build

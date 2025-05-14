@@ -66,6 +66,12 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(23)
     }
+
+}
+
+tasks.compileJava {
+    options.encoding = "UTF-8"
+    options.compilerArgs.add("-Xlint:all,-dangling-doc-comments,-serial")
 }
 
 tasks.jar {
