@@ -26,6 +26,7 @@ package fluent.syntax.AST;
 import java.util.List;
 import org.jspecify.annotations.NullMarked;
 
+///  arguments for function calls
 @NullMarked
 public record CallArguments(List<? extends Expression> positional,
                             List<NamedArgument> named) implements SyntaxNode {

@@ -27,7 +27,7 @@ import org.jspecify.annotations.NullMarked;
 
 // TODO: 'name()' should be used. key() should be eliminated (implementation of Keyable)
 @NullMarked
-public final record Identifier(String name) implements SyntaxNode, VariantKey {
+public record Identifier(String name) implements SyntaxNode, VariantKey {
     @Override
     public String key() {
         return name;

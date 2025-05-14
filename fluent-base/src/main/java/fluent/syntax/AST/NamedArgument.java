@@ -25,7 +25,7 @@ package fluent.syntax.AST;
 
 import org.jspecify.annotations.NullMarked;
 
-
+///  Named arguments (in functions)
 @NullMarked
 public record NamedArgument(Identifier name,
                             Literal<?> value) implements SyntaxNode {

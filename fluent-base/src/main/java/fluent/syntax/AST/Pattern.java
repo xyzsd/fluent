@@ -23,73 +23,16 @@
 
 package fluent.syntax.AST;
 
-import fluent.bundle.resolver.Resolvable;
-import fluent.bundle.resolver.Scope;
-import fluent.types.FluentString;
-import fluent.types.FluentValue;
-
 import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 
+///  Pattern
 @NullMarked
-public record Pattern(List<PatternElement> elements) implements SyntaxNode, Resolvable {
-
-    // initial size of StringBuilder (todo: determine a good initial size or perhaps allow tuning)
-    private static final int SB_SIZE = 128;
+public record Pattern(List<PatternElement> elements) implements SyntaxNode {
 
     public Pattern {
         elements = List.copyOf( elements );
-    }
-
-
-    @Override
-    public List<FluentValue<?>> resolve(Scope scope) {
-        if (scope.isDirty()) {
-            return Resolvable.error( "[dirty]" );
-        }
-
-        // fast-path (resolve)
-        if (elements.size() == 1) {
-            final PatternElement patternElement = elements.get( 0 );
-            if (patternElement instanceof PatternElement.TextElement textElement) {
-                return List.of( FluentString.of( textElement.value() ) );
-            } else {
-                return scope.maybeTrack( this, ((PatternElement.Placeable) patternElement) );
-            }
-        }
-
-        StringBuilder sb = new StringBuilder( SB_SIZE );
-        for (PatternElement patternElement : elements) {
-            if (scope.isDirty()) {
-                return Resolvable.error( "[dirty]" );
-            }
-
-            if (patternElement instanceof PatternElement.TextElement textElement) {
-                sb.append( textElement.value() );
-            } else if (patternElement instanceof PatternElement.Placeable placeable) {
-                scope.incrementAndCheckPlaceables();
-
-                final boolean needsIsolation = scope.bundle().useIsolation()
-                        && elements.size() > 1
-                        && placeable.needsIsolation();
-
-                if (needsIsolation) {
-                    sb.append( Resolvable.FSI );
-                }
-
-                final List<FluentValue<?>> fluentValues = scope.maybeTrack( this, placeable );
-                sb.append( scope.reduce( fluentValues ) );
-
-                if (needsIsolation) {
-                    sb.append( Resolvable.PDI );
-                }
-            } else {
-                throw new IllegalStateException( patternElement.toString() );
-            }
-        }
-
-        return List.of( FluentString.of( sb.toString() ) );
     }
 
 }

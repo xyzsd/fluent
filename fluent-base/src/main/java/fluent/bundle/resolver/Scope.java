@@ -146,8 +146,8 @@ public class Scope {
         return raw.entrySet().stream()
                 .collect( Collectors.toMap(
                         Map.Entry::getKey,
-                        entry -> bundle.valueCreator()
-                                .toCollection( entry.getValue() )
+                        entry -> FluentValue.toCollection(
+                                 entry.getValue() )
                         )
                 );
     }
@@ -163,7 +163,7 @@ public class Scope {
      */
     public void incrementAndCheckPlaceables() {
         placeables += 1;
-        if (placeables > Resolvable.MAX_PLACEABLES) {
+        if (placeables > Resolver.MAX_PLACEABLES) {
             isDirty = true;
             throw new ResolutionException( "Too many placeables" );
         }
@@ -194,14 +194,14 @@ public class Scope {
 
         List<FluentValue<?>> result;
         try {
-            result = exp.resolve( this );
+            result = Resolver.resolve( exp, this );
         } catch (FluentFunctionException e) {
-            return Resolvable.error( e.fnName().orElse( "???" ) + "()" );
+            return Resolver.error( e.fnName().orElse( "???" ) + "()" );
         }
 
         if (isDirty) {
             addError( new ResolutionException( exp.toString() ) );
-            return Resolvable.error( "{!dirty: " + exp + "}" );
+            return Resolver.error( "{!dirty: " + exp + "}" );
         }
 
         return result;
@@ -211,10 +211,10 @@ public class Scope {
     public List<FluentValue<?>> track(final Pattern pattern, final Identifiable exp) {
         if (visited.contains( pattern )) {
             addError( new ResolutionException( "Cyclic" ) );
-            return Resolvable.error( "{!cyclic:" + exp.name() + "}" );
+            return Resolver.error( "{!cyclic:" + exp.name() + "}" );
         } else {
             visited.addLast( pattern ); // push
-            final List<FluentValue<?>> result = pattern.resolve( this );
+            final List<FluentValue<?>> result = Resolver.resolve( pattern, this );
             visited.removeLast(); // pop;
             return result;
         }
@@ -247,7 +247,7 @@ public class Scope {
         // then lookup in named-pair Options, which are never in Lists.
         // these are also not FluentValues, and must be converted
         return localParams.options().asRaw( name )
-                .map( bundle.valueCreator()::toFluentValue )
+                .map( FluentValue::toFluentValue )
                 .<List<FluentValue<?>>>map( List::of )
                 .orElse( List.of() );
     }
@@ -256,7 +256,7 @@ public class Scope {
     public ResolvedParameters resolveParameters(@Nullable final CallArguments callArgs) {
         final List<List<FluentValue<?>>> rezPoz = (callArgs == null)
                 ? List.of()
-                : callArgs.positional().stream().map( e -> e.resolve( this ) ).toList();
+                : callArgs.positional().stream().map( e -> Resolver.resolve(e, this ) ).toList();
 
         final Options opts = options.mergeOverriding( Options.from( callArgs ) );
 

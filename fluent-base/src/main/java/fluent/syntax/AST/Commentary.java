@@ -25,30 +25,25 @@ package fluent.syntax.AST;
 
 import org.jspecify.annotations.NullMarked;
 
+///  Comment nodes
 @NullMarked
-public /*sealed*/ interface Commentary extends Entry {
+public sealed interface Commentary extends Entry {
 
-    /** Comment text */
+    /// Comment text
     String text();
 
-    /**
-     *   Single-hash comments '#'; these can be bound to
-     *   Messages or Terms, but also can be standalone
-    */
+    ///   Single-hash comments '#'; these can be bound to
+    ///   Messages or Terms, but also can be standalone
     record Comment(String text) implements Commentary {}
 
-    /**
-     *  Double-Hash '##' comments (Group Comments), which are standalone
-     */
+    ///  Double-Hash '##' comments (Group Comments), which are standalone
     record GroupComment(String text) implements Commentary {
         public GroupComment(Commentary c) {
             this( c.text() );
         }
     }
 
-    /**
-     *  Triple-Hash '###' comments (Resource Comments), which are standalone
-     */
+    ///  Triple-Hash '###' comments (Resource Comments), which are standalone
     record ResourceComment(String text) implements Commentary {
         public ResourceComment(Commentary c) {
             this( c.text() );

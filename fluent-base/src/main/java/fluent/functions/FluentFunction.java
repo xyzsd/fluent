@@ -23,6 +23,7 @@
 
 package fluent.functions;
 
+import fluent.bundle.resolver.Resolver;
 import fluent.syntax.AST.SelectExpression;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentError;
@@ -116,7 +117,7 @@ public interface FluentFunction {
         // this should work for most functions ... unless they reduce!
         return apply( parameters, scope ).stream()
                 .map( v -> v.select( selectExpression, parameters, scope ) )
-                .map( v -> v.value().resolve( scope ) )
+                .map( v -> Resolver.resolve( v.value(), scope ) )
                 .flatMap( List::stream )
                 .toList();
     }
@@ -209,7 +210,7 @@ public interface FluentFunction {
     static FluentValue<?> applyIfNumber(final FluentValue<?> in, final Scope scope, final Function<Number, ?> fn) {
         validate( in );
         if (in.value() instanceof Number num) {
-            return scope.bundle().valueCreator().toFluentValue( fn.apply( num ) );
+            return FluentValue.toFluentValue( num );
         } else {
             return in;
         }

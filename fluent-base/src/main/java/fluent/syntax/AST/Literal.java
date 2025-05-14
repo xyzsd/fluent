@@ -23,17 +23,12 @@
 
 package fluent.syntax.AST;
 
-import fluent.bundle.resolver.Scope;
-import fluent.types.FluentNumber;
-import fluent.types.FluentString;
-import fluent.types.FluentValue;
 import org.jspecify.annotations.NullMarked;
 
-import java.util.List;
 
-
+///  Literals
 @NullMarked
-public /*sealed*/ interface Literal<T> extends InlineExpression {
+public sealed interface Literal<T> extends InlineExpression {
 
     T value();
 
@@ -50,24 +45,17 @@ public /*sealed*/ interface Literal<T> extends InlineExpression {
             return false;
         }
 
-        @Override
-        public List<FluentValue<?>> resolve(Scope scope) {
-            return List.of( new FluentString( value ) );
-        }
     }
 
 
-    /*sealed*/ interface NumberLiteral<N extends Number> extends Literal<Number>, VariantKey
-            /*permits LongLiteral, DoubleLiteral*/ {
+    ///  NumberLiterals are constrained to Long or Double types.
+    sealed interface NumberLiteral<N> extends Literal<Number>, VariantKey {
 
-
-        /**
-         * Create a NumberLiteral from the given String
-         *
-         * @param s input text
-         * @return a LongLiteral or DoubleLiteral as appropriate
-         * @throws NumberFormatException if there is a parse exception
-         */
+        /// Create a NumberLiteral from the given String
+        ///
+        /// @param s input text
+        /// @return a LongLiteral or DoubleLiteral as appropriate
+        /// @throws NumberFormatException if there is a parse exception
         static NumberLiteral<?> from(final String s) throws NumberFormatException {
             if (s.indexOf( '.' ) > 0) {
                 return new DoubleLiteral( Double.valueOf( s ) );
@@ -77,21 +65,16 @@ public /*sealed*/ interface Literal<T> extends InlineExpression {
         }
 
         @Override
-        default List<FluentValue<?>> resolve(Scope scope) {
-            return List.of( FluentNumber.from( value() ) );
-        }
-
-        @Override
         default String key() {
             return String.valueOf( value() );
         }
+
+        record LongLiteral(Long value) implements NumberLiteral<Long> {}
+
+
+        record DoubleLiteral(Double value) implements NumberLiteral<Double> {}
     }
 
 
-    // todo: these were present for serialization issues ... but may be removed in the future
 
-    final record LongLiteral(Long value) implements NumberLiteral<Long> {}
-
-
-    final record DoubleLiteral(Double value) implements NumberLiteral<Double> {}
 }

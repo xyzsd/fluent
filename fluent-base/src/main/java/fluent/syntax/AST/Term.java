@@ -30,11 +30,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+///  Terms
 @NullMarked
 public record Term(Identifier identifier,
                    Pattern value,
                    List<Attribute> attributes,
-                   Commentary.@Nullable Comment _comment) implements Entry, Identifiable {
+                   Commentary.@Nullable Comment comment) implements Entry, Identifiable {
 
 
     public Term {
@@ -65,8 +66,8 @@ public record Term(Identifier identifier,
     }
 
     /** The (optional) Comment */
-    public Optional<Commentary.Comment> comment() {
-        return Optional.ofNullable( _comment );
+    public Commentary.@Nullable Comment comment() {
+        return comment ;
     }
 
 

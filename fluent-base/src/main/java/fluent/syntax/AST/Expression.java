@@ -23,10 +23,10 @@
 
 package fluent.syntax.AST;
 
-import fluent.bundle.resolver.Resolvable;
 import org.jspecify.annotations.NullMarked;
 
-// inlineexpression, selectexpression,
+/// Parent of Inline and Select expressions
 @NullMarked
-public /*sealed*/ interface Expression extends SyntaxNode, Resolvable /*permits InlineExpression, SelectExpression*/ {
+public sealed interface Expression extends SyntaxNode
+        permits InlineExpression, SelectExpression {
 }

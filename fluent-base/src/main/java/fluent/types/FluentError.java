@@ -28,10 +28,7 @@ import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
 
-/**
- * An error value.
- *
- */
+/// An error value.
 @NullMarked
 public record FluentError(String value) implements FluentValue<String> {
 

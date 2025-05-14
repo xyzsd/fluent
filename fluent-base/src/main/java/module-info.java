@@ -1,7 +1,8 @@
 module net.xyzsd.fluent {
-    requires com.ibm.icu;
     // TODO: transitive, static or 'static transitive' ? need to decide
     requires static transitive org.jspecify;
+    // these are currently automatic modules ... careful
+    requires com.ibm.icu;
     requires org.jetbrains.annotations;
     //
     // we are exporting all for now.

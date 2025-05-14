@@ -162,9 +162,6 @@ public class NumberFn implements FluentImplicit, ImplicitFormatter {
     }
 
 
-    ///////////////////////////////////
-    // private
-    ///////////////////////////////////
     private enum SelectType {
         // CLDR categories:
         CARDINAL, ORDINAL,

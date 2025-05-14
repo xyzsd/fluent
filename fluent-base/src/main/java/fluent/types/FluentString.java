@@ -31,13 +31,10 @@ import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
 
-/**
- * Wrapper for a String
- * <p>
- *  String values may not be null. Null strings may be encoded to "null" by a FluentValueCreator if so desired.
- * </p>
- *
- */
+/// Wrapper for a String
+///
+///  String values may not be null. Null strings may be encoded to "null" by a FluentValueCreator if so desired.
+///
 @NullMarked
 public record FluentString(String value) implements FluentValue<String> {
 
@@ -45,13 +42,8 @@ public record FluentString(String value) implements FluentValue<String> {
         Objects.requireNonNull(value);
     }
 
-    // for now, this is package-protected
-    static final FluentString FLUENT_NULL = new FluentString( "null" );
 
-
-    /**
-     * Create a FluentString
-     */
+    /// Create a FluentString
     public static FluentString of(String s) {
         return new FluentString( s );
     }
@@ -63,10 +55,8 @@ public record FluentString(String value) implements FluentValue<String> {
     }
 
 
-    /**
-     * Select variant that exactly matches this FluentString.
-     * If there is no match, return the default Variant.
-     */
+    /// Select variant that exactly matches this FluentString.
+    /// If there is no match, return the default Variant.
     @Override
     public Variant select(SelectExpression selectExpression, ResolvedParameters params, Scope scope) {
         return selectExpression.matchOrDefault( value() );

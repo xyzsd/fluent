@@ -24,6 +24,7 @@
 package fluent.functions.icu.list;
 
 import com.ibm.icu.text.ListFormatter;
+import fluent.bundle.resolver.Resolver;
 import fluent.functions.FluentImplicit;
 import fluent.functions.ImplicitReducer;
 import fluent.functions.ResolvedParameters;
@@ -96,7 +97,7 @@ public class JoinFn implements FluentImplicit, ImplicitReducer {
 
         return params.valuesAll()
                 .map( v -> v.select( selectExpression, params, initialScope ) )
-                .map( v -> v.value().resolve( initialScope ) )
+                .map( v -> Resolver.resolve(v.value(),  initialScope ) )
                 .flatMap( List::stream )
                 .toList();
     }

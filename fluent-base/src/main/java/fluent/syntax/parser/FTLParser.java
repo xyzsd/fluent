@@ -372,7 +372,7 @@ public class FTLParser {
         ps.skipBlankInline();
         ps.expectChar( '}' );
         if (exp instanceof InlineExpression.TermReference termReference) {
-            if (termReference.attributeID().isPresent()) {
+            if (termReference.attributeID() != null) {
                 throw ParseException.create( ParseException.ErrorCode.E0019, ps );
             }
         }
@@ -394,7 +394,7 @@ public class FTLParser {
 
         if (!ps.isCurrentChar( '-' ) || !ps.isNextChar( '>' )) {
             if (exp instanceof InlineExpression.TermReference ref) {
-                if (ref.attributeID().isPresent()) {
+                if (ref.attributeID() != null) {
                     throw ParseException.create( ParseException.ErrorCode.E0019, ps );
                 }
             }
@@ -402,13 +402,13 @@ public class FTLParser {
         }
 
         if (exp instanceof InlineExpression.MessageReference ref) {
-            if (ref.attributeID().isEmpty()) {
+            if (ref.attributeID() == null) {
                 throw ParseException.create( ParseException.ErrorCode.E0016, ps );
             } else {
                 throw ParseException.create( ParseException.ErrorCode.E0018, ps );
             }
         } else if (exp instanceof InlineExpression.TermReference ref) {
-            if (ref.attributeID().isEmpty()) {
+            if (ref.attributeID() == null) {
                 throw ParseException.create( ParseException.ErrorCode.E0017, ps );
             }
         } else if (exp instanceof PatternElement.Placeable) {

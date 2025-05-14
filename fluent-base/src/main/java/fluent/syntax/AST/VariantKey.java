@@ -24,19 +24,16 @@
 package fluent.syntax.AST;
 
 
-/**
- *  A SynatxNode usable as VariantKey (used by Variant)
- *  <p>
- *  A kind of sum-type pseudo-reference to an Identifier or Literal.NumberLiteral.
- *  {@code Keyable := NumberLiteral | Identifier}
- */
+
 import org.jspecify.annotations.NullMarked;
 
+///  A SyntaxNode usable as VariantKey (used by Variant)
+///
+///  A kind of sum-type pseudo-reference to an Identifier or Literal.NumberLiteral.
+///  `Keyable := NumberLiteral | Identifier`
 @NullMarked
-public /*sealed*/ interface VariantKey /*permits Identifier, Literal.NumberLiteral*/ {
+public sealed interface VariantKey permits Identifier, Literal.NumberLiteral {
 
-    /**
-     * The value that should be used as a key in a map.
-     */
+    /// The value that should be used as a key in a map.
     String key();
 }

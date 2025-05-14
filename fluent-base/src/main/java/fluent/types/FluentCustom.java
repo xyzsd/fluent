@@ -29,15 +29,11 @@ import org.jspecify.annotations.NullMarked;
 import java.util.Objects;
 
 
-/**
- * Custom classes should extend FluentCustom.
- * <p>
- *     FluentCustom is used in lieu of a more appropriate type. Formatting of FluentCustom values
- *     is equivalent to calling the wrapped objects toString() method.
- * </p>
- *
- *
- */
+/// Custom classes should extend FluentCustom.
+///
+///     FluentCustom is used in lieu of a more appropriate type. Formatting of FluentCustom values
+///     is equivalent to calling the wrapped objects toString() method.
+///
 @NullMarked
 public record FluentCustom<T>(T value) implements FluentValue<T> {
 
@@ -45,11 +41,13 @@ public record FluentCustom<T>(T value) implements FluentValue<T> {
         Objects.requireNonNull(value);
     }
 
+    ///  Create a FluentCustom
     public static <V> FluentCustom<V> of(V value) {
         return new FluentCustom<>( value );
     }
 
 
+    ///  {@inheritDoc}
     @Override
     public String format(Scope scope) {
         return String.valueOf(value());

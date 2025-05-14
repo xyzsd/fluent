@@ -22,14 +22,13 @@
  */
 package fluent.bundle;
 
+import fluent.bundle.resolver.Resolver;
 import fluent.functions.*;
 import fluent.functions.FluentImplicit.Implicit;
 import fluent.syntax.AST.*;
 import fluent.bundle.resolver.ReferenceException;
 import fluent.bundle.resolver.Scope;
-import fluent.types.DefaultFluentValueFactory;
 import fluent.types.FluentValue;
-import fluent.types.FluentValueFactory;
 
 import org.jspecify.annotations.NullMarked;
 
@@ -78,7 +77,6 @@ public class FluentBundle {
     private final Map<String, Message> messages;
     private final Map<String, FluentFunction> functions;
     private final EnumMap<Implicit, FluentImplicit> implicits;
-    private final FluentValueFactory fluentValueCreator;
     private final FunctionResources fnResources;    // accessed only via Scope
     private final Options globalOpts;
 
@@ -90,7 +88,6 @@ public class FluentBundle {
         this.messages = Map.copyOf( b.messages );
         this.functions = Map.copyOf( b.functions );
         this.implicits = new EnumMap<>( b.implicits );
-        this.fluentValueCreator = b.fluentValueCreator;
         this.fnResources = b.fnFactory.resources( b.locale  );
         this.globalOpts = b.globalOpts;
     }
@@ -148,13 +145,6 @@ public class FluentBundle {
         return useIsolation;
     }
 
-    /**
-     * Bundle FluentValueCreator
-     */
-    public FluentValueFactory valueCreator() {
-        return fluentValueCreator;
-    }
-
 
     /**
      * Returns the Message for the given id
@@ -209,7 +199,7 @@ public class FluentBundle {
      */
     public Optional<Pattern> getMessagePattern(final String messageID) {
         return Optional.ofNullable( messages.get( messageID ) )
-                .flatMap( Message::pattern );
+                .flatMap( m -> Optional.ofNullable( m.pattern()) );
     }
 
     /**
@@ -338,7 +328,7 @@ public class FluentBundle {
 
     private String patternFormat(Pattern pattern, Map<String, ?> args, List<Exception> errors) {
         final Scope scope = new Scope( this, this.fnResources, args, errors, globalOpts );
-        final List<FluentValue<?>> resolved = pattern.resolve( scope );
+        final List<FluentValue<?>> resolved = Resolver.resolve( pattern, scope );
         return scope.reduce( resolved );
     }
 
@@ -366,7 +356,6 @@ public class FluentBundle {
         Map<String, Message> messages = new HashMap<>();
         Map<String, FluentFunction> functions = new HashMap<>();
         Map<Implicit, FluentImplicit> implicits = new HashMap<>();
-        FluentValueFactory fluentValueCreator = DefaultFluentValueFactory.create();
         boolean useIsolation = false;
         Options globalOpts = Options.EMPTY;
 
@@ -390,7 +379,6 @@ public class FluentBundle {
             this.messages = new HashMap<>( from.messages );
             this.functions = new HashMap<>( from.functions );
             this.implicits = new EnumMap<>( from.implicits );
-            this.fluentValueCreator = from.fluentValueCreator;
             // FunctionResources: local to each bundle
             this.globalOpts = from.globalOpts;
         }
@@ -430,17 +418,6 @@ public class FluentBundle {
          */
         public Builder withIsolation(boolean value) {
             useIsolation = value;
-            return this;
-        }
-
-        /**
-         * Set the FluentValueCreator for the Builder
-         *
-         * @param creator FluentValueCreator
-         * @return Builder
-         */
-        public Builder withValueCreator(FluentValueFactory creator) {
-            fluentValueCreator = Objects.requireNonNull( creator );
             return this;
         }
 

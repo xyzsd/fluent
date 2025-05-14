@@ -22,16 +22,8 @@
  *
  */
 
-/**
- * AST Nodes created during Fluent parsing.
- * <p>
- *     AST Nodes are immutable.
- * </p>
- * <p>
- *      Some interfaces have their implementations defined as classes within the same file, in an effort to improve
- *      code base readability ... this could potentially change
- * </p>
- *
- */
-
+/// AST Nodes created during Fluent parsing.
+///
+///     AST Nodes are immutable.
+///
 package fluent.syntax.AST;

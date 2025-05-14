@@ -24,11 +24,10 @@
 package fluent.syntax.AST;
 
 import org.jspecify.annotations.NullMarked;
-/**
- * Parent of all AST Nodes.
- */
+
+/// Parent of all AST Nodes.
 @NullMarked
-public /*sealed*/ interface SyntaxNode
-        /*permits Attribute, CallArguments, Entry, Expression, Identifier,
-        Junk, NamedArgument, Pattern, PatternElement, Variant*/ {
+public sealed interface SyntaxNode
+        permits Attribute, CallArguments, Entry, Expression, Identifier,
+        Junk, NamedArgument, Pattern, PatternElement, Variant {
 }

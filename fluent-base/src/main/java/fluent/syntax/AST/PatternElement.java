@@ -30,19 +30,13 @@ import java.util.List;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.NullMarked;
 
-/**
- * Parent of Placeable and TextElement
- */
+/// Parent of Placeable and TextElement
 @NullMarked
-public /*sealed*/ interface PatternElement extends SyntaxNode {
+public sealed interface PatternElement extends SyntaxNode {
 
-    final record TextElement(String value) implements PatternElement {
+    record TextElement(String value) implements PatternElement {
     }
 
-    final record Placeable(Expression expression) implements PatternElement, InlineExpression {
-        @Override
-        public List<FluentValue<?>> resolve(Scope scope) {
-            return expression.resolve( scope );
-        }
+    record Placeable(Expression expression) implements PatternElement, InlineExpression {
     }
 }

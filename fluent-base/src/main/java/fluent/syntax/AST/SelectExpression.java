@@ -24,17 +24,14 @@
 package fluent.syntax.AST;
 
 
-import fluent.functions.FluentImplicit;
-import fluent.functions.ResolvedParameters;
-import fluent.bundle.resolver.Scope;
-import fluent.types.FluentValue;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 import java.util.Optional;
 
+///  SelectExpression
 @NullMarked
-public final record SelectExpression(Expression selector,
+public record SelectExpression(Expression selector,
                                      List<Variant> variants) implements Expression {
 
     public SelectExpression {
@@ -89,19 +86,5 @@ public final record SelectExpression(Expression selector,
 
         return defaultVariant;
     }
-
-
-    @Override
-    public List<FluentValue<?>> resolve(final Scope scope) {
-        final List<FluentValue<?>> resolved = selector.resolve( scope );
-
-        return scope.bundle().implicit( FluentImplicit.Implicit.JOIN )
-                .select(
-                        this,
-                        ResolvedParameters.from( resolved, scope ),
-                        scope
-                );
-    }
-
 
 }

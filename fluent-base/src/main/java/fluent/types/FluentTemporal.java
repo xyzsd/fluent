@@ -30,18 +30,25 @@ import fluent.bundle.resolver.Scope;
 import org.jspecify.annotations.NullMarked;
 
 import java.time.temporal.TemporalAccessor;
+import java.util.Objects;
 
-/**
- * Temporal type (date, time, ...)
- */
+/// Temporal type (date, time, ...)
 @NullMarked
 public record FluentTemporal(TemporalAccessor value) implements FluentValue<TemporalAccessor> {
 
-    /**
-     * Format using the implicit TEMPORAL() function, without a
-     * @param scope Scope
-     * @return
-     */
+
+    public FluentTemporal {
+        Objects.requireNonNull( value );
+    }
+
+    public static FluentTemporal of(TemporalAccessor ta) {
+        return new FluentTemporal( ta );
+    }
+
+
+    /// Format using the implicit TEMPORAL() function, without a
+    /// @param scope Scope
+    /// @return
     @Override
     public String format(Scope scope) {
         return ((ImplicitFormatter) scope.bundle().implicit( FluentImplicit.Implicit.TEMPORAL ))

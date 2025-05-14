@@ -248,6 +248,8 @@ class FTLParserSmokeTest {
                 update-successful = { -brand-name } has been updated.
                 """;
 
+        // one ReferenceException will be generated. This test is correct though
+        // we don't yet verify the exception
         assertEquals(
                 "{brand-name} has been updated.",
                 msg( s1, "update-successful" )
@@ -361,14 +363,16 @@ class FTLParserSmokeTest {
                 """;
 
         assertEquals(
+                "a TEXT message has been sent.",
+                msg( s, "output2" )
+        );
+
+        assertEquals(
                 "a general message has been sent.",
                 msg( s, "output" )
         );
 
-        assertEquals(
-                "a TEXT message has been sent.",
-                msg( s, "output2" )
-        );
+
 
         // no value (pattern) after message
         s = """

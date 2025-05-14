@@ -29,11 +29,12 @@ import org.jspecify.annotations.Nullable;
 import java.util.List;
 import java.util.Optional;
 
+///  Attribute
 @NullMarked
 public record Attribute(Identifier identifier, Pattern pattern)
         implements SyntaxNode, Identifiable {
 
-    /** Find matching attribute, if any */
+    /// Find matching attribute, if any
     public static Optional<Attribute> match(final List<Attribute> attributeList,
                                             @Nullable final String id) {
         return attributeList.stream()
@@ -41,7 +42,7 @@ public record Attribute(Identifier identifier, Pattern pattern)
                 .findAny();
     }
 
-    /** Find matching attribute, if any */
+    /// Find matching attribute, if any
     public static Optional<Attribute> match(final List<Attribute> attributeList,
                                             @Nullable final Identifier id) {
         return attributeList.stream()

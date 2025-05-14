@@ -25,8 +25,9 @@ package fluent.syntax.AST;
 
 import org.jspecify.annotations.NullMarked;
 
+///  Variant (a limb of a SelectExpression)
 @NullMarked
-public final record Variant(VariantKey keyable, Pattern value,
+public record Variant(VariantKey keyable, Pattern value,
                             boolean isDefault) implements SyntaxNode {
 
     public String key() {

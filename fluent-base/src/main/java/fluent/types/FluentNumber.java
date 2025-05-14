@@ -37,25 +37,21 @@ import java.math.BigInteger;
 import java.util.Objects;
 
 
-/**
- * FluentNumber wraps a numeric type.
- * <p>
- *     All numeric types are converted into Long, Double, or BigDecimal as appropriate.
- * </p>
- * @param <T>
- */
+/// FluentNumber wraps a numeric type.
+///
+///     All numeric types are converted into Long, Double, or BigDecimal as appropriate.
+///
+/// @param <T>
 @NullMarked
 public sealed interface FluentNumber<T extends Number> extends FluentValue<T> {
 
 
-    /**
-     * Create a FluentNumber for a given Number type. Returns the best fitting FluentNumber type.
-     *
-     * @param n Number type to convert to a FluentNumber
-     * @return FluentNumber best representing the given Number type
-     * @throws IllegalArgumentException for unknown Number types
-     * @throws NullPointerException if Number is null
-     */
+    /// Create a FluentNumber for a given Number type. Returns the best fitting FluentNumber type.
+    ///
+    /// @param n Number type to convert to a FluentNumber
+    /// @return FluentNumber best representing the given Number type
+    /// @throws IllegalArgumentException for unknown Number types
+    /// @throws NullPointerException if Number is null
     static FluentNumber<?> from(final Number n) {
         Objects.requireNonNull(n);
 
@@ -75,30 +71,28 @@ public sealed interface FluentNumber<T extends Number> extends FluentValue<T> {
         throw new IllegalArgumentException( String.valueOf( n ) );
     }
 
-    /** Create a FluentBigDecimal from a BigDecimal */
+    /// Create a FluentBigDecimal from a BigDecimal
     static FluentBigDecimal of(BigDecimal bigDecimal) {
         return new FluentBigDecimal( bigDecimal );
     }
 
-    /** Create a FluentBigDecimal from a BigInteger */
+    /// Create a FluentBigDecimal from a BigInteger
     static FluentBigDecimal of(BigInteger bigInteger) {
         return new FluentBigDecimal( new BigDecimal( bigInteger ) );
     }
 
-    /** Create a FluentLong from a long */
+    /// Create a FluentLong from a long
     static FluentLong of(long value) {
         return new FluentLong( value );
     }
 
-    /** Create a FluentDouble from a double */
+    /// Create a FluentDouble from a double
     static FluentDouble of(double value) {
         return new FluentDouble( value );
     }
 
 
-    /**
-     * Format the number. This is equivalent to calling NUMBER() on this FluentValue without any additional arguments.
-     */
+    /// Format the number. This is equivalent to calling NUMBER() on this FluentValue without any additional arguments.
     @Override
     default String format(final Scope scope) {
         // 'NUMBER()' function called, with 'default' arguments, to apply default localized formatter
@@ -106,19 +100,15 @@ public sealed interface FluentNumber<T extends Number> extends FluentValue<T> {
                 .format( this, scope );
     }
 
-    /**
-     * By default, for select statements, attempt to match a Variant that corresponds to the
-     * cardinal plural form of this number. If there is no match, the default Variant is returned.
-     */
+    /// By default, for select statements, attempt to match a Variant that corresponds to the
+    /// cardinal plural form of this number. If there is no match, the default Variant is returned.
     @Override
     default Variant select(final SelectExpression selectExpression, final ResolvedParameters params, final Scope scope) {
         final String categoryName = scope.fnResources.selectCardinal( value() );
         return selectExpression.matchOrDefault( categoryName );
     }
 
-    /**
-     * Type as BigDecimal
-     */
+    /// Type as BigDecimal
     BigDecimal asBigDecimal();
 
 
