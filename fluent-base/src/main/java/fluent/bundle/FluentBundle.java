@@ -25,7 +25,6 @@ package fluent.bundle;
 import fluent.bundle.resolver.FluentValueFormatter;
 import fluent.bundle.resolver.Resolver;
 import fluent.functions.*;
-import fluent.functions.FluentImplicit.Implicit;
 import fluent.functions.list.reducer.ListFn;
 import fluent.functions.numeric.NumberFn;
 import fluent.functions.temporal.TemporalFn;
@@ -36,7 +35,6 @@ import fluent.types.FluentValue;
 
 import org.jspecify.annotations.NullMarked;
 
-import java.time.temporal.TemporalAccessor;
 import java.util.*;
 
 // TODO: this class deserves the best documentation... we are not there yet
