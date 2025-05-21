@@ -1,9 +1,6 @@
 package fluent.bundle.resolver;
 
-import fluent.functions.FluentFunction;
-import fluent.functions.FluentFunctionException;
-import fluent.functions.FluentImplicit;
-import fluent.functions.ResolvedParameters;
+import fluent.functions.*;
 import fluent.syntax.AST.*;
 import fluent.syntax.AST.InlineExpression.FunctionReference;
 import fluent.syntax.AST.InlineExpression.MessageReference;
@@ -111,7 +108,7 @@ public class Resolver {
 
     private static List<FluentValue<?>> resolveFunctionReference(final FunctionReference fr, final Scope scope) {
         final String name = fr.name();
-        final FluentFunction function = scope.bundle().getFunction( name ).orElse( null );
+        final FluentFunction function = scope.bundle().function( name ).orElse( null );
         if (function == null) {
             scope.addError( ReferenceException.unknownFn( name ) );
             return Resolver.error( name + "()" );
@@ -203,16 +200,20 @@ public class Resolver {
     }
 
 
-
+    // TODO:
     private static List<FluentValue<?>> resolveSelectExpression(final SelectExpression se, final Scope scope) {
         final List<FluentValue<?>> resolved = resolve(se.selector(),  scope ); // recurse
 
-        return scope.bundle().implicit( FluentImplicit.Implicit.JOIN )
+        throw new UnsupportedOperationException("TODO: select expression resolution");
+        /*
+        return scope.bundle().implicit_OLD( FluentImplicit.Implicit.JOIN )
                 .select(
                         se,
                         ResolvedParameters.from( resolved, scope ),
                         scope
                 );
+
+         */
     }
 
 

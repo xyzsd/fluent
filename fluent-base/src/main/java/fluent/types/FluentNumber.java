@@ -23,18 +23,12 @@
 
 package fluent.types;
 
-import fluent.functions.FluentImplicit;
-import fluent.functions.ImplicitFormatter;
-import fluent.functions.ResolvedParameters;
-import fluent.syntax.AST.SelectExpression;
-import fluent.syntax.AST.Variant;
-import fluent.bundle.resolver.Scope;
-
 import org.jspecify.annotations.NullMarked;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 
 /// FluentNumber wraps a numeric type.
@@ -45,7 +39,6 @@ import java.util.Objects;
 @NullMarked
 public sealed interface FluentNumber<T extends Number> extends FluentValue<T> {
 
-
     /// Create a FluentNumber for a given Number type. Returns the best fitting FluentNumber type.
     ///
     /// @param n Number type to convert to a FluentNumber
@@ -54,21 +47,13 @@ public sealed interface FluentNumber<T extends Number> extends FluentValue<T> {
     /// @throws NullPointerException if Number is null
     static FluentNumber<?> from(final Number n) {
         Objects.requireNonNull(n);
-
-        if (n instanceof Integer || n instanceof Long) {
-            return new FluentLong( n.longValue() );
-        } else if (n instanceof Double || n instanceof Float) {
-            return new FluentDouble( n.doubleValue() );
-        } else if (n instanceof BigDecimal bigDecimal) {
-            return new FluentBigDecimal( bigDecimal );
-        } else if (n instanceof BigInteger bigInteger) {
-            return new FluentBigDecimal( new BigDecimal( bigInteger ) );
-        } else if(n instanceof Short || n instanceof Byte) {
-            // separate branch; shorts & bytes are expected to be used less frequently
-            return new FluentLong( n.longValue() );
-        }
-
-        throw new IllegalArgumentException( String.valueOf( n ) );
+        return switch(n) {
+            case Integer _, Long _, Short _, Byte _ -> new FluentLong(n.longValue());
+            case Double _, Float _ -> new FluentDouble(n.doubleValue());
+            case BigDecimal bigDecimal -> new FluentBigDecimal(bigDecimal);
+            case BigInteger bigInteger -> new FluentBigDecimal( new BigDecimal( bigInteger ) );
+            default ->  throw new IllegalArgumentException( String.valueOf( n ) );
+        };
     }
 
     /// Create a FluentBigDecimal from a BigDecimal
@@ -81,32 +66,20 @@ public sealed interface FluentNumber<T extends Number> extends FluentValue<T> {
         return new FluentBigDecimal( new BigDecimal( bigInteger ) );
     }
 
-    /// Create a FluentLong from a long
+    /// Create a FluentLong from a long or narrower integral type
     static FluentLong of(long value) {
         return new FluentLong( value );
     }
 
-    /// Create a FluentDouble from a double
+    /// Create a FluentDouble from a double or narrower type (float)
     static FluentDouble of(double value) {
         return new FluentDouble( value );
     }
 
 
-    /// Format the number. This is equivalent to calling NUMBER() on this FluentValue without any additional arguments.
-    @Override
-    default String format(final Scope scope) {
-        // 'NUMBER()' function called, with 'default' arguments, to apply default localized formatter
-        return ((ImplicitFormatter) scope.bundle().implicit( FluentImplicit.Implicit.NUMBER ))
-                .format( this, scope );
-    }
 
-    /// By default, for select statements, attempt to match a Variant that corresponds to the
-    /// cardinal plural form of this number. If there is no match, the default Variant is returned.
-    @Override
-    default Variant select(final SelectExpression selectExpression, final ResolvedParameters params, final Scope scope) {
-        final String categoryName = scope.fnResources.selectCardinal( value() );
-        return selectExpression.matchOrDefault( categoryName );
-    }
+
+
 
     /// Type as BigDecimal
     BigDecimal asBigDecimal();

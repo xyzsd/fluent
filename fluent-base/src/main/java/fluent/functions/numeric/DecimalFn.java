@@ -21,11 +21,11 @@
  *
  */
 
-package fluent.functions.icu.numeric;
+package fluent.functions.numeric;
 
-import fluent.functions.FluentFunction;
+import fluent.functions.FluentFunction_OLD;
 import fluent.functions.FluentFunctionException;
-import fluent.functions.ResolvedParameters;
+import fluent.functions.ResolvedParameters_OLD;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentValue;
 
@@ -52,7 +52,7 @@ import java.util.List;
  *     Example: {@code DECIMAL($num, pattern:"###.00"}
  * </p>
  */
-public class DecimalFn implements FluentFunction {
+public class DecimalFn implements FluentFunction_OLD {
 
     public static final String NAME = "DECIMAL";
 
@@ -66,8 +66,8 @@ public class DecimalFn implements FluentFunction {
 
     // extraneous options ignored but extraneous args are errors
     @Override
-    public List<FluentValue<?>> apply(final ResolvedParameters params, final Scope scope) {
-        FluentFunction.ensureInput( params );
+    public List<FluentValue<?>> apply(final ResolvedParameters_OLD params, final Scope scope) {
+        FluentFunction_OLD.ensureInput( params );
 
         // get a localized DecimalFormat [it is an internal error if DecimalFormat not the concrete class]
         final DecimalFormat df = (DecimalFormat) NumberFormat.getNumberInstance( scope.bundle().locale() );
@@ -79,7 +79,7 @@ public class DecimalFn implements FluentFunction {
         params.options().asString( "pattern" )
                 .ifPresent( pattern -> applyPattern( df, pattern ) );
 
-        return FluentFunction.mapOverNumbers( params.valuesAll(),scope, df::format );
+        return FluentFunction_OLD.mapOverNumbers( params.valuesAll(),scope, df::format );
     }
 
 

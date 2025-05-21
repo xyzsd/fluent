@@ -26,11 +26,22 @@ package fluent.syntax.parser;
 import org.jspecify.annotations.NullMarked;
 import org.jetbrains.annotations.Range;
 
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.MissingResourceException;
+import java.util.stream.Collectors;
+
+import static java.util.Objects.requireNonNull;
+
 /**
  * Read-only input stream used by the parser.
  * <p>
  * Contains building blocks for parser implementation.
  */
+// for files: Files.readString()
+
 @NullMarked
 public final class FTLStream {
     /*
@@ -67,18 +78,21 @@ public final class FTLStream {
     private int pos;    // current position in stream
 
 
-    /**
-     * Create an FTLStream from the given String.
-     * <p>
-     * Streams are absolutely not threadsafe.
-     * </p>
-     *
-     * @param in Data to parse
-     * @return The stream, ready for parsing
-     */
+    /// Create an FTLStream from the given String.
+    ///
+    /// Streams are absolutely not threadsafe.
+    ///
+    /// A performant way to read in a file would be
+    /// {@snippet :
+    ///     Path path = Paths.get("myFile.ftl");
+    ///     FTLStream ftl = FTLStream.of( Files.readString(path));
+    /// }
+    /// @param in Data to parse
+    /// @return The stream, ready for parsing
     public static FTLStream of(final String in) {
-        if (in == null || in.isEmpty()) {
-            throw new IllegalArgumentException( "null or zero length input" );
+        requireNonNull(in);
+        if (in.isEmpty()) {
+            throw new IllegalArgumentException( "empty input String!" );
         }
         return new FTLStream( in.toCharArray() );
     }
@@ -98,16 +112,40 @@ public final class FTLStream {
      * @return The stream, ready for parsing
      */
     public static FTLStream of(final char[] array) {
-        checkArray(array);
+        requireNonNull( array, "null array" );
+        if (array.length == 0) {
+            throw new IllegalArgumentException( "zero length array!" );
+        }
         return new FTLStream( array );  // no defensive copy made
     }
 
 
-    private static void checkArray(final char[] array)  {
-        if (array == null || array.length == 0) {
-            throw new IllegalArgumentException( "null or zero length array!" );
+    /// Read directly from a resource stream.
+    ///
+    /// @param classLoader such as Thread.currentThread().getContextClassLoader();
+    /// @param resource resource to load
+    /// @return FTLStream
+    /// @throws IOException if resource is missing or an I/O error occurs while reading.
+    public static FTLStream from(final ClassLoader classLoader, final String resource)
+    throws IOException {
+        requireNonNull(classLoader);
+        requireNonNull(resource);
+
+        try (InputStream is = classLoader.getResourceAsStream( resource )) {
+            if(is ==  null) {
+                // todo: exception choice
+                throw new FileNotFoundException( resource );
+            }
+
+            final CharBuffer decoded = StandardCharsets.UTF_8.decode(
+                    ByteBuffer.wrap( is.readAllBytes() )
+            );
+
+            return new FTLStream(decoded.array());
         }
     }
+
+
 
 
     /**

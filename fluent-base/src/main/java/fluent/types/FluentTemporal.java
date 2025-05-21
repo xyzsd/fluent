@@ -23,14 +23,11 @@
 
 package fluent.types;
 
-import fluent.functions.FluentImplicit;
-import fluent.functions.ImplicitFormatter;
-import fluent.bundle.resolver.Scope;
-
 import org.jspecify.annotations.NullMarked;
 
 import java.time.temporal.TemporalAccessor;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 /// Temporal type (date, time, ...)
 @NullMarked
@@ -46,13 +43,6 @@ public record FluentTemporal(TemporalAccessor value) implements FluentValue<Temp
     }
 
 
-    /// Format using the implicit TEMPORAL() function, without a
-    /// @param scope Scope
-    /// @return
-    @Override
-    public String format(Scope scope) {
-        return ((ImplicitFormatter) scope.bundle().implicit( FluentImplicit.Implicit.TEMPORAL ))
-                .format( this, scope );
-    }
+
 
 }

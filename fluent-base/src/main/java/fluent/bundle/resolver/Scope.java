@@ -30,7 +30,6 @@ import fluent.syntax.AST.Expression;
 import fluent.syntax.AST.Identifiable;
 import fluent.syntax.AST.Pattern;
 import fluent.types.FluentValue;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayDeque;
@@ -45,7 +44,7 @@ import java.util.stream.Collectors;
  * The lifetime of a Scope is no longer than a single formatPattern() call
  * from the MessageBundle
  */
-public class Scope {
+public final class Scope {
 
     /**
      *  Map variable names to FluentValues
@@ -68,8 +67,9 @@ public class Scope {
     // bundle for this scope (immutable)
     private final FluentBundle bundle;
 
+    // TODO: eliminate; can get plural info via bundle.pluralselector
     // function resources (immutable)
-    public final FunctionResources fnResources;
+    //public final FunctionResources fnResources;
 
     // developer-set options valid for entire life of this Scope (immutable)
     // never null
@@ -77,6 +77,12 @@ public class Scope {
 
     // name-variable map (immutable)
     private final ValueMapper valueMapper;
+
+    // immutable : from bundle and locale-dependent
+    private final PluralSelector pluralSelector;
+
+    // immutable : from bundle
+    private final FluentValueFormatter formatter;
 
     // mutable: exceptions that have occurred during processing
     private final List<Exception> errors;
@@ -92,22 +98,24 @@ public class Scope {
     private boolean isDirty;
 
     // mutable: local arguments
-    private ResolvedParameters localParams = ResolvedParameters.EMPTY;
+    private ResolvedParameters localParams = ResolvedParameters.RP_EMPTY;
 
 
 
 
     ///////////////////////////
 
-    public Scope(FluentBundle bundle, FunctionResources res, Map<String, ?> args, List<Exception> errors) {
-        this( bundle, res, args, errors, Options.EMPTY );
+    public Scope(FluentBundle bundle, PluralSelector ps, FluentValueFormatter formatter, Map<String, ?> args,
+                 List<Exception> errors) {
+        this( bundle, ps, formatter, args, errors, Options.EMPTY );
     }
 
     // with Options
-    public Scope(FluentBundle bundle, FunctionResources res, Map<String, ?> args, List<Exception> errors,
-                 Options options) {
+    public Scope(FluentBundle bundle, PluralSelector ps, FluentValueFormatter formatter, Map<String, ?> args,
+                 List<Exception> errors, Options options) {
         this.bundle = bundle;
-        this.fnResources = res;
+        this.pluralSelector = ps;
+        this.formatter = formatter;
         this.errors = errors;
         this.valueMapper = ValueMapper.from( remap( args ) );
         this.visited = new ArrayDeque<>();
@@ -118,9 +126,10 @@ public class Scope {
     // private, for rescoping
     private Scope(final Scope from, ValueMapper mapper) {
         this.bundle = from.bundle;
+        this.pluralSelector = from.pluralSelector;
+        this.formatter = from.formatter;
         this.errors = from.errors;
         this.options = from.options;
-        this.fnResources = from.fnResources;
 
         this.valueMapper = mapper;
 
@@ -153,10 +162,17 @@ public class Scope {
     }
 
 
-    /** Options */
+    ///  Options
     public Options options() {
         return options;
     }
+
+    ///  PluralSelector
+    public PluralSelector pluralSelector() { return pluralSelector; }
+
+    ///  FluentValueFormatter
+    public FluentValueFormatter formatter() { return formatter; }
+
 
     /**
      * Used by resolution logic.
@@ -179,9 +195,8 @@ public class Scope {
         errors.add( t );
     }
 
-    // this is NOT a copy; should only be used when Scope no longer is needed for resolution
-    // todo: should rename to 'exceptions'
-    public List<Exception> errors() {
+    // NOTE: this is NOT a copy; should only be used when Scope no longer is needed for resolution
+    public List<Exception> exceptions() {
         return errors;
     }
 
@@ -196,7 +211,7 @@ public class Scope {
         try {
             result = Resolver.resolve( exp, this );
         } catch (FluentFunctionException e) {
-            return Resolver.error( e.fnName().orElse( "???" ) + "()" );
+            return Resolver.error( e.fnName().orElse( "?unknown function?" ) + "()" );
         }
 
         if (isDirty) {
@@ -222,7 +237,7 @@ public class Scope {
 
 
     public void clearLocalParams() {
-        localParams = ResolvedParameters.EMPTY;
+        localParams = ResolvedParameters.RP_EMPTY;
     }
 
 
@@ -252,15 +267,10 @@ public class Scope {
                 .orElse( List.of() );
     }
 
+
     // CallArguments are merged with scope options; call args options override initial scope options
     public ResolvedParameters resolveParameters(@Nullable final CallArguments callArgs) {
-        final List<List<FluentValue<?>>> rezPoz = (callArgs == null)
-                ? List.of()
-                : callArgs.positional().stream().map( e -> Resolver.resolve(e, this ) ).toList();
-
-        final Options opts = options.mergeOverriding( Options.from( callArgs ) );
-
-        return ResolvedParameters.from( rezPoz, opts );
+        return ResolvedParameters.from( callArgs, this );
     }
 
 
@@ -269,10 +279,8 @@ public class Scope {
     }
 
 
-    /**
-     * Call the (Implicit) reduction function "JOIN()"
-     */
+    ///  Call the TerminalReducer (typically 'LIST') implicitly
     public String reduce(final List<FluentValue<?>> in) {
-        return ((ImplicitReducer) bundle.implicit( FluentImplicit.Implicit.JOIN )).reduce( in, this );
+        return formatter.reducer().reduce( in, this );
     }
 }

@@ -27,8 +27,11 @@ import fluent.bundle.resolver.Scope;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
+import java.util.stream.Stream;
 
 /// An error value.
+/// This is used instead of throwing an Exception in order to preserve more of the message,
+/// if possible.
 @NullMarked
 public record FluentError(String value) implements FluentValue<String> {
 
@@ -37,13 +40,9 @@ public record FluentError(String value) implements FluentValue<String> {
         Objects.requireNonNull( value );
     }
 
+
     public static FluentError of(String s) {
         return new FluentError( s );
-    }
-
-    @Override
-    public String format(Scope scope) {
-        return value;
     }
 
 }

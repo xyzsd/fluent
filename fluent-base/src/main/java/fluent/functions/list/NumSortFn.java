@@ -21,11 +21,11 @@
  *
  */
 
-package fluent.functions.icu.list;
+package fluent.functions.list;
 
-import fluent.functions.FluentFunction;
+import fluent.functions.FluentFunction_OLD;
 import fluent.functions.FluentFunctionException;
-import fluent.functions.ResolvedParameters;
+import fluent.functions.ResolvedParameters_OLD;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentNumber;
 import fluent.types.FluentValue;
@@ -51,7 +51,7 @@ import java.util.List;
  *  <p>
  *      NUMSORT() will error on non-numeric input. e.g., {@code NUMSORT(3, 2, 1, "barf") } will result in an error.
  */
-public class NumSortFn implements FluentFunction {
+public class NumSortFn implements FluentFunction_OLD {
 
     public static final String NAME = "NUMSORT";
 
@@ -62,8 +62,8 @@ public class NumSortFn implements FluentFunction {
 
 
     @Override
-    public List<FluentValue<?>> apply(final ResolvedParameters params, final Scope scope) {
-        FluentFunction.ensureInput( params );
+    public List<FluentValue<?>> apply(final ResolvedParameters_OLD params, final Scope scope) {
+        FluentFunction_OLD.ensureInput( params );
 
         final Order order = params.options().asEnum( Order.class, "order" )
                 .orElse( Order.ASCENDING );

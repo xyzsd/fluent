@@ -21,10 +21,10 @@
  *
  */
 
-package fluent.functions.icu.numeric;
+package fluent.functions.numeric;
 
-import fluent.functions.FluentFunction;
-import fluent.functions.ResolvedParameters;
+import fluent.functions.FluentFunction_OLD;
+import fluent.functions.ResolvedParameters_OLD;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentString;
 import fluent.types.FluentValue;
@@ -51,7 +51,7 @@ import java.util.List;
  *         <li>negative infinity=> "negativeInfinity"</li>
  *    </ul>
  */
-public class SignFn implements FluentFunction {
+public class SignFn implements FluentFunction_OLD {
 
     public static final String NAME = "SIGN";
 
@@ -64,10 +64,10 @@ public class SignFn implements FluentFunction {
     }
 
     @Override
-    public List<FluentValue<?>> apply(ResolvedParameters params, Scope scope) {
-        FluentFunction.ensureInput( params );    // SIGN() [no arguments]: not legal
+    public List<FluentValue<?>> apply(ResolvedParameters_OLD params, Scope scope) {
+        FluentFunction_OLD.ensureInput( params );    // SIGN() [no arguments]: not legal
 
-        return FluentFunction.mapOverNumbers( params.valuesAll(),
+        return FluentFunction_OLD.mapOverNumbers( params.valuesAll(),
                 scope, SignFn::sign );
     }
 

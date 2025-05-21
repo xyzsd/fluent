@@ -23,170 +23,108 @@
 
 package fluent.functions;
 
+import fluent.bundle.resolver.Resolver;
 import fluent.bundle.resolver.Scope;
+import fluent.syntax.AST.CallArguments;
 import fluent.types.FluentValue;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Predicate;
+import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 
-/**
- * Resolved Parameters for Fluent Functions.
- */
-public class ResolvedParameters {
+import static java.util.Objects.requireNonNull;
 
-    //      TODO: look into performance.
-    //          in many cases, there is but a single argument [possibly with options]
-    //          perhaps have special subclass for that, and eliminate the 'list of lists..'
-    //          with interface being public; subclasses would be package-protected or private
-    //          ...
-    //          another option could be just a single list, and then
-    //          most of the time positional arguments are just iterated through in-order
-    //          track offsets into that list for Positionals (could keep an int[] array.... etc.)
-    //          since typically valuesAll() is used rather than indexing specific positionals
-    //          could then use sublist to get specific positionals as needed. Also would be easier on
-    //          creation to filter/flatten lists (e.g., remove empty lists)
-    //          ...
-    //          or, perhaps just handle everything as Streams instead. This approach may be better,
-    //          though it would no longer (without substantial effort) be possible to address
-    //          arguments (positionals) individually (since they would be merged into a single stream).
-    //          This may not be a problem in practice but may potentially limit the expressivity of
-    //          functions, for example.
+/// Resolved Parameters for Fluent Functions.
+//TODO: probably should limit # of positionals, to say 8 or so
+// should be sufficient. each positionl can be a list
+@NullMarked
+public sealed interface ResolvedParameters
+        permits RPImpl.RP0, RPImpl.RP11, RPImpl.RP1n, RPImpl.RPNn {
+
+    ///  Constant ResolvedParameters without positionals arguments and without options
+    ResolvedParameters RP_EMPTY = new RPImpl.RP0( Options.EMPTY );
 
 
-    /**
-     * Empty
-     */
-    public static final ResolvedParameters EMPTY = new ResolvedParameters( List.of(), Options.EMPTY );
 
+    ///  Create a ResolvedParameters from a CallArguments AST node.
+    static ResolvedParameters from(@Nullable CallArguments callArgs, final Scope scope) {
+        requireNonNull( scope );
 
-    /**
-     * Positional argument index
-     */
-    public enum Positional {
-        // Enum order is particularly meaningful here
-        FIRST, SECOND, THIRD, FOURTH, FIFTH, SIXTH, SEVENTH, EIGHTH, NINTH, TENTH
-    }
+        // handle options (named arguments). Options.from() can handle null callArgs
+        final Options mergedOptions = scope.options().mergeOverriding( Options.from( callArgs ) );
 
-    private static final int MAX_POSITIONALS = Positional.values().length;
-
-    // positional arguments. single-items are in single-item lists (via List.of())
-    // e.g. FUNCTION("hello", "goodbye") :
-    //      "hello" would be the first positional, and would be a single item list
-    //      "goodbye" is the second positional, and would also be a single item list
-    // so this would be List( List(FluentString("hello")), List(FluentString("goodbye")) )
-    private final List<List<FluentValue<?>>> pos;
-
-    // Options are the key-value pairs
-    private final Options options;
-
-
-    // could use a builder instead....
-    public static ResolvedParameters from(final List<List<FluentValue<?>>> listIn, final Options opts) {
-        Objects.requireNonNull( listIn );
-        Objects.requireNonNull( opts );
-
-        // remove empty lists
-        final List<List<FluentValue<?>>> collapsed = listIn.stream()
-                .filter( Predicate.not( List::isEmpty ) )
-                .toList();
-
-        // note: this is somewhat arbitrary...
-        if(collapsed.size() >= MAX_POSITIONALS) {
-            throw new IllegalArgumentException(MAX_POSITIONALS+" arguments maximum!");
+        // no callArgs
+        if (callArgs == null) {
+            return new RPImpl.RP0( mergedOptions );
         }
 
-        return new ResolvedParameters( collapsed, opts );
+        return switch (callArgs.positionals().size()) {
+            case 0 -> new RPImpl.RP0( mergedOptions );
+            case 1 -> {
+                final List<FluentValue<?>> list = Resolver.resolve( callArgs.positionals().getFirst(), scope );
+                yield new RPImpl.RP1n( list, mergedOptions );
+            }
+            default -> {
+                final List<List<FluentValue<?>>> listyList = callArgs.positionals().stream()
+                        .map( expression -> Resolver.resolve( expression, scope ) ).toList();
+                yield new RPImpl.RPNn( listyList, mergedOptions );
+            }
+        };
+    }
+
+    Options options();
+
+    List<FluentValue<?>> positional(int index);
+
+    List<FluentValue<?>> firstPositional();
+
+    ///  `true` if there is at least one positional argument with one value.
+    boolean hasPositionals();
+
+    // stream ALL arguments, in order
+    Stream<FluentValue<?>> positionals();
+
+    int positionalCount();
+
+    // true if single argument with single value (not a list); just one FluentValue<?>
+    default boolean isSingle() {
+        return false;
+    }
+
+    // if isSingle() == true, single, this returns a value, otherwise; no such element exception
+    default FluentValue<?> singleValue() throws NoSuchElementException {
+        throw new NoSuchElementException();
     }
 
 
+    /*
     // typically used by FluentValue<> formatters
     // uses options supplied in scope -- if any
-    public static ResolvedParameters from(FluentValue<?> value, final Scope scope) {
-        return new ResolvedParameters( List.of(List.of(value)), scope.options() );
+    public static ResolvedParametersNEW from(FluentValue<?> value, final Scope scope) {
+        return new ResolvedParametersNEW( List.of(List.of(value)), scope.options() );
     }
 
-    public static ResolvedParameters from(List<FluentValue<?>> list, final Scope scope) {
+    public static ResolvedParametersNEW from(List<FluentValue<?>> list, final Scope scope) {
         if(list.isEmpty()) {
-            return new ResolvedParameters( List.of(), scope.options() );
+            return new ResolvedParametersNEW( List.of(), scope.options() );
         }
-        return new ResolvedParameters( List.of(List.copyOf(list)), scope.options() );
+        return new ResolvedParametersNEW( List.of(List.copyOf(list)), scope.options() );
     }
 
 
     // replace options with new options
-    public ResolvedParameters with(Options options) {
-        return new ResolvedParameters( this.pos, Objects.requireNonNull( options ) );
+    public ResolvedParametersNEW with(Options options) {
+        return new ResolvedParametersNEW( this.pos, Objects.requireNonNull( options ) );
     }
 
 
-    private ResolvedParameters(List<List<FluentValue<?>>> list, Options opts) {
+    private ResolvedParametersNEW(List<List<FluentValue<?>>> list, Options opts) {
         this.pos = list;
         this.options = opts;
     }
+    */
 
 
-    public Options options() {
-        return options;
-    }
-
-
-    // returns a single value (first item from list) or empty
-    public Optional<FluentValue<?>> valueFirst(final Positional p) {
-        final int index = p.ordinal();
-        if (index < pos.size()) {
-            return Optional.of( pos.get( index ).get( 0 ) );
-        }
-        return Optional.empty();
-    }
-
-    // returns a stream (of 0 or more elements) for a given position
-    public Stream<FluentValue<?>> valueStream(final Positional p) {
-        final int index = p.ordinal();
-        if (index < pos.size()) {
-            return pos.get( index ).stream();
-        }
-        return Stream.empty();
-    }
-
-    // stream ALL arguments, in order
-    public Stream<FluentValue<?>> valuesAll() {
-        return pos.stream().flatMap( List::stream );
-    }
-
-
-    public int valueCount(final Positional p) {
-        final int index = p.ordinal();
-        if (index < pos.size()) {
-            return pos.get( index ).size();
-        }
-        return 0;
-    }
-
-
-    /**
-     * Count the number positional arguments.
-     */
-    public int positionalCount() {
-        return pos.size();
-    }
-
-    public boolean noPositionals() {
-        return pos.isEmpty();
-    }
-
-    public boolean hasPositional(final Positional p) {
-        return (p.ordinal() < pos.size());
-    }
-
-
-    @Override
-    public String toString() {
-        return (this == EMPTY)
-                ? "ResolvedParameters{ResolvedParameters.EMPTY}"
-                : ("ResolvedParameters{" + "pos=" + pos + ", options=" + options + '}');
-    }
 }

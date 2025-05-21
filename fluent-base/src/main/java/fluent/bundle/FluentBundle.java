@@ -22,9 +22,13 @@
  */
 package fluent.bundle;
 
+import fluent.bundle.resolver.FluentValueFormatter;
 import fluent.bundle.resolver.Resolver;
 import fluent.functions.*;
 import fluent.functions.FluentImplicit.Implicit;
+import fluent.functions.list.reducer.ListFn;
+import fluent.functions.numeric.NumberFn;
+import fluent.functions.temporal.TemporalFn;
 import fluent.syntax.AST.*;
 import fluent.bundle.resolver.ReferenceException;
 import fluent.bundle.resolver.Scope;
@@ -32,6 +36,7 @@ import fluent.types.FluentValue;
 
 import org.jspecify.annotations.NullMarked;
 
+import java.time.temporal.TemporalAccessor;
 import java.util.*;
 
 // TODO: this class deserves the best documentation... we are not there yet
@@ -75,9 +80,12 @@ public class FluentBundle {
     private final boolean useIsolation;
     private final Map<String, Term> terms;
     private final Map<String, Message> messages;
+
     private final Map<String, FluentFunction> functions;
-    private final EnumMap<Implicit, FluentImplicit> implicits;
-    private final FunctionResources fnResources;    // accessed only via Scope
+    // TODO: implicit formatters should be derived from functions (probably) or set explicitly
+    private final PluralSelector pluralSelector;    // accessed only via Scope
+    private final FluentValueFormatter formatter;   // accessed only via Scope
+
     private final Options globalOpts;
 
 
@@ -87,8 +95,8 @@ public class FluentBundle {
         this.terms = Map.copyOf( b.terms );
         this.messages = Map.copyOf( b.messages );
         this.functions = Map.copyOf( b.functions );
-        this.implicits = new EnumMap<>( b.implicits );
-        this.fnResources = b.fnFactory.resources( b.locale  );
+        this.pluralSelector = b.pluralSelector;
+        this.formatter = b.formatter;
         this.globalOpts = b.globalOpts;
     }
 
@@ -101,13 +109,11 @@ public class FluentBundle {
      * </p>
      *
      * @param locale  Locale for the bundle to be built
-     * @param factory Factory supplying the functions for the bundle to be built
      * @return Builder
      */
-    public static Builder builder(Locale locale, FluentFunctionFactory factory) {
+    public static Builder builder(Locale locale) {
         Objects.requireNonNull( locale );
-        Objects.requireNonNull( factory );
-        return new Builder( locale, factory );
+        return new Builder( locale );
     }
 
     /**
@@ -174,19 +180,12 @@ public class FluentBundle {
         return terms;
     }
 
-    /**
-     * Returns the Function for the given id
-     */
-    public Optional<FluentFunction> getFunction(final String id) {
+
+    ///  Return the Function for the given ID
+    public Optional<FluentFunction> function(final String id) {
         return Optional.ofNullable( functions.get( id ) );
     }
 
-    /**
-     * Returns the implicit function
-     */
-    public FluentImplicit implicit(final FluentImplicit.Implicit id) {
-        return implicits.get( id );
-    }
 
     /**
      * Convenience method to get the Message Pattern for a given messageID.
@@ -322,20 +321,14 @@ public class FluentBundle {
     }
 
 
-    ////////////////////////////////
-    // private
-    ////////////////////////////////
 
     private String patternFormat(Pattern pattern, Map<String, ?> args, List<Exception> errors) {
-        final Scope scope = new Scope( this, this.fnResources, args, errors, globalOpts );
+        final Scope scope = new Scope( this, pluralSelector, formatter, args, errors, globalOpts );
         final List<FluentValue<?>> resolved = Resolver.resolve( pattern, scope );
         return scope.reduce( resolved );
     }
 
 
-    ////////////////////////////////
-    // Builder
-    ////////////////////////////////
 
     /**
      * Build a FluentBundle
@@ -349,40 +342,36 @@ public class FluentBundle {
      * </p>
      */
     public static final class Builder {
-
+        final FluentValueFormatter.Builder fvfBuilder;
         Locale locale;
-        FluentFunctionFactory fnFactory;
         Map<String, Term> terms = new HashMap<>();
         Map<String, Message> messages = new HashMap<>();
         Map<String, FluentFunction> functions = new HashMap<>();
-        Map<Implicit, FluentImplicit> implicits = new HashMap<>();
         boolean useIsolation = false;
+        PluralSelector pluralSelector;
+        FluentValueFormatter formatter;
         Options globalOpts = Options.EMPTY;
 
         private Builder() {
-
+            this.fvfBuilder = FluentValueFormatter.builder();
         }
 
-
         // Builder with Locale & Function Factory
-        private Builder(Locale locale, FluentFunctionFactory factory) {
+        private Builder(Locale locale) {
+            this.fvfBuilder = FluentValueFormatter.builder();
             this.locale = locale;
-            this.fnFactory = factory;
-            mergeFunctions();
         }
 
         // Builder from existing bundle
         private Builder(final FluentBundle from) {
+            this.fvfBuilder = FluentValueFormatter.builder();
             this.locale = from.locale;
             this.useIsolation = from.useIsolation;
             this.terms = new HashMap<>( from.terms );
             this.messages = new HashMap<>( from.messages );
             this.functions = new HashMap<>( from.functions );
-            this.implicits = new EnumMap<>( from.implicits );
-            // FunctionResources: local to each bundle
             this.globalOpts = from.globalOpts;
         }
-
 
         /**
          * Use the given Locale when creating this bundle.
@@ -399,21 +388,6 @@ public class FluentBundle {
         }
 
         /**
-         * Use the given FluentFunctionFactory when creating this bundle.
-         * <p>
-         * A FluentFunctionFactory is required for a bundle to be created
-         * without error.
-         *
-         * @param factory FluentFunctionFactory
-         * @return Builder
-         */
-        public Builder withFunctionFactory(FluentFunctionFactory factory) {
-            this.fnFactory = Objects.requireNonNull( factory );
-            mergeFunctions();
-            return this;
-        }
-
-        /**
          * Set whether this builder should use unicode isolating characters
          */
         public Builder withIsolation(boolean value) {
@@ -421,6 +395,21 @@ public class FluentBundle {
             return this;
         }
 
+
+        /// Add default functions from FluentFunctions.
+        public Builder withDefaultFunctions() {
+            FluentFunctions.IMPLICITS.functions()
+                    .forEach( fn -> functions.put(fn.name(), fn) );
+
+            fvfBuilder.setTerminalReducer( ListFn.LIST );
+            fvfBuilder.setNumberFormatter( NumberFn.NUMBER, Options.EMPTY );
+            fvfBuilder.setTemporalFormatter( TemporalFn.TEMPORAL, Options.EMPTY );
+
+            // TODO: add the others when ready
+            System.err.println("--TODO-- add additional fn when ready");
+
+            return this;
+        }
 
         /**
          * Add the given resource.
@@ -505,19 +494,6 @@ public class FluentBundle {
             return this;
         }
 
-        /**
-         * Set an Implicit function.
-         */
-        public Builder setImplicit(final FluentImplicit fn) {
-            Objects.requireNonNull( fn );
-
-            if (!fn.id().toString().equals( fn.name() )) {
-                throw new IllegalArgumentException( "Implicit function name/identifier mismatch: " + fn.name() + ":" + fn.id() );
-            }
-
-            implicits.put( fn.id(), fn );
-            return this;
-        }
 
         /**
          * Set global options / default options, that apply to all functions.
@@ -535,34 +511,22 @@ public class FluentBundle {
          */
         public FluentBundle build() {
             Objects.requireNonNull( locale, "Locale not set." );
-            Objects.requireNonNull( fnFactory, "FluentFunctionFactory not set." );
-            if (implicits.size() != Implicit.values().length) {
-                throw new IllegalStateException(
-                        String.format(
-                                "Only %d implicits were set; %d required",
-                                implicits.size(), Implicit.values().length )
-                );
-            }
+
+            // plural selector
+            pluralSelector = new PluralSelector(locale);
 
             // map implicits into the 'regular' function map
             // implicits will (and must!) override any non-implicit registered function with same name
-            implicits.forEach( (key, value) -> functions.put( key.name(), value ) );
+            // TODO: re-look at this
+            //implicits.forEach( (key, value) -> functions.put( key.name(), value ) );
+
+            formatter = fvfBuilder.build();
 
             return new FluentBundle( this );
         }
 
 
-        private void mergeFunctions() {
-            fnFactory.functions().forEach(
-                    fn -> functions.merge( fn.name(), fn, (vOld, vNew) -> vOld )
-            );
-
-            fnFactory.implicits().forEach(
-                fn -> implicits.merge( fn.id(), fn, (vOld, vNew) -> vOld )
-            );
-
-        }
-    }
+   }
 
 
 }

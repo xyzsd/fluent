@@ -21,10 +21,10 @@
  *
  */
 
-package fluent.functions.icu.numeric;
+package fluent.functions.numeric;
 
-import fluent.functions.FluentFunction;
-import fluent.functions.ResolvedParameters;
+import fluent.functions.FluentFunction_OLD;
+import fluent.functions.ResolvedParameters_OLD;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentValue;
 
@@ -47,7 +47,7 @@ import java.util.List;
  *         <li>{@code minimumFractionDigits:} integer value (0 is default) </li>
  *     </ul>
  */
-public class CompactFn implements FluentFunction {
+public class CompactFn implements FluentFunction_OLD {
 
     /**
      * Method name
@@ -63,8 +63,8 @@ public class CompactFn implements FluentFunction {
     }
 
     @Override
-    public List<FluentValue<?>> apply(final ResolvedParameters params, final Scope scope) {
-        FluentFunction.ensureInput( params );
+    public List<FluentValue<?>> apply(final ResolvedParameters_OLD params, final Scope scope) {
+        FluentFunction_OLD.ensureInput( params );
 
         final NumberFormat.Style style = params.options().asEnum( NumberFormat.Style.class, "style" )
                 .orElse( NumberFormat.Style.SHORT );
@@ -77,7 +77,7 @@ public class CompactFn implements FluentFunction {
         // negative values replaced with 0 per CompactNumberFormat spec
         fmt.setMinimumFractionDigits( minFractionDigits );
 
-        return FluentFunction.mapOverNumbers( params.valuesAll(),
+        return FluentFunction_OLD.mapOverNumbers( params.valuesAll(),
                 scope, fmt::format );
     }
 

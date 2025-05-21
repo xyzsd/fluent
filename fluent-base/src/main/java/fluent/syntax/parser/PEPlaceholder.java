@@ -24,18 +24,19 @@
 package fluent.syntax.parser;
 
 import fluent.syntax.AST.PatternElement;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
 
 
 /// PatternElement Placeholder
+@NullMarked
 sealed interface PEPlaceholder {
 
 
-    static @NotNull PEPlaceholder of(PatternElement.Placeable placeable) {
+    static PEPlaceholder of(PatternElement.Placeable placeable) {
         return new PlaceableHolder( placeable );
     }
 
-    static @NotNull PEPlaceholder of(int start, int end, int indent, FTLPatternParser.TextElementPosition position) {
+    static PEPlaceholder of(int start, int end, int indent, FTLPatternParser.TextElementPosition position) {
         return new TextElementHolder( start, end, indent, position );
     }
 

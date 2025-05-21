@@ -22,7 +22,5 @@
  *
  */
 
-/**
- *  Package containing Fluent-specific types (derived from passed-in objects) for manipulation during AST resolution.
- */
+///  Package containing Fluent-specific types (derived from passed-in objects) for manipulation during AST resolution.
 package fluent.types;

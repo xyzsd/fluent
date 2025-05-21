@@ -13,9 +13,9 @@ module net.xyzsd.fluent {
     exports fluent.syntax.parser;
     exports fluent.types;
     //
-    exports fluent.functions.icu;
-    exports fluent.functions.icu.list;
-    exports fluent.functions.icu.numeric;
-    exports fluent.functions.icu.string;
-    exports fluent.functions.icu.temporal;
+    exports fluent.functions.list;
+    exports fluent.functions.numeric;
+    exports fluent.functions.string;
+    exports fluent.functions.temporal;
+    exports fluent.functions.list.reducer;
 }

@@ -21,72 +21,82 @@
  *
  */
 
-package fluent.functions.icu;
+package fluent.functions;
 
 import com.ibm.icu.number.FormattedNumber;
 import com.ibm.icu.number.LocalizedNumberFormatter;
 import com.ibm.icu.number.NumberFormatter;
 import com.ibm.icu.number.Precision;
 import com.ibm.icu.text.PluralRules;
-import fluent.functions.FunctionResources;
+import org.jspecify.annotations.NullMarked;
 
 import java.math.BigDecimal;
 import java.util.Locale;
 
-/**
- * Bridge implementation of plural selection logic, specific to ICU.
- */
-public class ICUPluralSelector  implements FunctionResources {
+import static java.util.Objects.requireNonNull;
 
+///  Plural selection logic for numbers.
+///
+///  Uses ICU4J
+@NullMarked
+public class PluralSelector {
+
+    private final Locale locale;            // TODO: should we keep this?
     private final PluralRules cardinalRule;
     private final PluralRules ordinalRule;
     private final LocalizedNumberFormatter lnf;
-    private final Locale locale;
 
-    ICUPluralSelector(Locale locale) {
-        this.locale = locale;
-        cardinalRule = PluralRules.forLocale( locale, PluralRules.PluralType.CARDINAL );
-        ordinalRule = PluralRules.forLocale( locale, PluralRules.PluralType.ORDINAL );
+    ///
+    /// Create a PluralSelector for a given Locale.
+    ///
+    public PluralSelector(Locale locale) {
+        this.locale = requireNonNull(locale);
+        this.cardinalRule = PluralRules.forLocale( locale, PluralRules.PluralType.CARDINAL );
+        this.ordinalRule = PluralRules.forLocale( locale, PluralRules.PluralType.ORDINAL );
         // options to change trailing zero display does not seem to do anything.
         // formatter seems to remove trailing zeros UNLESS minimum/fixed fraction
         // size specified.
-        lnf = NumberFormatter.withLocale( locale );
+        // TODO: re-evaluate these assumptions for ICU77
+        this.lnf = NumberFormatter.withLocale( locale );
     }
 
-    @Override
+    ///  The locale for this PluralSelector
     public Locale locale() {
         return locale;
     }
 
-    @Override
+    ///  Cardinal selection based on Number
+    ///
+    ///  (example: Cardinal: 1 file, 2 files, 3 files, ...)
     public String selectCardinal(final Number num) {
-        return cardinalRule.select( toFormattedNumber(num) );
-
+        requireNonNull(num);
+        return cardinalRule.select( toFormattedNumber( num ) );
     }
 
+    ///  Ordinal selection based on Number
+    ///
+    ///  (example: Ordinal: 1st file, 2nd file, 3rd file, 4th file, ...)
     public String selectOrdinal(final Number num) {
-        return ordinalRule.select( toFormattedNumber(num) );
+        requireNonNull(num);
+        return ordinalRule.select( toFormattedNumber( num ) );
     }
-
 
 
     private FormattedNumber toFormattedNumber(final Number num) {
-        if(num instanceof Long) {
-            // no fraction digits; do nothing
+        if (num instanceof Long) {
+            // simple case; no fraction digits; do nothing
             return lnf.format( num.longValue() );
         } else {
             final BigDecimal bigDecimal = (num instanceof BigDecimal)
                     ? (BigDecimal) num
-                    : (BigDecimal.valueOf(num.doubleValue()));
+                    : (BigDecimal.valueOf( num.doubleValue() ));
             // aka PluralOperand.v
             // this is the # of digits, including trailing zeros, right of the decimal place
-            final int v = Math.max(0, bigDecimal.scale());
+            final int v = Math.max( 0, bigDecimal.scale() );
             // adjust LocalizedNumberFormat
             return lnf.precision( Precision.fixedFraction( v ) )
                     .format( bigDecimal );
         }
     }
-
-
 
 }

@@ -23,7 +23,6 @@
 
 import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
-import fluent.functions.icu.ICUFunctionFactory;
 import fluent.syntax.AST.Pattern;
 import fluent.syntax.parser.FTLParser;
 import fluent.syntax.parser.FTLStream;
@@ -229,7 +228,7 @@ class FTLParserSmokeTest {
         );
 
 
-        // positional arguments in term references will cause an exception during parse
+        // positionals arguments in term references will cause an exception during parse
         s1 = """
                 -https = https://{ $host }
                 visit = Visit { -https("positional1", "positional2", host: "example.com") } for more information.
@@ -604,7 +603,8 @@ class FTLParserSmokeTest {
         if(parse.hasErrors()) {
             System.err.println("errors on parse: "+parse.errors());
         }
-        return FluentBundle.builder( Locale.US, ICUFunctionFactory.INSTANCE )
+        return FluentBundle.builder( Locale.US )
+                .withDefaultFunctions()
                 .addResource( parse )
                 .build();
     }

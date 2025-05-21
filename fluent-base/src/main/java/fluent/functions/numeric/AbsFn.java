@@ -21,10 +21,10 @@
  *
  */
 
-package fluent.functions.icu.numeric;
+package fluent.functions.numeric;
 
-import fluent.functions.FluentFunction;
-import fluent.functions.ResolvedParameters;
+import fluent.functions.FluentFunction_OLD;
+import fluent.functions.ResolvedParameters_OLD;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentNumber;
 import fluent.types.FluentValue;
@@ -47,7 +47,7 @@ import java.util.List;
  *          <li>ABS("stringvalue") => "stringvalue" </li>
  *      </ul>
  */
-public class AbsFn implements FluentFunction {
+public class AbsFn implements FluentFunction_OLD {
 
     public static final String NAME = "ABS";
 
@@ -59,10 +59,10 @@ public class AbsFn implements FluentFunction {
     }
 
     @Override
-    public List<FluentValue<?>> apply(final ResolvedParameters params, final Scope scope) {
-        FluentFunction.ensureInput( params );
+    public List<FluentValue<?>> apply(final ResolvedParameters_OLD params, final Scope scope) {
+        FluentFunction_OLD.ensureInput( params );
 
-        return FluentFunction.mapOverNumbers(params.valuesAll(),
+        return FluentFunction_OLD.mapOverNumbers(params.valuesAll(),
                 scope, AbsFn::abs);
     }
 

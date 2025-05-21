@@ -21,10 +21,10 @@
  *
  */
 
-package fluent.functions.icu.string;
+package fluent.functions.string;
 
-import fluent.functions.FluentFunction;
-import fluent.functions.ResolvedParameters;
+import fluent.functions.FluentFunction_OLD;
+import fluent.functions.ResolvedParameters_OLD;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentString;
 import fluent.types.FluentValue;
@@ -55,7 +55,7 @@ import java.util.Locale;
  *          <li>CASE(-5) => -5</li>
  *   </ul>
  */
-public class CaseFn implements FluentFunction {
+public class CaseFn implements FluentFunction_OLD {
 
     public static final String NAME = "CASE";
 
@@ -71,8 +71,8 @@ public class CaseFn implements FluentFunction {
     }
 
     @Override
-    public List<FluentValue<?>> apply(final ResolvedParameters params, final Scope scope) {
-        FluentFunction.ensureInput( params );
+    public List<FluentValue<?>> apply(final ResolvedParameters_OLD params, final Scope scope) {
+        FluentFunction_OLD.ensureInput( params );
 
         final Style style = params.options().asEnum(Style.class,  "style" )
                 .orElse( Style.UPPER );

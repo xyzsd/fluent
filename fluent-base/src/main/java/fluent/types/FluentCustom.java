@@ -27,12 +27,19 @@ import fluent.bundle.resolver.Scope;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
+import java.util.stream.Stream;
 
 
-/// Custom classes should extend FluentCustom.
 ///
-///     FluentCustom is used in lieu of a more appropriate type. Formatting of FluentCustom values
-///     is equivalent to calling the wrapped objects toString() method.
+///     FluentCustom is used for all custom types. The default Formatting of FluentCustom values
+///     is equivalent to calling the wrapped objects toString() method, unless a specific formatter
+///     has been defined.
+///
+///     Note that it is possible to have FluentCustom values that are the same as other FluentValues;
+///     e.g., `FluentCustom<String>` or `FluentCustom<Number>` are legal, however, it is not recommended
+///     to use FluentCustom for value types already created. Custom value types that wrap an already-defined
+///     FluentValue type will not be automatcially created (e.g., FluentValue.of(String) will not create a
+///    `FluentCustom<String>`).
 ///
 @NullMarked
 public record FluentCustom<T>(T value) implements FluentValue<T> {
@@ -41,16 +48,15 @@ public record FluentCustom<T>(T value) implements FluentValue<T> {
         Objects.requireNonNull(value);
     }
 
+
+    @SuppressWarnings( "unchecked" )
+    public Class<T> type() { return (Class<T>) value.getClass(); }
+
+
     ///  Create a FluentCustom
     public static <V> FluentCustom<V> of(V value) {
         return new FluentCustom<>( value );
     }
 
-
-    ///  {@inheritDoc}
-    @Override
-    public String format(Scope scope) {
-        return String.valueOf(value());
-    }
 
 }

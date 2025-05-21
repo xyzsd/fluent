@@ -21,12 +21,12 @@
  *
  */
 
-package fluent.functions.icu.numeric;
+package fluent.functions.numeric;
 
 
-import fluent.functions.FluentFunction;
+import fluent.functions.FluentFunction_OLD;
 import fluent.functions.FluentFunctionException;
-import fluent.functions.ResolvedParameters;
+import fluent.functions.ResolvedParameters_OLD;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentNumber;
 import fluent.types.FluentValue;
@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * IADD(): Integral-add function
  * <p>
- * Adds the named option "addend" (which must be a long or integer) to each positional value.
+ * Adds the named option "addend" (which must be a long or integer) to each positionals value.
  *
  * </p>
  * <p>
@@ -50,7 +50,7 @@ import java.util.List;
  * <p>
  * No 'passthrough' occurs with this method. For any arguments that are NOT integers or longs, an error will occur.
  */
-public class AddFn implements FluentFunction {
+public class AddFn implements FluentFunction_OLD {
 
     // math terminology refresher: 'augend' + 'addend' = 'sum'
 
@@ -64,8 +64,8 @@ public class AddFn implements FluentFunction {
     }
 
     @Override
-    public List<FluentValue<?>> apply(final ResolvedParameters params, final Scope scope) {
-        FluentFunction.ensureInput( params );
+    public List<FluentValue<?>> apply(final ResolvedParameters_OLD params, final Scope scope) {
+        FluentFunction_OLD.ensureInput( params );
         final long addend = params.options()
                 .asLong( "addend" )
                 .orElseThrow(
@@ -73,14 +73,14 @@ public class AddFn implements FluentFunction {
                 );
 
         return params.valuesAll()
-                .peek( FluentFunction::validate )
+                .peek( FluentFunction_OLD::validate )
                 .<FluentValue<?>>map( v -> asLongAndAdd( v, addend ) )
                 .toList();
     }
 
 
     private static FluentValue<?> asLongAndAdd(final FluentValue<?> in, final long addend) {
-        final Long augend = FluentFunction.asFluentValue( FluentNumber.FluentLong.class, in ).value();
+        final Long augend = FluentFunction_OLD.asFluentValue( FluentNumber.FluentLong.class, in ).value();
         return FluentNumber.of( augend + addend );
     }
 

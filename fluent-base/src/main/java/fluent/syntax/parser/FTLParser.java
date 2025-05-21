@@ -498,7 +498,7 @@ public class FTLParser {
                 final Identifier attribAccessorID = getAttributeAccessor( ps ).orElse( null );
                 final CallArguments callArguments = getCallArguments( ps ).orElse( null );
 
-                //  create exception if there are positional arguments in TermReferences
+                //  create exception if there are positionals arguments in TermReferences
                 validateTermCallArguments( ps, identifier, callArguments );
 
                 return new InlineExpression.TermReference(
@@ -530,9 +530,9 @@ public class FTLParser {
         }
     }
 
-    // terms with CallArguments should not have positional arguments.
+    // terms with CallArguments should not have positionals arguments.
     private static void validateTermCallArguments(final FTLStream ps, final Identifier id, @Nullable final CallArguments in) {
-        if (in != null && !in.positional().isEmpty()) {
+        if (in != null && !in.positionals().isEmpty()) {
             throw ParseException.of( ParseException.ErrorCode.E0031, id.name(), ps );
         }
     }

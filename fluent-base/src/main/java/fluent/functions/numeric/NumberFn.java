@@ -21,14 +21,15 @@
  *
  */
 
-package fluent.functions.icu.numeric;
+package fluent.functions.numeric;
 
 import fluent.functions.*;
-import fluent.functions.icu.ICUPluralSelector;
+import fluent.functions.PluralSelector;
 import fluent.syntax.AST.SelectExpression;
 import fluent.bundle.resolver.Scope;
-import fluent.types.FluentNumber;
+import fluent.types.FluentString;
 import fluent.types.FluentValue;
+import org.jspecify.annotations.NullMarked;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -39,94 +40,92 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.Function;
 
-/**
- * NUMBER(): Control formatting of numbers.
- * <p>
- * This is an Implicit function; it is called any time a number needs to be formatted to a String. When explicit,
- * arguments to control formatting may be supplied.
- * </p>
- * <p>
- * As a selector, NUMBER() uses its argument to determine a CLDR plural category for the given locale.
- * By default, this is type:"cardinal". Ordinal types are supported. If it is NOT desirable to produce a plural category
- * from the number, type:"string" can be used; then an exact string pattern match (after formatting) will be performed.
- * </p>
- * <p>
- * When used as a selector, decimal formatting can (for some locales) make a difference as to plural selection. If this
- * is important, consider using BigDecimal types, because the decimal representation can be more precisely controlled
- * in contrast to double/float types. For integral types, this is generally less of a concern.
- * </p>
- * <p>
- * For a pattern-based alternative to number formatting, see the {@link DecimalFn}.
- * </p>
- *
- * <p>
- * Supported format options:
- *      <ul>
- *          <li>{@code useGrouping:} "true" or "false". Whether to use a locale-appropriate numeric grouping separator.</li>
- *          <li>{@code minimumIntegerDigits:} Minimum number of digits to display before (left of) the decimal separator.</li>
- *          <li>{@code minimumFractionDigits:} Minimum number of digits to display after the decimal separator.</li>
- *          <li>{@code maximumFractionDigits:} Maximum number of digits to display after the decimal separator.</li>
- *          <li>{@code style:} Numeric display style "decimal", "currency", or "percent". "unit" style is NOT supported.</li>
- *      </ul>
- * <p>
- *     If either (or both) of the following format options are used, the minimumIntegerDigits, minimumFractionDigits, and
- *     maximumFractionDigits are ignored. The following options are:
- *     <ul>
- *          <li>{@code minimumSignificantDigits:} minimum significant digits (right of decimal separator) to display.</li>
- *          <li>{@code maximumSignificantDigits:} maximum significant digits (right of decimal separator) to display.</li>
- *      </ul>
- * <p>
- *      As a selector, the following options are supported (this will be otherwise be ignored):
- *      <ul>
- *          <li>
- *              {@code type}: "cardinal", "ordinal", or "string". No formatting is performed for cardinal or ordinal types,
- *              and a CLDR plural category will be selected as appropriate for the number and locale.
- *              For string types, formatting is applied then exact-string matching on selector variants occurs.
- *          </li>
- *      </ul>
- *  <p>
- *      Unsupported options:
- *      <ul>
- *          <li>{@code unitDisplay}</li>
- *          <li>{@code currencyDisplay}</li>
- *      </ul>
- *  <p>
- *      General notes:
- *      <ul>
- *          <li>Extraneous options are ignored.</li>
- *          <li>Rounding mode: RoundingMode.HALF_UP</li>
- *      </ul>
- */
-public class NumberFn implements FluentImplicit, ImplicitFormatter {
+/// NUMBER(): Control formatting of numbers.
+///
+/// This is an Implicit function; it is called any time a number needs to be formatted to a String. When explicit,
+/// arguments to control formatting may be supplied.
+///
+/// As a selector, NUMBER() uses its argument to determine a CLDR plural category for the given locale.
+/// By default, this is type:"cardinal". Ordinal types are supported. If it is NOT desirable to produce a plural category
+/// from the number, type:"string" can be used; then an exact string pattern match (after formatting) will be performed.
+///
+/// When used as a selector, decimal formatting can (for some locales) make a difference as to plural selection. If this
+/// is important, consider using BigDecimal types, because the decimal representation can be more precisely controlled
+/// in contrast to double/float types. For integral types, this is generally less of a concern.
+///
+/// For a pattern-based alternative to number formatting, see the [DecimalFn].
+///
+/// Supported format options:
+///     - `useGrouping:` "true" or "false". Whether to use a locale-appropriate numeric grouping separator.
+///
+///     - `minimumIntegerDigits:` Minimum number of digits to display before (left of) the decimal separator.
+///
+///     - `minimumFractionDigits:` Minimum number of digits to display after the decimal separator.
+///
+///     - `maximumFractionDigits:` Maximum number of digits to display after the decimal separator.
+///
+///     - `style:` Numeric display style "decimal", "currency", or "percent". "unit" style is NOT supported.
+///
+///
+///     If either (or both) of the following format options are used, the minimumIntegerDigits, minimumFractionDigits, and
+///     maximumFractionDigits are ignored. The following options are:
+///
+///        - `minimumSignificantDigits:` minimum significant digits (right of decimal separator) to display.
+///        - `maximumSignificantDigits:` maximum significant digits (right of decimal separator) to display.
+///
+///
+///      As a selector, the following options are supported (this will be otherwise be ignored):
+///
+///        - `type`: "cardinal", "ordinal", or "string". No formatting is performed for cardinal or ordinal types,
+///     and a CLDR plural category will be selected as appropriate for the number and locale.
+///     For string types, formatting is applied then exact-string matching on selector variants occurs.
+///
+///      Unsupported options:
+///        - `unitDisplay`
+///        - `currencyDisplay`
+///
+///
+///      General notes:
+///        - Extraneous options are ignored.
+///        - Rounding mode: RoundingMode.HALF_UP
+///
+@NullMarked
+public enum NumberFn implements FluentFunction, ImplicitFormatter<Number> {
 
     // loosely based on:
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat
 
-    public NumberFn() {}
+    NUMBER;
+
 
     @Override
-    public Implicit id() {
-        return Implicit.NUMBER;
+    public String format(final FluentValue<? extends Number> in, final Scope scope) {
+        final CustomFormatter formatter = CustomFormatter.create( scope.options(), scope.bundle().locale() );
+        return  formatter.format( in.value() );
     }
 
-
     @Override
-    public List<FluentValue<?>> apply(final ResolvedParameters params, final Scope scope) {
-        FluentFunction.ensureInput( params );
+    public List<FluentValue<?>> apply(final ResolvedParameters parameters, final Scope scope) throws FluentFunctionException {
+        FluentFunction.ensureInput( parameters );
 
-        // for apply(), the default action is to format numbers into Strings
-        final SelectType type = params.options()
+        final SelectType type = parameters.options()
                 .asEnum( SelectType.class, "type" )
                 .orElse( SelectType.STRING );
 
-        return applyType( type, params, scope );
+        return applyType( type, parameters, scope );
     }
 
-
-    // will convert FluentNumbers<> to a FluentString with the appropriate plural category
     @Override
-    public List<FluentValue<?>>  select(SelectExpression selectExpression, ResolvedParameters params, Scope scope) {
-        FluentFunction.ensureInput( params );
+    public FluentValue<?> select(SelectExpression selectExpression, ResolvedParameters parameters, Scope scope) throws FluentFunctionException {
+        System.err.println("** number select not yet implemented");
+        throw new UnsupportedOperationException("** number select not yet implemented");
+    }
+
+    /*
+    // will convert FluentNumbers<> to a FluentString with the appropriate plural category
+    public List<FluentValue<?>>  select(SelectExpression selectExpression, ResolvedParameters_OLD params, Scope scope) {
+        // TODO: reevaluate this
+        FluentFunction_OLD.ensureInput( params );
 
         // for select(), the default action is to format numbers into the cardinal plural type
         final SelectType type = params.options()
@@ -135,10 +134,11 @@ public class NumberFn implements FluentImplicit, ImplicitFormatter {
 
         return applyType( type, params, scope );
     }
+    */
 
     // apply the type
     private List<FluentValue<?>> applyType(final SelectType type, final ResolvedParameters params, final Scope scope) {
-        final ICUPluralSelector pluralSelector = (ICUPluralSelector) scope.fnResources;
+        final PluralSelector pluralSelector = scope.pluralSelector();
 
         final Function<Number, String> pluralFn = switch(type) {
             case CARDINAL -> pluralSelector::selectCardinal;
@@ -149,17 +149,12 @@ public class NumberFn implements FluentImplicit, ImplicitFormatter {
             }
         };
 
-        return FluentFunction.mapOverNumbers( params.valuesAll(), scope, pluralFn );
+        final var biConsumer = FluentFunction.mapOrPassthrough( Number.class, pluralFn );
+        return params.positionals().mapMulti( biConsumer ).toList();
     }
 
 
-    // this will fail if 'in' is not a FluentNumber<>
-    @Override
-    public String format(FluentValue<?> in, Scope scope) {
-        assert (in instanceof FluentNumber<?>);
-        final CustomFormatter formatter = CustomFormatter.create( scope.options(), scope.bundle().locale() );
-        return formatter.format( ((FluentNumber<?>) in).value() );
-    }
+
 
 
     private enum SelectType {

@@ -21,10 +21,10 @@
  *
  */
 
-package fluent.functions.icu.list;
+package fluent.functions.list;
 
-import fluent.functions.FluentFunction;
-import fluent.functions.ResolvedParameters;
+import fluent.functions.FluentFunction_OLD;
+import fluent.functions.ResolvedParameters_OLD;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentNumber;
 import fluent.types.FluentValue;
@@ -50,7 +50,7 @@ import java.util.List;
  *  If any arguments are errors, this will fail.
  *
  */
-public class CountFn implements FluentFunction {
+public class CountFn implements FluentFunction_OLD {
 
     public static final String NAME = "COUNT";
 
@@ -60,13 +60,13 @@ public class CountFn implements FluentFunction {
     }
 
     @Override
-    public List<FluentValue<?>> apply(ResolvedParameters param, Scope scope) {
+    public List<FluentValue<?>> apply(ResolvedParameters_OLD param, Scope scope) {
         if (param.noPositionals()) {
             return List.of( FluentNumber.of( 0L ) );
         }
 
         // invalid values result in an exception
-        param.valuesAll().forEach( FluentFunction::validate );
+        param.valuesAll().forEach( FluentFunction_OLD::validate );
 
         return List.of( FluentNumber.of(
             param.valuesAll().count()

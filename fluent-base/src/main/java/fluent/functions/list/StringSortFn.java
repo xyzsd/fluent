@@ -21,10 +21,11 @@
  *
  */
 
-package fluent.functions.icu.list;
+package fluent.functions.list;
 
-import fluent.functions.FluentFunction;
-import fluent.functions.ResolvedParameters;
+import fluent.bundle.resolver.FluentValueFormatter;
+import fluent.functions.FluentFunction_OLD;
+import fluent.functions.ResolvedParameters_OLD;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentString;
 import fluent.types.FluentValue;
@@ -83,7 +84,7 @@ import java.util.function.Function;
  *
  *     </ul>
  */
-public class StringSortFn implements FluentFunction {
+public class StringSortFn implements FluentFunction_OLD {
 
     // Sorting converts inputs to FluentString prior to sort. The reason is that
     // formatting may affect sort order. However.. sorting strings may not always
@@ -113,8 +114,8 @@ public class StringSortFn implements FluentFunction {
 
 
     @Override
-    public List<FluentValue<?>> apply(final ResolvedParameters params, final Scope scope) {
-        FluentFunction.ensureInput( params );
+    public List<FluentValue<?>> apply(final ResolvedParameters_OLD params, final Scope scope) {
+        FluentFunction_OLD.ensureInput( params );
 
         final Order order  = params.options().asEnum( Order.class, "order" )
                 .orElse( Order.NATURAL );
@@ -143,7 +144,7 @@ public class StringSortFn implements FluentFunction {
         if (in instanceof FluentString fs) {
             return fs;
         } else {
-            return FluentString.of( in.format( scope ) );
+            return FluentString.of( scope.formatter().format( in, scope ) );
         }
     }
 

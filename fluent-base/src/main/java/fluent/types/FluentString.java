@@ -23,10 +23,6 @@
 
 package fluent.types;
 
-import fluent.functions.ResolvedParameters;
-import fluent.syntax.AST.SelectExpression;
-import fluent.syntax.AST.Variant;
-import fluent.bundle.resolver.Scope;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
@@ -42,23 +38,11 @@ public record FluentString(String value) implements FluentValue<String> {
         Objects.requireNonNull(value);
     }
 
-
     /// Create a FluentString
     public static FluentString of(String s) {
         return new FluentString( s );
     }
 
 
-    @Override
-    public String format(Scope scope) {
-        return value();
-    }
 
-
-    /// Select variant that exactly matches this FluentString.
-    /// If there is no match, return the default Variant.
-    @Override
-    public Variant select(SelectExpression selectExpression, ResolvedParameters params, Scope scope) {
-        return selectExpression.matchOrDefault( value() );
-    }
 }

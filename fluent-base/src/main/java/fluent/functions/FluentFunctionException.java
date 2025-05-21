@@ -28,16 +28,17 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 
-/**
- * FluentFunctionExceptions are thrown during function evaluation when an error is encountered.
- * <p>
- * Any other expected exception--checked or unchecked-- reasonbly expected during function evaluation
- * should be wrapped in a FluentFunctionException.
- *
- */
+import static java.util.Objects.requireNonNull;
+
+/// FluentFunctionExceptions are thrown during function evaluation when an error is encountered.
+///
+/// Any other expected exception--checked or unchecked-- reasonably expected during function evaluation
+/// should be wrapped in a FluentFunctionException.
+@NullMarked
 public class FluentFunctionException extends RuntimeException {
 
     @Nullable private final String name;
+
 
     private FluentFunctionException(@Nullable String fnName, String message, Throwable cause) {
         super( message, cause );
@@ -50,9 +51,7 @@ public class FluentFunctionException extends RuntimeException {
     }
 
 
-    /**
-     * The name of the function causing the exception, if set.
-     */
+    /// The name of the function causing the exception, if set.
     public Optional<String> fnName() {
         return Optional.ofNullable( name );
     }
@@ -63,41 +62,34 @@ public class FluentFunctionException extends RuntimeException {
         return (name == null) ? super.getMessage() : (name + "(): " + super.getMessage());
     }
 
-    /**
-     * Add the function name to the exception, creating a new Exception (but maintaining the stack trace).
-     * Subsequence calls to getMessage() will prepend the function name to the existing message.
-     */
+    /// Add the function name to the Exception, creating a new Exception (but maintaining the stack trace).
+    /// Subsequence calls to getMessage() will prepend the function name to the existing message.
     public FluentFunctionException withName(String functionName) {
+        requireNonNull(functionName);
         return new FluentFunctionException( functionName, this.getMessage(), this.getCause() );
     }
 
-    /**
-     * Wrap a Throwable into a FluentFunctionException, without altering the message.
-     *
-     * @param cause Throwable to wrap
-     * @return FluentFunctionException
-     */
+    /// Wrap a Throwable into a FluentFunctionException without altering the message.
+    ///
+    /// @param cause Throwable to wrap
+    /// @return FluentFunctionException
     public static FluentFunctionException wrap(Throwable cause) {
         return new FluentFunctionException( null, cause.getMessage(), cause );
     }
 
-    /**
-     * Wrap a Throwable into a FluentFunctionException, with a custom message.
-     *
-     * @param cause Throwable to wrap
-     * @return FluentFunctionException
-     */
+    /// Wrap a Throwable into a FluentFunctionException, with a custom message.
+    ///
+    /// @param cause Throwable to wrap
+    /// @return FluentFunctionException
     public static FluentFunctionException wrap(Throwable cause, String formatString, Object... args) {
         return new FluentFunctionException( null, String.format( formatString, args ), cause );
     }
 
-    /**
-     * Create a FluentFunctionException with the given message.
-     *
-     * @param formatString Message format String, as per String.format()
-     * @param args         (optional) arguments for the format string
-     * @return FluentFunctionException
-     */
+    /// Create a FluentFunctionException with the given message.
+    ///
+    /// @param formatString Message format String, as per String.format()
+    /// @param args         (optional) arguments for the format string
+    /// @return FluentFunctionException
     public static FluentFunctionException create(String formatString, Object... args) {
         return new FluentFunctionException( String.format( formatString, args ) );
     }

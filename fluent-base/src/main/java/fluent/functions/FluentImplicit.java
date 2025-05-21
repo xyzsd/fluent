@@ -46,7 +46,8 @@ package fluent.functions;
  *     All Implicit functions must be defined by a FluentFunctionFactory.
  * </p>
  */
-public interface FluentImplicit extends FluentFunction {
+@Deprecated
+public interface FluentImplicit extends FluentFunction_OLD {
 
     /**
      * The required Implicit Functions.

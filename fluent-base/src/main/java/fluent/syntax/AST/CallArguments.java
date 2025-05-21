@@ -28,11 +28,12 @@ import org.jspecify.annotations.NullMarked;
 
 ///  arguments for function calls
 @NullMarked
-public record CallArguments(List<? extends Expression> positional,
+public record CallArguments(List<Expression> positionals,
                             List<NamedArgument> named) implements SyntaxNode {
     public CallArguments {
-        positional = List.copyOf( positional );
+        positionals = List.copyOf( positionals );
         named = List.copyOf( named );
     }
+
 
 }

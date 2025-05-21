@@ -21,10 +21,10 @@
  *
  */
 
-package fluent.functions.icu.numeric;
+package fluent.functions.numeric;
 
-import fluent.functions.FluentFunction;
-import fluent.functions.ResolvedParameters;
+import fluent.functions.FluentFunction_OLD;
+import fluent.functions.ResolvedParameters_OLD;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentValue;
 
@@ -46,7 +46,7 @@ import java.util.List;
  *         <li>{@code minimumFractionDigits:} integer value (0 is default) </li>
  *     </ul>
  */
-public class CurrencyFn implements FluentFunction {
+public class CurrencyFn implements FluentFunction_OLD {
 
     /**
      * Function name
@@ -61,8 +61,8 @@ public class CurrencyFn implements FluentFunction {
     }
 
     @Override
-    public List<FluentValue<?>> apply(final ResolvedParameters params, final Scope scope) {
-        FluentFunction.ensureInput( params );
+    public List<FluentValue<?>> apply(final ResolvedParameters_OLD params, final Scope scope) {
+        FluentFunction_OLD.ensureInput( params );
 
         final NumberFormat fmt = NumberFormat.getCurrencyInstance( scope.bundle().locale() );
 
@@ -70,7 +70,7 @@ public class CurrencyFn implements FluentFunction {
                 .orElse( fmt.getMinimumFractionDigits() )
         );
 
-        return FluentFunction.mapOverNumbers(params.valuesAll(),
+        return FluentFunction_OLD.mapOverNumbers(params.valuesAll(),
                 scope, fmt::format);
 
     }

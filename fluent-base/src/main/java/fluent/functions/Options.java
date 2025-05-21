@@ -35,68 +35,64 @@ import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
-/**
- * An immutable name-value mapping, with a restricted set of allowed mapped values.
- * <p>
- * Values may be String, Long, or Double types only. Values are <b>not</b> FluentValues; values
- * are not formatted, resolved, or changed.
- * </p>
- * <p>
- * Option names are matched exactly and are case sensitive (matched using Locale.ROOT).
- * </p>
- * <p>
- * This class has convenience methods which permit Long types to be queried as Integers.
- * Additionally, String types may be queried as enum class constants or boolean values.
- * </p>
- * <p>
- * For example for {@code FUNCTION(optionName:"theValue") }
- *     <ul>
- *         <li>has("optionName") = true</li>
- *         <li>has("optionname") [note lowercase 'n'] = false</li>
- *         <li>asBoolean("option-3") = Optional.empty</li>
- *         <li>asString("optionName") = "theValue"</li>
- *         <li>asBoolean("optionName") = exception ("theValue" is neither "true" or "false")</li>
- *     </ul>
- * <p>
- * For example for {@code ANOTHERFUNCTION(optionName:"TruE") }, and
- * also given the class {@code enum MyEnum { TRUE, FALSE, MAYBE }}
- *     <ul>
- *         <li>has("optionName") = true</li>
- *         <li>asString("optionName") = "TruE"</li>
- *         <li>asBoolean("optionName") = {@code Boolean.TRUE} // case insensitive match</li>
- *         <li>asEnum(MyEnum.class, "optionName") = {@code MyEnum.TRUE} // case insensitive enum name match</li>
- *     </ul>
- */
+/// An immutable name-value mapping, with a restricted set of allowed mapped values.
+///
+/// Values may be String, Long, or Double types only. Values are **not** FluentValues; values
+/// are not formatted, resolved, or changed.
+///
+/// Option names are matched exactly and are case sensitive (matched using Locale.ROOT).
+///
+/// This class has convenience methods which permit Long types to be queried as Integers.
+/// Additionally, String types may be queried as enum class constants or boolean values.
+///
+/// For example,
+/// `FUNCTION(optionName:"theValue")`
+///
+///       - `has("optionName") = true`
+///       - `has("optionname") = false` // note the lowercase 'n'
+///       - `asBoolean("option-3") = Optional.empty()`
+///       - `asString("optionName") = "theValue"`
+///       - `asBoolean("optionName") = Exception` // "theValue" is neither "true" nor "false"
+///
+///
+/// For example, `ANOTHERFUNCTION(optionName:"TruE")`, and
+/// also given the class `enum MyEnum{TRUE, FALSE, MAYBE}`
+///
+///       - `has("optionName") = true`
+///       - `asString("optionName") = "TruE"`
+///       - `asBoolean("optionName") = Boolean.TRUE` // case insensitive match
+///       - `asEnum(MyEnum.class, "optionName") = MyEnum.TRUE` // case insensitive enum name match
+///
+@NullMarked
 public class Options {
 
-    /**
-     * Empty Options
-     */
+    ///  No options set
     public static final Options EMPTY = new Options( Map.of() );
 
 
     private final Map<String, ?> opts;
 
 
-    ////////////////////////////////////////////////////////////////////////
-    // static
-    /////////////////////////////////////////////////////////////////////////
+    /// private constructor
+    private Options(Map<String, ?> in) {this.opts = Map.copyOf( in );}
 
-    /**
-     * Create a Builder
-     *
-     * @return Builder
-     */
+    /// Create a Builder
+    ///
+    /// @return Builder
     public static Builder builder() {
         return new Builder();
     }
 
 
-    /**
-     * Convert NamedArguments within CallArguments into Options.
-     * <p>
-     * Nullsafe.
-     */
+    ///  If this Options is empty, use `other` (which may also be empty)
+    public Options orElse(Options other) {
+        return opts.isEmpty() ? other : this;
+    }
+
+
+    /// Convert NamedArguments within CallArguments into Options.
+    ///
+    /// Nullsafe.
     public static Options from(@Nullable final CallArguments callArgs) {
         if (callArgs == null || callArgs.named().isEmpty()) {
             return EMPTY;
@@ -106,230 +102,6 @@ public class Options {
         callArgs.named().forEach( n -> builder.set( n.name().key(), n.value() ) );
         return builder.build();
     }
-
-
-    ////////////////////////////////////////////////////////////////////////
-    // instance
-    /////////////////////////////////////////////////////////////////////////
-
-    /**
-     * True if no options have been set (count() == 0)
-     */
-    public boolean isEmpty() {
-        return opts.isEmpty();
-    }
-
-    /**
-     * Number of named options.
-     */
-    public int count() {
-        return opts.size();
-    }
-
-    /**
-     * True if the option name has been set.
-     *
-     * @param name option name to check; exact match required
-     */
-    public boolean has(String name) {
-        return opts.containsKey( name );
-    }
-
-    /**
-     * Merges the current options with 'toMerge', returning a new Options.
-     * <p>
-     * Any option in toMerge with the same name as in the current set will override (replace)
-     * the value within the new Options returned.
-     * </p>
-     * Implementation note: this is optimized for cases where one--or both--of the Options may be empty.
-     */
-    @Contract(pure = true)
-    public Options mergeOverriding(final Options toMergeAndOverride) {
-        // fast-path
-        if (toMergeAndOverride == EMPTY) {
-            return this;
-        } else if (this == EMPTY) {
-            return toMergeAndOverride;
-        }
-
-        Builder builder = new Builder();
-        builder.with( this );
-        builder.with( toMergeAndOverride );
-        return builder.build();
-    }
-
-
-    /**
-     * Get the value of an option, as a String.
-     * <p>
-     * If the value is absent, return an empty Optional.
-     * </p>
-     * <p>
-     * If the value is present, but not a String, throw an exception.
-     * (for example: FUNCTION(name: 37) option "name" is a number; whereas FUNCTION(name: "37")
-     * option "name" would be a String)
-     * <p>
-     * Otherwise, return the value.
-     * </p>
-     *
-     * @param optionName option name (case sensitive)
-     * @return option value (as above)
-     */
-
-    public Optional<String> asString(final String optionName) {
-        return asType( optionName, String.class, null );
-    }
-
-    /**
-     * Get the value of an option, as a Boolean.
-     * <p>
-     * If the value is absent, return an empty Optional.
-     * </p>
-     * <p>
-     * If the value is "true" or "false" (case-insensitive), return the appropriate Boolean value.
-     * Otherwise, throw an exception.
-     * </p>
-     *
-     * @param optionName option name (case sensitive)
-     * @return option value (as above)
-     */
-
-    public Optional<Boolean> asBoolean(final String optionName) {
-        return asType( optionName, String.class, "Boolean" )
-                .map( s -> parseBoolStrict( optionName, s ) );
-    }
-
-
-    /**
-     * Get the value of an option, if it matches an existing Enum type
-     * <p>
-     * If the value is absent, return an empty Optional.
-     * </p>
-     * <p>
-     * If the value matches an enum constant, return the enum. Otherwise, throw an exception.
-     * </p>
-     * <p>
-     * NOTE: a case-insensitive match is used to evaluate enums, since the convention for
-     * option format is lower case or camel case, but enum constants are typically upper case.
-     * </p>
-     *
-     * @param optionName option name (case sensitive)
-     * @return option value (as above)
-     */
-    public <E extends Enum<E>> Optional<E> asEnum(final Class<E> enumClass, final String optionName) {
-        return asType( optionName, String.class, "Enum (as a String)" )
-                .map( value -> matchEnum( enumClass, optionName, value ) );
-    }
-
-
-    /**
-     * Get the value of an option, as an int.
-     * <p>
-     * If the value is absent, return an empty OptionalInt.
-     * </p>
-     * <p>
-     * If the value is present (and within range for an integer) return the value; otherwise, throw an Exception.
-     * </p>
-     *
-     * @param optionName option name (case sensitive)
-     * @return option value (as above)
-     */
-
-    public OptionalInt asInt(final String optionName) {
-        return asType( optionName, Long.class, "Integer" ).stream()
-                .flatMapToInt( v -> toIntStream( optionName, v ) )
-                .findFirst();
-    }
-
-
-    /**
-     * Get the value of an option, as a double.
-     * <p>
-     * If the value is absent, return an empty OptionalDouble.
-     * </p>
-     *
-     * @param optionName option name (case sensitive)
-     * @return option value (as above)
-     */
-
-    public OptionalDouble asDouble(final String optionName) {
-        return asType( optionName, Double.class, null ).stream()
-                .flatMapToDouble( DoubleStream::of )
-                .findFirst();
-    }
-
-    /**
-     * Get the value of an option, as a long.
-     * <p>
-     * If the value is absent, return an empty OptionalLong.
-     * </p>
-     *
-     * @param optionName option name (case sensitive)
-     * @return option value (as above)
-     */
-
-    public OptionalLong asLong(final String optionName) {
-        return asType( optionName, Long.class, null ).stream()
-                .flatMapToLong( LongStream::of )
-                .findFirst();
-    }
-
-
-    /**
-     * Returns the given option, if present, as a String, Long, or Double depending upon its form.
-     * @param optionName option name (case sensitive)
-     * @return the value of the option, or an empty optional
-     */
-    public Optional<?> asRaw(final String optionName) {
-        return Optional.ofNullable( opts.get( optionName ) );
-    }
-
-
-    /**
-     * Convert the given String, if present, into the type specified by the conversion
-     * (parsing) function fn. If parsing fails due to an exception, that exception is
-     * wrapped (and thrown) as a FluentFunctionException.
-     * <p>
-     * Only String values are supported. Non-String values will be converted to Strings
-     * via String.valueOf().
-     * <p>
-     * If null is returned, an empty optional will be returned by this method.
-     *
-     *
-     * @param optionName option name (case sensitive)
-     * @param fn Function converting the data to the given type
-     * @throws FluentFunctionException if fn returns null or throws an exception
-     */
-    public <R> Optional<R> into(final String optionName, final Function<String, R> fn) {
-        final var val = opts.get( optionName );
-        if (val == null) {
-            return Optional.empty();
-        }
-
-        // consider: inferring type parameter from lambda and casting..
-        // but that is both nontrivial and may be overkill. Vs. having
-        // overloads for Function<Long,R> and Function<Double,R>
-
-        try {
-            // todo: decide if returning an empty optional or NPE/FFE is better...
-            return Optional.ofNullable( fn.apply(String.valueOf( val ) ) );
-        } catch(Exception e) {
-            throw FluentFunctionException.wrap( e );
-        }
-    }
-
-
-    ////////////////////////////////////////////////////////////////////////
-    // constructors
-    /////////////////////////////////////////////////////////////////////////
-
-    // warning: NO DEFENSIVE COPY
-    private Options(Map<String, ?> in) { this.opts = in; }
-
-
-    ////////////////////////////////////////////////////////////////////////
-    // private
-    /////////////////////////////////////////////////////////////////////////
 
     private static IntStream toIntStream(String optionName, long value) {
         // This will work for all Number types, and is based on
@@ -353,18 +125,6 @@ public class Options {
         throw typeError( optionName, "Boolean", value );
     }
 
-    private <T> Optional<T> asType(final String optionName, final Class<T> type, @Nullable final String typeNameOverride) {
-        final Object val = opts.get( optionName );
-        if (val == null) {
-            return Optional.empty();
-        } else if (type.isInstance( val )) {
-            return Optional.of( type.cast( val ) );
-        } else {
-            final String typeName = (typeNameOverride == null) ? type.getSimpleName() : typeNameOverride;
-            throw typeError( optionName, typeName, val );
-        }
-    }
-
     // case-insensitive enum match
     private static <E extends Enum<E>> E matchEnum(final Class<E> enm, final String optionName, final String optionValue) {
         final E[] values = enm.getEnumConstants();
@@ -382,7 +142,6 @@ public class Options {
         );
     }
 
-
     private static FluentFunctionException typeError(String optionName, String expectedType, Object actual) {
         return FluentFunctionException.create( "Option %s: expected type %s (actual: '%s')",
                 optionName,
@@ -391,10 +150,190 @@ public class Options {
         );
     }
 
+    /// True if no options have been set (count() == 0)
+    public boolean isEmpty() {
+        return opts.isEmpty();
+    }
 
-    /**
-     * Builder for Options
-     */
+    /// Number of named options.
+    public int count() {
+        return opts.size();
+    }
+
+    /// True if the option name has been set.
+    ///
+    /// @param name option name to check; exact match required
+    public boolean has(String name) {
+        return opts.containsKey( name );
+    }
+
+    /// Merges the current options with 'toMerge', returning a new Options.
+    ///
+    /// Any option in toMerge with the same name as in the current set will override (replace)
+    /// the value within the new Options returned.
+    ///
+    /// Implementation note: this is optimized for cases where one--or both--of the Options may be empty.
+    @Contract(pure = true)
+    public Options mergeOverriding(final Options toMergeAndOverride) {
+        // fast-path
+        if (toMergeAndOverride == EMPTY) {
+            // nothing to merge
+            return this;
+        } else if (this == EMPTY) {
+            // nothing exists, 'everything' to merge
+            return toMergeAndOverride;
+        } else {
+            Map<String, Object> temp = new HashMap<>( this.opts );
+            temp.putAll( toMergeAndOverride.opts );
+            return new Options( temp );
+        }
+    }
+
+    /// Get the value of an option, as a String.
+    ///
+    /// If the value is absent, return an empty Optional.
+    ///
+    ///
+    /// If the value is present, but not a String, throw an exception.
+    /// (for example: FUNCTION(name: 37) option "name" is a number; whereas FUNCTION(name: "37")
+    /// option "name" would be a String)
+    ///
+    /// Otherwise, return the value.
+    ///
+    /// @param optionName option name (case sensitive)
+    /// @return option value (as above)
+    public Optional<String> asString(final String optionName) {
+        return asType( optionName, String.class, null );
+    }
+
+    /// Get the value of an option, as a Boolean.
+    ///
+    /// If the value is absent, return an empty Optional.
+    ///
+    ///
+    /// If the value is "true" or "false" (case-insensitive), return the appropriate Boolean value.
+    /// Otherwise, throw an exception.
+    ///
+    /// @param optionName option name (case sensitive)
+    /// @return option value (as above)
+    public Optional<Boolean> asBoolean(final String optionName) {
+        return asType( optionName, String.class, "Boolean" )
+                .map( s -> parseBoolStrict( optionName, s ) );
+    }
+
+    /// Get the value of an option, if it matches an existing Enum type
+    ///
+    /// If the value is absent, return an empty Optional.
+    ///
+    ///
+    /// If the value matches an enum constant, return the enum. Otherwise, throw an exception.
+    ///
+    ///
+    /// NOTE: a case-insensitive match is used to evaluate enums, since the convention for
+    /// option format is lower case or camel case, but enum constants are typically upper case.
+    ///
+    /// @param optionName option name (case sensitive)
+    /// @return option value (as above)
+    public <E extends Enum<E>> Optional<E> asEnum(final Class<E> enumClass, final String optionName) {
+        return asType( optionName, String.class, "Enum (as a String)" )
+                .map( value -> matchEnum( enumClass, optionName, value ) );
+    }
+
+    /// Get the value of an option, as an int.
+    ///
+    /// If the value is absent, return an empty OptionalInt.
+    ///
+    ///
+    /// If the value is present (and within range for an integer) return the value; otherwise, throw an Exception.
+    ///
+    /// @param optionName option name (case sensitive)
+    /// @return option value (as above)
+    public OptionalInt asInt(final String optionName) {
+        return asType( optionName, Long.class, "Integer" ).stream()
+                .flatMapToInt( v -> toIntStream( optionName, v ) )
+                .findFirst();
+    }
+
+    /// Get the value of an option, as a double.
+    ///
+    /// If the value is absent, return an empty OptionalDouble.
+    ///
+    /// @param optionName option name (case sensitive)
+    /// @return option value (as above)
+    public OptionalDouble asDouble(final String optionName) {
+        return asType( optionName, Double.class, null ).stream()
+                .flatMapToDouble( DoubleStream::of )
+                .findFirst();
+    }
+
+    /// Get the value of an option, as a long.
+    ///
+    /// If the value is absent, return an empty OptionalLong.
+    ///
+    /// @param optionName option name (case sensitive)
+    /// @return option value (as above)
+    public OptionalLong asLong(final String optionName) {
+        return asType( optionName, Long.class, null ).stream()
+                .flatMapToLong( LongStream::of )
+                .findFirst();
+    }
+
+    /// Returns the given option, if present, as a String, Long, or Double depending upon its form.
+    ///
+    /// @param optionName option name (case sensitive)
+    /// @return the value of the option, or an empty optional
+    public Optional<?> asRaw(final String optionName) {
+        return Optional.ofNullable( opts.get( optionName ) );
+    }
+
+    /// Convert the given String, if present, into the type specified by the conversion
+    /// (parsing) function fn. If parsing fails due to an exception, that exception is
+    /// wrapped (and thrown) as a FluentFunctionException.
+    ///
+    /// Only String values are supported. Non-String values will be converted to Strings
+    /// via String.valueOf().
+    ///
+    /// If null is returned, an empty optional will be returned by this method.
+    ///
+    /// @param optionName option name (case sensitive)
+    /// @param fn         Function converting the data to the given type
+    /// @throws FluentFunctionException if fn returns null or throws an exception
+    public <R> Optional<R> into(final String optionName, final Function<String, R> fn) {
+        final var val = opts.get( optionName );
+        if (val == null) {
+            return Optional.empty();
+        }
+
+        // consider: inferring type parameter from lambda and casting..
+        // but that is both nontrivial and may be overkill. Vs. having
+        // overloads for Function<Long,R> and Function<Double,R>
+
+        try {
+            // todo: decide if returning an empty optional or NPE/FFE is better...
+            return Optional.of( fn.apply( String.valueOf( val ) ) );
+        } catch (Exception e) {
+            throw FluentFunctionException.wrap( e );
+        }
+    }
+
+    private <T> Optional<T> asType(final String optionName, final Class<T> type, @Nullable final String typeNameOverride) {
+        final Object val = opts.get( optionName );
+        if (val == null) {
+            return Optional.empty();
+        } else if (type.isInstance( val )) {
+            return Optional.of( type.cast( val ) );
+        } else {
+            final String typeName = (typeNameOverride == null) ? type.getSimpleName() : typeNameOverride;
+            throw typeError( optionName, typeName, val );
+        }
+    }
+
+    @Override
+    public String toString() {
+        return (this == EMPTY) ? "Options{Options.EMPTY}" : ("Options{" + "opts=" + opts + '}');
+    }
+
+    /// Builder for Options
     public static class Builder {
 
         private final Map<String, Object> map = new HashMap<>();
@@ -402,18 +341,15 @@ public class Options {
         private Builder() {}
 
 
-        /**
-         * Set an option value as a String. Null values are not allowed.
-         * <p>
-         * If a prior option with this name already exists, it will be
-         * replaced with the new value.
-         * </p>
-         *
-         * @param name  option name
-         * @param value option value
-         * @return Builder
-         * @throws NullPointerException if name or value is null
-         */
+        /// Set an option value as a String. Null values are not allowed.
+        ///
+        /// If a prior option with this name already exists, it will be
+        /// replaced with the new value.
+        ///
+        /// @param name  option name
+        /// @param value option value
+        /// @return Builder
+        /// @throws NullPointerException if name or value is null
         public Builder set(String name, String value) {
             Objects.requireNonNull( name );
             Objects.requireNonNull( value );
@@ -421,53 +357,44 @@ public class Options {
             return this;
         }
 
-        /**
-         * Set an option value as a boolean.
-         * <p>
-         * If a prior option with this name already exists, it will be
-         * replaced with the new value.
-         * </p>
-         *
-         * @param name  option name
-         * @param value option value
-         * @return Builder
-         * @throws NullPointerException if name is null
-         */
+        /// Set an option value as a boolean.
+        ///
+        /// If a prior option with this name already exists, it will be
+        /// replaced with the new value.
+        ///
+        /// @param name  option name
+        /// @param value option value
+        /// @return Builder
+        /// @throws NullPointerException if name is null
         public Builder set(String name, boolean value) {
             return set( name, Boolean.toString( value ) );
         }
 
-        /**
-         * Set an option value as a double.
-         * <p>
-         * If a prior option with this name already exists, it will be
-         * replaced with the new value.
-         * </p>
-         *
-         * @param name  option name
-         * @param value option value
-         * @return Builder
-         * @throws NullPointerException if name is null
-         */
+        /// Set an option value as a double.
+        ///
+        /// If a prior option with this name already exists, it will be
+        /// replaced with the new value.
+        ///
+        /// @param name  option name
+        /// @param value option value
+        /// @return Builder
+        /// @throws NullPointerException if name is null
         public Builder set(String name, long value) {
             Objects.requireNonNull( name );
             map.put( name, value );
             return this;
         }
 
-        /**
-         * Set an option value as a double. The value must be finite.
-         * <p>
-         * If a prior option with this name already exists, it will be
-         * replaced with the new value.
-         * </p>
-         *
-         * @param name  option name
-         * @param value option value
-         * @return Builder
-         * @throws NullPointerException     if name is null
-         * @throws IllegalArgumentException if value is not finite.
-         */
+        /// Set an option value as a double. The value must be finite.
+        ///
+        /// If a prior option with this name already exists, it will be
+        /// replaced with the new value.
+        ///
+        /// @param name  option name
+        /// @param value option value
+        /// @return Builder
+        /// @throws NullPointerException     if name is null
+        /// @throws IllegalArgumentException if value is not finite.
         public Builder set(String name, double value) {
             Objects.requireNonNull( name );
             if (!Double.isFinite( value )) {
@@ -477,25 +404,21 @@ public class Options {
             return this;
         }
 
-        /**
-         * Add all options, replacing any existing options with the same name.
-         *
-         * @param options Options to merge
-         * @return Builder
-         * @throws NullPointerException if options is null
-         */
+        /// Add all options, replacing any existing options with the same name.
+        ///
+        /// @param options Options to merge
+        /// @return Builder
+        /// @throws NullPointerException if options is null
         public Builder with(Options options) {
             Objects.requireNonNull( options );
             map.putAll( options.opts );
             return this;
         }
 
-        /**
-         * Remove the given option. If the option is not present, this has no effect.
-         *
-         * @param name name of option to remove
-         * @return Builder
-         */
+        /// Remove the given option. If the option is not present, this has no effect.
+        ///
+        /// @param name name of option to remove
+        /// @return Builder
         public Builder remove(String name) {
             Objects.requireNonNull( name );
             map.remove( name );
@@ -511,26 +434,14 @@ public class Options {
         }
 
 
-        /**
-         * Build (create) the Options
-         */
+        /// Build (create) the Options
         public Options build() {
             if (map.isEmpty()) {
                 return Options.EMPTY;
             }
 
-            return new Options( Map.copyOf( map ) );
+            return new Options( map );
         }
 
-    }
-
-
-    ////////////////////////////////////////////////////////////////////////
-    // misc
-    /////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public String toString() {
-        return (this == EMPTY) ? "Options{Options.EMPTY}" : ("Options{" + "opts=" + opts + '}');
     }
 }

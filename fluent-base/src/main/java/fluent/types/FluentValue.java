@@ -23,10 +23,6 @@
 
 package fluent.types;
 
-import fluent.functions.ResolvedParameters;
-import fluent.syntax.AST.SelectExpression;
-import fluent.syntax.AST.Variant;
-import fluent.bundle.resolver.Scope;
 import org.jspecify.annotations.NullMarked;
 
 import java.time.temporal.TemporalAccessor;
@@ -55,25 +51,7 @@ public sealed interface FluentValue<T>
     ///  the Value
     T value();
 
-    /// This value, formatted as a String.
-    /// @param scope Scope
-    /// @return formatted String. Never null.
-    @Deprecated // will move out into bundle processing
-    String format(Scope scope);
 
-
-    /// Handle fluent 'select'
-    ///
-    /// By default, this method picks the default variant. No attempt to match variants is performed.
-    ///
-    /// @param selectExpression SelectExpression
-    /// @param params ResolvedParameters
-    /// @param scope Scope
-    /// @return
-    @Deprecated
-    default Variant select(final SelectExpression selectExpression, final ResolvedParameters params, final Scope scope) {
-        return selectExpression.defaultVariant();
-    }
 
 
     /// Map objects to FluentValues.
