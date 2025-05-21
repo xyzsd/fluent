@@ -108,7 +108,7 @@ public class Options {
         // JLS primitive narrowing/widening conventions
         final int intValue = (int) value;
         if (intValue != value) {
-            throw FluentFunctionException.create(
+            throw FluentFunctionException.of(
                     "Option %s: expected value within Integer range (actual: '%d')", optionName, value );
         } else {
             return IntStream.of( (int) value );
@@ -135,7 +135,7 @@ public class Options {
         }
 
         // helpful error message
-        throw FluentFunctionException.create( "Option %s: unrecognized value '%s'. Allowed string values: %s",
+        throw FluentFunctionException.of( "Option %s: unrecognized value '%s'. Allowed string values: %s",
                 optionName,
                 optionValue,
                 Arrays.toString( enm.getEnumConstants() )
@@ -143,7 +143,7 @@ public class Options {
     }
 
     private static FluentFunctionException typeError(String optionName, String expectedType, Object actual) {
-        return FluentFunctionException.create( "Option %s: expected type %s (actual: '%s')",
+        return FluentFunctionException.of( "Option %s: expected type %s (actual: '%s')",
                 optionName,
                 expectedType,
                 String.valueOf( actual )

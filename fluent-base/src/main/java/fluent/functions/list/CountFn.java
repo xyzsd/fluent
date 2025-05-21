@@ -23,11 +23,11 @@
 
 package fluent.functions.list;
 
-import fluent.functions.FluentFunction_OLD;
-import fluent.functions.ResolvedParameters_OLD;
+import fluent.functions.*;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentNumber;
 import fluent.types.FluentValue;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 
@@ -50,26 +50,25 @@ import java.util.List;
  *  If any arguments are errors, this will fail.
  *
  */
-public class CountFn implements FluentFunction_OLD {
+@NullMarked
+public enum CountFn implements FluentFunction {
 
-    public static final String NAME = "COUNT";
+
+    COUNT;
+
+
 
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public List<FluentValue<?>> apply(ResolvedParameters_OLD param, Scope scope) {
-        if (param.noPositionals()) {
+    public List<FluentValue<?>> apply(final ResolvedParameters parameters, final Scope scope) throws FluentFunctionException {
+        if (!parameters.hasPositionals()) {
             return List.of( FluentNumber.of( 0L ) );
         }
 
         // invalid values result in an exception
-        param.valuesAll().forEach( FluentFunction_OLD::validate );
+        parameters.positionals().forEach( FluentFunction::validate );
 
         return List.of( FluentNumber.of(
-            param.valuesAll().count()
+                parameters.positionals().count()
         ) );
     }
 }

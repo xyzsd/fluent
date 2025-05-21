@@ -23,11 +23,11 @@
 
 package fluent.functions.numeric;
 
-import fluent.functions.FluentFunction_OLD;
-import fluent.functions.ResolvedParameters_OLD;
+import fluent.functions.*;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentString;
 import fluent.types.FluentValue;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 
@@ -51,24 +51,18 @@ import java.util.List;
  *         <li>negative infinity=> "negativeInfinity"</li>
  *    </ul>
  */
-public class SignFn implements FluentFunction_OLD {
+@NullMarked
+public enum SignFn implements FluentFunction {
 
-    public static final String NAME = "SIGN";
+    SIGN;
 
-    public SignFn() {}
-
-
-    @Override
-    public String name() {
-        return NAME;
-    }
 
     @Override
-    public List<FluentValue<?>> apply(ResolvedParameters_OLD params, Scope scope) {
-        FluentFunction_OLD.ensureInput( params );    // SIGN() [no arguments]: not legal
-
-        return FluentFunction_OLD.mapOverNumbers( params.valuesAll(),
-                scope, SignFn::sign );
+    public List<FluentValue<?>> apply(final ResolvedParameters parameters, final Scope scope) throws FluentFunctionException {
+        // SIGN() [no arguments]: not legal
+        FluentFunction.ensureInput( parameters );
+        final var biConsumer = FluentFunction.mapOrPassthrough( Number.class, SignFn::sign );
+        return parameters.positionals().mapMulti( biConsumer ).toList();
     }
 
     private static FluentValue<?> sign(Number number) {

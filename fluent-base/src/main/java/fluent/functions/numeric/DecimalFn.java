@@ -23,11 +23,10 @@
 
 package fluent.functions.numeric;
 
-import fluent.functions.FluentFunction_OLD;
-import fluent.functions.FluentFunctionException;
-import fluent.functions.ResolvedParameters_OLD;
+import fluent.functions.*;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentValue;
+import org.jspecify.annotations.NullMarked;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -52,34 +51,29 @@ import java.util.List;
  *     Example: {@code DECIMAL($num, pattern:"###.00"}
  * </p>
  */
-public class DecimalFn implements FluentFunction_OLD {
+@NullMarked
+public enum DecimalFn implements FluentFunction {
 
-    public static final String NAME = "DECIMAL";
-
-    public DecimalFn() {}
-
-    @Override
-    public String name() {
-        return NAME;
-    }
+    DECIMAL;
 
 
     // extraneous options ignored but extraneous args are errors
     @Override
-    public List<FluentValue<?>> apply(final ResolvedParameters_OLD params, final Scope scope) {
-        FluentFunction_OLD.ensureInput( params );
+    public List<FluentValue<?>> apply(final ResolvedParameters parameters, final Scope scope) throws FluentFunctionException {
+        FluentFunction.ensureInput( parameters );
 
         // get a localized DecimalFormat [it is an internal error if DecimalFormat not the concrete class]
         final DecimalFormat df = (DecimalFormat) NumberFormat.getNumberInstance( scope.bundle().locale() );
 
-        df.setMinimumFractionDigits( params.options().asInt( "minimumFractionDigits" )
+        df.setMinimumFractionDigits( parameters.options().asInt( "minimumFractionDigits" )
                 .orElse( df.getMinimumFractionDigits() )
         );
 
-        params.options().asString( "pattern" )
+        parameters.options().asString( "pattern" )
                 .ifPresent( pattern -> applyPattern( df, pattern ) );
 
-        return FluentFunction_OLD.mapOverNumbers( params.valuesAll(),scope, df::format );
+        final var biConsumer = FluentFunction.mapOrPassthrough( Number.class, df::format );
+        return parameters.positionals().mapMulti( biConsumer ).toList();
     }
 
 
@@ -89,10 +83,8 @@ public class DecimalFn implements FluentFunction_OLD {
             //       is a better fit for the general case. This could be changed via an option.
             df.applyPattern( pattern );
         } catch (IllegalArgumentException e) {
-            throw FluentFunctionException.create( "Invalid format pattern '%s'",
+            throw FluentFunctionException.of( "Invalid format pattern '%s'",
                     pattern );
         }
     }
-
-
 }

@@ -27,7 +27,6 @@ import fluent.functions.*;
 import fluent.functions.PluralSelector;
 import fluent.syntax.AST.SelectExpression;
 import fluent.bundle.resolver.Scope;
-import fluent.types.FluentString;
 import fluent.types.FluentValue;
 import org.jspecify.annotations.NullMarked;
 
@@ -100,7 +99,7 @@ public enum NumberFn implements FluentFunction, ImplicitFormatter<Number> {
 
     @Override
     public String format(final FluentValue<? extends Number> in, final Scope scope) {
-        final CustomFormatter formatter = CustomFormatter.create( scope.options(), scope.bundle().locale() );
+        final CustomFormatter formatter = CustomFormatter.of( scope.options(), scope.bundle().locale() );
         return  formatter.format( in.value() );
     }
 
@@ -144,7 +143,7 @@ public enum NumberFn implements FluentFunction, ImplicitFormatter<Number> {
             case CARDINAL -> pluralSelector::selectCardinal;
             case ORDINAL -> pluralSelector::selectOrdinal;
             case STRING -> {
-                final CustomFormatter formatter = CustomFormatter.create( params.options(), scope.bundle().locale() );
+                final CustomFormatter formatter = CustomFormatter.of( params.options(), scope.bundle().locale() );
                 yield formatter::format;
             }
         };
@@ -206,13 +205,12 @@ public enum NumberFn implements FluentFunction, ImplicitFormatter<Number> {
             // this nicely lowers precision from the given input if we need to
             // NOTE: when we create a BigDecimal, precision() can be different than what we specify here
             final MathContext mc = new MathContext( maxSig );
-            BigDecimal bigDecimal = null;
+            BigDecimal bigDecimal;
             if (number instanceof BigDecimal bdIn) {
                 bigDecimal = bdIn.round( mc );
             } else {
                 bigDecimal = new BigDecimal( number.toString(), mc );
             }
-            assert (bigDecimal != null);
 
             // add extra zeroes if precision() of the created BigDecimal < minSig
             // e.g.: minSig=12, maxSig=21
@@ -243,7 +241,7 @@ public enum NumberFn implements FluentFunction, ImplicitFormatter<Number> {
         }
 
 
-        static CustomFormatter create(final Options options, Locale locale) {
+        static CustomFormatter of(final Options options, Locale locale) {
             // fast path
             if (options.isEmpty()) {
                 final DecimalFormat df = (DecimalFormat) NumberFormat.getNumberInstance( locale );
@@ -269,7 +267,7 @@ public enum NumberFn implements FluentFunction, ImplicitFormatter<Number> {
                 final int minSig = options.asInt( "minimumSignificantDigits" ).orElse( 1 );
                 final int maxSig = options.asInt( "maximumSignificantDigits" ).orElse( 21 );
                 if (minSig < 1 || maxSig > 21 || minSig > maxSig) {
-                    throw FluentFunctionException.create( "significant digits out of range (<1 or >21) or max < min" );
+                    throw FluentFunctionException.of( "significant digits out of range (<1 or >21) or max < min" );
                 }
 
                 return new CustomFormatter( nf, minSig, maxSig );
@@ -298,8 +296,5 @@ public enum NumberFn implements FluentFunction, ImplicitFormatter<Number> {
             }
         }
     }
-
-
-
 }
 

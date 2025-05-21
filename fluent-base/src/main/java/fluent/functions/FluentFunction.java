@@ -34,14 +34,10 @@ import java.util.stream.Stream;
 ///       - Functions should have a static String constant denoting the function name (preferably called NAME).
 ///     This name should also be returned by the name() method.
 ///
-///
-///
 ///     By convention, implementation class names have an "Fn" suffix
 ///     (e.g., the class for the fluent function NUMBER is called NumberFn).
 ///
-///
-///      Functions should explicitly fail if there is no input, and input is required.
-///
+///     Functions should explicitly fail if there is no input, and input is required.
 ///
 ///     Characters permitted in function names: `[A-Z],[0-9], '-' and '_'`, per the Fluent specification.
 ///
@@ -61,7 +57,7 @@ public interface FluentFunction {
     /// @param rp ResolvedParameters
     static void ensureInput(final ResolvedParameters rp) {
         if (!rp.hasPositionals()) {
-            throw FluentFunctionException.create( "No positional arguments supplied; at least one is required." );
+            throw FluentFunctionException.of( "No positional arguments supplied; at least one is required." );
         }
     }
 
@@ -105,6 +101,17 @@ public interface FluentFunction {
         };
     }
 
+    /// Throw an exception if the given value is a FluentError.
+    /// Otherwise, do nothing.
+    ///
+    /// @param in FluentValue to check
+    static FluentValue<?> validate(final FluentValue<?> in) {
+        if (in instanceof FluentError(String value)) {
+            throw FluentFunctionException.of( value );
+        }
+        return in;
+    }
+
 
     /// Fluent Function name (per Fluent Function name guidelines)
     String name();
@@ -120,7 +127,7 @@ public interface FluentFunction {
     /// @param parameters input
     /// @param scope      scope
     /// @return FluentObject
-    default List<FluentValue<?>> apply(ResolvedParameters parameters, Scope scope) throws FluentFunctionException {
+    default List<FluentValue<?>> apply(final ResolvedParameters parameters, final Scope scope) throws FluentFunctionException {
         return List.of( new FluentError( String.format( "%s(): cannot apply().", name() ) ) );
     }
 

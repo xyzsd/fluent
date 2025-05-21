@@ -23,11 +23,11 @@
 
 package fluent.functions.string;
 
-import fluent.functions.FluentFunction_OLD;
-import fluent.functions.ResolvedParameters_OLD;
+import fluent.functions.*;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentString;
 import fluent.types.FluentValue;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 import java.util.Locale;
@@ -55,40 +55,37 @@ import java.util.Locale;
  *          <li>CASE(-5) => -5</li>
  *   </ul>
  */
-public class CaseFn implements FluentFunction_OLD {
+@NullMarked
+public enum CaseFn implements FluentFunction {
 
-    public static final String NAME = "CASE";
+    CASE;
 
-    public CaseFn() {}
+
 
     private enum Style {
         UPPER, LOWER
     }
 
-    @Override
-    public String name() {
-        return NAME;
-    }
 
     @Override
-    public List<FluentValue<?>> apply(final ResolvedParameters_OLD params, final Scope scope) {
-        FluentFunction_OLD.ensureInput( params );
+    public List<FluentValue<?>> apply(final ResolvedParameters parameters, final Scope scope) throws FluentFunctionException {
+        FluentFunction.ensureInput( parameters );
 
-        final Style style = params.options().asEnum(Style.class,  "style" )
+        final Style style = parameters.options().asEnum(Style.class,  "style" )
                 .orElse( Style.UPPER );
         final Locale locale = scope.bundle().locale();
 
-        return params.valuesAll()
+        return parameters.positionals()
                 .<FluentValue<?>>map( fv -> changeCase( fv, style, locale ) )
                 .toList();
     }
 
 
     private static FluentValue<?> changeCase(FluentValue<?> in, Style style, Locale locale) {
-        if(in instanceof FluentString fluentString) {
+        if(in instanceof FluentString(String value)) {
             return switch(style) {
-                case UPPER -> FluentString.of( fluentString.value().toUpperCase( locale ) );
-                case LOWER -> FluentString.of( fluentString.value().toLowerCase( locale ) );
+                case UPPER -> FluentString.of( value.toUpperCase( locale ) );
+                case LOWER -> FluentString.of( value.toLowerCase( locale ) );
             };
         } else {
             return in;

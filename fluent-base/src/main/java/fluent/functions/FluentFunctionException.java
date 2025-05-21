@@ -90,7 +90,7 @@ public class FluentFunctionException extends RuntimeException {
     /// @param formatString Message format String, as per String.format()
     /// @param args         (optional) arguments for the format string
     /// @return FluentFunctionException
-    public static FluentFunctionException create(String formatString, Object... args) {
+    public static FluentFunctionException of(String formatString, Object... args) {
         return new FluentFunctionException( String.format( formatString, args ) );
     }
 }

@@ -24,12 +24,11 @@
 package fluent.functions.numeric;
 
 
-import fluent.functions.FluentFunction_OLD;
-import fluent.functions.FluentFunctionException;
-import fluent.functions.ResolvedParameters_OLD;
+import fluent.functions.*;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentNumber;
 import fluent.types.FluentValue;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 
@@ -50,38 +49,36 @@ import java.util.List;
  * <p>
  * No 'passthrough' occurs with this method. For any arguments that are NOT integers or longs, an error will occur.
  */
-public class AddFn implements FluentFunction_OLD {
+@NullMarked
+public enum AddFn implements FluentFunction {
 
     // math terminology refresher: 'augend' + 'addend' = 'sum'
+    IADD; // so very Excel
 
-    public static final String NAME = "IADD";   // so very Excel
 
-    public AddFn() {}
-
-    @Override
-    public String name() {
-        return NAME;
-    }
 
     @Override
-    public List<FluentValue<?>> apply(final ResolvedParameters_OLD params, final Scope scope) {
-        FluentFunction_OLD.ensureInput( params );
-        final long addend = params.options()
+    public List<FluentValue<?>> apply(final ResolvedParameters parameters, final Scope scope) throws FluentFunctionException {
+        FluentFunction.ensureInput( parameters );
+
+        final long addend = parameters.options()
                 .asLong( "addend" )
                 .orElseThrow(
-                        () -> FluentFunctionException.create( "Missing required option 'addend'" )
+                        () -> FluentFunctionException.of( "Missing required option 'addend'" )
                 );
 
-        return params.valuesAll()
-                .peek( FluentFunction_OLD::validate )
-                .<FluentValue<?>>map( v -> asLongAndAdd( v, addend ) )
+        return parameters.positionals()
+                .mapToLong( AddFn::toLongFn )
+                .map( augend -> augend + addend)
+                .<FluentValue<?>>mapToObj( FluentNumber::of)
                 .toList();
     }
 
-
-    private static FluentValue<?> asLongAndAdd(final FluentValue<?> in, final long addend) {
-        final Long augend = FluentFunction_OLD.asFluentValue( FluentNumber.FluentLong.class, in ).value();
-        return FluentNumber.of( augend + addend );
+    private static long toLongFn(final FluentValue<?> in) {
+        if(in instanceof FluentNumber.FluentLong(Long value)) {
+            return value;
+        }
+        throw FluentFunctionException.of(String.format("Invalid type: '%s':'%s'", in.getClass(), in));
     }
 
 }

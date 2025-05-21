@@ -23,11 +23,11 @@
 
 package fluent.functions.numeric;
 
-import fluent.functions.FluentFunction_OLD;
-import fluent.functions.ResolvedParameters_OLD;
+import fluent.functions.*;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentNumber;
 import fluent.types.FluentValue;
+import org.jspecify.annotations.NullMarked;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -47,23 +47,18 @@ import java.util.List;
  *          <li>ABS("stringvalue") => "stringvalue" </li>
  *      </ul>
  */
-public class AbsFn implements FluentFunction_OLD {
+@NullMarked
+public enum AbsFn implements FluentFunction {
 
-    public static final String NAME = "ABS";
 
-    public AbsFn() {}
-
-    @Override
-    public String name() {
-        return NAME;
-    }
+    ABS;
 
     @Override
-    public List<FluentValue<?>> apply(final ResolvedParameters_OLD params, final Scope scope) {
-        FluentFunction_OLD.ensureInput( params );
+    public List<FluentValue<?>> apply(final ResolvedParameters parameters, final Scope scope) throws FluentFunctionException {
+        FluentFunction.ensureInput( parameters );
 
-        return FluentFunction_OLD.mapOverNumbers(params.valuesAll(),
-                scope, AbsFn::abs);
+        final var biConsumer = FluentFunction.mapOrPassthrough( Number.class, AbsFn::abs );
+        return parameters.positionals().mapMulti( biConsumer ).toList();
     }
 
 

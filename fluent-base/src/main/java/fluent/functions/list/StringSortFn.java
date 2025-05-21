@@ -23,12 +23,13 @@
 
 package fluent.functions.list;
 
-import fluent.bundle.resolver.FluentValueFormatter;
-import fluent.functions.FluentFunction_OLD;
-import fluent.functions.ResolvedParameters_OLD;
 import fluent.bundle.resolver.Scope;
+import fluent.functions.FluentFunction;
+import fluent.functions.FluentFunctionException;
+import fluent.functions.ResolvedParameters;
 import fluent.types.FluentString;
 import fluent.types.FluentValue;
+import org.jspecify.annotations.NullMarked;
 
 import java.text.Collator;
 import java.util.Comparator;
@@ -84,44 +85,25 @@ import java.util.function.Function;
  *
  *     </ul>
  */
-public class StringSortFn implements FluentFunction_OLD {
+@NullMarked
+public enum StringSortFn implements FluentFunction {
+
+
+    STRINGSORT;
 
     // Sorting converts inputs to FluentString prior to sort. The reason is that
     // formatting may affect sort order. However.. sorting strings may not always
     // sort numbers correctly.
 
-    private enum Strength {
-        // low to high
-        PRIMARY, SECONDARY, TERTIARY, IDENTICAL
-    }
-
-    private enum Decomposition {
-        NONE, CANONICAL, FULL
-    }
-
-    private enum Order {
-        NATURAL,
-        REVERSED
-    }
-
-
-    public static final String NAME = "STRINGSORT";
-
     @Override
-    public String name() {
-        return NAME;
-    }
+    public List<FluentValue<?>> apply(final ResolvedParameters parameters, final Scope scope) throws FluentFunctionException {
+        FluentFunction.ensureInput( parameters );
 
-
-    @Override
-    public List<FluentValue<?>> apply(final ResolvedParameters_OLD params, final Scope scope) {
-        FluentFunction_OLD.ensureInput( params );
-
-        final Order order  = params.options().asEnum( Order.class, "order" )
+        final Order order = parameters.options().asEnum( Order.class, "order" )
                 .orElse( Order.NATURAL );
-        final Strength strength = params.options().asEnum( Strength.class, "strength" )
+        final Strength strength = parameters.options().asEnum( Strength.class, "strength" )
                 .orElse( Strength.PRIMARY );
-        final Decomposition decomposition = params.options().asEnum( Decomposition.class, "decomposition" )
+        final Decomposition decomposition = parameters.options().asEnum( Decomposition.class, "decomposition" )
                 .orElse( Decomposition.NONE );
 
         final Collator col = Collator.getInstance( scope.bundle().locale() );
@@ -132,13 +114,12 @@ public class StringSortFn implements FluentFunction_OLD {
         Comparator<FluentString> comparator = (fs1, fs2) -> col.compare( fs1.value(), fs2.value() );
         comparator = (order == Order.REVERSED) ? comparator.reversed() : comparator;
 
-        return params.valuesAll()
+        return parameters.positionals()
                 .map( v -> toFS( v, scope ) )
                 .sorted( comparator )
                 .<FluentValue<?>>map( Function.identity() )
                 .toList();
     }
-
 
     private FluentString toFS(FluentValue<?> in, Scope scope) {
         if (in instanceof FluentString fs) {
@@ -146,6 +127,22 @@ public class StringSortFn implements FluentFunction_OLD {
         } else {
             return FluentString.of( scope.formatter().format( in, scope ) );
         }
+    }
+
+    private enum Strength {
+        // low to high
+        PRIMARY, SECONDARY, TERTIARY, IDENTICAL
+    }
+
+
+    private enum Decomposition {
+        NONE, CANONICAL, FULL
+    }
+
+
+    private enum Order {
+        NATURAL,
+        REVERSED
     }
 
 

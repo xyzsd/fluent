@@ -23,10 +23,10 @@
 
 package fluent.functions.numeric;
 
-import fluent.functions.FluentFunction_OLD;
-import fluent.functions.ResolvedParameters_OLD;
+import fluent.functions.*;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentValue;
+import org.jspecify.annotations.NullMarked;
 
 import java.text.NumberFormat;
 import java.util.List;
@@ -46,37 +46,22 @@ import java.util.List;
  *         <li>{@code minimumFractionDigits:} integer value (0 is default) </li>
  *     </ul>
  */
-public class CurrencyFn implements FluentFunction_OLD {
+@NullMarked
+public enum CurrencyFn implements FluentFunction {
 
-    /**
-     * Function name
-     */
-    public static final String NAME = "CURRENCY";
-
-    public CurrencyFn() {}
+    CURRENCY;
 
     @Override
-    public String name() {
-        return NAME;
-    }
-
-    @Override
-    public List<FluentValue<?>> apply(final ResolvedParameters_OLD params, final Scope scope) {
-        FluentFunction_OLD.ensureInput( params );
+    public List<FluentValue<?>> apply(final ResolvedParameters parameters, final Scope scope) throws FluentFunctionException {
+        FluentFunction.ensureInput( parameters );
 
         final NumberFormat fmt = NumberFormat.getCurrencyInstance( scope.bundle().locale() );
 
-        fmt.setMinimumFractionDigits( params.options().asInt( "minimumFractionDigits" )
+        fmt.setMinimumFractionDigits( parameters.options().asInt( "minimumFractionDigits" )
                 .orElse( fmt.getMinimumFractionDigits() )
         );
 
-        return FluentFunction_OLD.mapOverNumbers(params.valuesAll(),
-                scope, fmt::format);
-
+        final var biConsumer = FluentFunction.mapOrPassthrough( Number.class, fmt::format );
+        return parameters.positionals().mapMulti( biConsumer ).toList();
     }
-
-
-
-
-
 }

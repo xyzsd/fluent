@@ -25,7 +25,6 @@ package fluent.functions.temporal;
 
 import fluent.bundle.resolver.Scope;
 import fluent.functions.*;
-import fluent.types.FluentString;
 import fluent.types.FluentValue;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -81,7 +80,7 @@ public enum TemporalFn implements FluentFunction, ImplicitFormatter<TemporalAcce
     }
 
     @Override
-    public List<FluentValue<?>> apply(ResolvedParameters parameters, Scope scope) throws FluentFunctionException {
+    public List<FluentValue<?>> apply(final ResolvedParameters parameters, final Scope scope) throws FluentFunctionException {
         FluentFunction.ensureInput( parameters );
 
         CustomDTF dtf = new CustomDTF(parameters.options(), scope.bundle().locale() );
@@ -158,7 +157,7 @@ public enum TemporalFn implements FluentFunction, ImplicitFormatter<TemporalAcce
                     formatter = DateTimeFormatter.ofLocalizedTime( timeStyle )
                             .withLocale( locale );
                 } else {
-                    throw FluentFunctionException.create(
+                    throw FluentFunctionException.of(
                             "No local date OR time for temporal: '%s'",
                             temporalAccessor
                     );

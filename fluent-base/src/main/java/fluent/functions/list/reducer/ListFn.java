@@ -97,7 +97,7 @@ public enum ListFn implements TerminalReducer {
     // this would occur if we do something like LIST($anum), LIST($anum, $bval),
     // or LIST($anum, COUNT($avalue), type:or), etc.
     @Override
-    public List<FluentValue<?>> apply(ResolvedParameters parameters, Scope scope) throws FluentFunctionException {
+    public List<FluentValue<?>> apply(final ResolvedParameters parameters, final Scope scope) throws FluentFunctionException {
         // fast path (no list; single value)
         if (parameters.isSingle()) {
             return List.of( FluentString.of( scope.formatter().format( parameters.singleValue(), scope ) ) );

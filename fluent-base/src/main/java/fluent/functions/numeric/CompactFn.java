@@ -23,10 +23,10 @@
 
 package fluent.functions.numeric;
 
-import fluent.functions.FluentFunction_OLD;
-import fluent.functions.ResolvedParameters_OLD;
+import fluent.functions.*;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentValue;
+import org.jspecify.annotations.NullMarked;
 
 import java.text.CompactNumberFormat;
 import java.text.NumberFormat;
@@ -47,29 +47,19 @@ import java.util.List;
  *         <li>{@code minimumFractionDigits:} integer value (0 is default) </li>
  *     </ul>
  */
-public class CompactFn implements FluentFunction_OLD {
+@NullMarked
+public enum CompactFn implements FluentFunction {
 
-    /**
-     * Method name
-     */
-    public static final String NAME = "COMPACT";
-
-
-    public CompactFn() {}
+    COMPACT;
 
     @Override
-    public String name() {
-        return NAME;
-    }
+    public List<FluentValue<?>> apply(final ResolvedParameters parameters, final Scope scope) throws FluentFunctionException {
+        FluentFunction.ensureInput( parameters );
 
-    @Override
-    public List<FluentValue<?>> apply(final ResolvedParameters_OLD params, final Scope scope) {
-        FluentFunction_OLD.ensureInput( params );
-
-        final NumberFormat.Style style = params.options().asEnum( NumberFormat.Style.class, "style" )
+        final NumberFormat.Style style = parameters.options().asEnum( NumberFormat.Style.class, "style" )
                 .orElse( NumberFormat.Style.SHORT );
 
-        final int minFractionDigits = params.options().asInt( "minimumFractionDigits" ).orElse( 0 );
+        final int minFractionDigits = parameters.options().asInt( "minimumFractionDigits" ).orElse( 0 );
 
         final CompactNumberFormat fmt = (CompactNumberFormat) NumberFormat.getCompactNumberInstance(
                 scope.bundle().locale(), style );
@@ -77,8 +67,8 @@ public class CompactFn implements FluentFunction_OLD {
         // negative values replaced with 0 per CompactNumberFormat spec
         fmt.setMinimumFractionDigits( minFractionDigits );
 
-        return FluentFunction_OLD.mapOverNumbers( params.valuesAll(),
-                scope, fmt::format );
+        final var biConsumer = FluentFunction.mapOrPassthrough( Number.class, fmt::format );
+        return parameters.positionals().mapMulti( biConsumer ).toList();
     }
 
 

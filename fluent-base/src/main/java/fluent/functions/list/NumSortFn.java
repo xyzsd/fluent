@@ -23,12 +23,11 @@
 
 package fluent.functions.list;
 
-import fluent.functions.FluentFunction_OLD;
-import fluent.functions.FluentFunctionException;
-import fluent.functions.ResolvedParameters_OLD;
+import fluent.functions.*;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentNumber;
 import fluent.types.FluentValue;
+import org.jspecify.annotations.NullMarked;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
@@ -51,24 +50,21 @@ import java.util.List;
  *  <p>
  *      NUMSORT() will error on non-numeric input. e.g., {@code NUMSORT(3, 2, 1, "barf") } will result in an error.
  */
-public class NumSortFn implements FluentFunction_OLD {
+@NullMarked
+public enum NumSortFn implements FluentFunction {
 
-    public static final String NAME = "NUMSORT";
 
-    @Override
-    public String name() {
-        return NAME;
-    }
+    NUMSORT;
 
 
     @Override
-    public List<FluentValue<?>> apply(final ResolvedParameters_OLD params, final Scope scope) {
-        FluentFunction_OLD.ensureInput( params );
+    public List<FluentValue<?>> apply(final ResolvedParameters parameters, final Scope scope) throws FluentFunctionException {
+        FluentFunction.ensureInput( parameters );
 
-        final Order order = params.options().asEnum( Order.class, "order" )
+        final Order order = parameters.options().asEnum( Order.class, "order" )
                 .orElse( Order.ASCENDING );
 
-        return params.valuesAll()
+        return parameters.positionals()
                 .map( NumSortFn::toBigDecimal )
                 .sorted( order.comparator() )
                 .<FluentValue<?>>map( FluentNumber::of )
@@ -81,7 +77,7 @@ public class NumSortFn implements FluentFunction_OLD {
             return fluentNumber.asBigDecimal();
         }
 
-        throw FluentFunctionException.create(
+        throw FluentFunctionException.of(
                 "Expected numeric value, not non-numeric FluentValue: '%s'", in
         );
     }
