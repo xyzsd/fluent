@@ -27,7 +27,9 @@ import fluent.syntax.AST.Pattern;
 import fluent.syntax.parser.FTLParser;
 import fluent.syntax.parser.FTLStream;
 import fluent.syntax.parser.ParseException;
+import fluent.types.FluentNumber;
 import fluent.types.FluentString;
+import fluent.types.FluentValue;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -561,6 +563,45 @@ class FTLParserSmokeTest {
     }
 
     @Test
+    void simpleFunctionTestForCOUNT() {
+        // COUNT() / no args
+        assertEquals(
+                "Hello, 0!",
+                msg( "hello = Hello, {COUNT()}!\n", "hello", Map.of( "name", "world" ) )
+        );
+
+        // COUNT() 1 arg with 1 value
+        assertEquals(
+                "Hello, 1!",
+                msg( "hello = Hello, {COUNT($name)}!\n", "hello", Map.of( "name", new FluentString( "world" ) ) )
+        );
+
+        // COUNT() 2 args with 1 value each
+        assertEquals(
+                "Hello, 2!",
+                msg( "hello = Hello, {COUNT($name, $age)}!\n", "hello",
+                        Map.of( "name", new FluentString( "world" ),
+                                "age", FluentNumber.of(99)) )
+        );
+
+        // COUNT() 1 arg with a list of 3 items
+        assertEquals(
+                "Hello, 3!",
+                msg( "hello = Hello, {COUNT($names)}!\n", "hello",
+                        Map.of( "names", List.of("Alfonso","Betty","Charlie"),
+                                "age", FluentNumber.of(99)) )
+        );
+
+        // COUNT() 2 args with a list and a non-list
+        assertEquals(
+                "Hello, 4!",
+                msg( "hello = Hello, {COUNT($names, $age)}!\n", "hello",
+                        Map.of( "names", List.of("Alfonso","Betty","Charlie"),
+                                "age", FluentNumber.of(99)) )
+        );
+    }
+
+    @Test
     void missingVariableTest() {
         assertEquals(
                 "Hello, {$name}!",
@@ -592,6 +633,8 @@ class FTLParserSmokeTest {
                 "You have things.",
                 msg( s1, "you-own" , Map.of("count", "ten") )
         );
+
+
 
     }
 

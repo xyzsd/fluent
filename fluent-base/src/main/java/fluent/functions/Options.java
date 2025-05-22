@@ -312,7 +312,7 @@ public class Options {
             // todo: decide if returning an empty optional or NPE/FFE is better...
             return Optional.of( fn.apply( String.valueOf( val ) ) );
         } catch (Exception e) {
-            throw FluentFunctionException.wrap( e );
+            throw FluentFunctionException.of( e );
         }
     }
 

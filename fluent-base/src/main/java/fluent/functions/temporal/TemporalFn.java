@@ -129,7 +129,7 @@ public enum TemporalFn implements FluentFunction, ImplicitFormatter<TemporalAcce
             try {
                 return DateTimeFormatter.ofPattern( in );
             } catch (IllegalArgumentException e) {
-                throw FluentFunctionException.wrap( e );
+                throw FluentFunctionException.of( e );
             }
         }
 
@@ -171,7 +171,7 @@ public enum TemporalFn implements FluentFunction, ImplicitFormatter<TemporalAcce
             try {
                 return formatter.format( temporalAccessor );
             } catch (DateTimeException e) {
-                throw FluentFunctionException.wrap( e );
+                throw FluentFunctionException.of( e );
             }
         }
     }

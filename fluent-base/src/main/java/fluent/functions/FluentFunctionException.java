@@ -73,7 +73,7 @@ public class FluentFunctionException extends RuntimeException {
     ///
     /// @param cause Throwable to wrap
     /// @return FluentFunctionException
-    public static FluentFunctionException wrap(Throwable cause) {
+    public static FluentFunctionException of(Throwable cause) {
         return new FluentFunctionException( null, cause.getMessage(), cause );
     }
 
@@ -81,7 +81,7 @@ public class FluentFunctionException extends RuntimeException {
     ///
     /// @param cause Throwable to wrap
     /// @return FluentFunctionException
-    public static FluentFunctionException wrap(Throwable cause, String formatString, Object... args) {
+    public static FluentFunctionException of(Throwable cause, String formatString, Object... args) {
         return new FluentFunctionException( null, String.format( formatString, args ), cause );
     }
 

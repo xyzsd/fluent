@@ -396,15 +396,17 @@ public class FluentBundle {
 
         /// Add default functions from FluentFunctions.
         public Builder withDefaultFunctions() {
-            FluentFunctions.IMPLICITS.functions()
-                    .forEach( fn -> functions.put(fn.name(), fn) );
-
             fvfBuilder.setTerminalReducer( ListFn.LIST );
             fvfBuilder.setNumberFormatter( NumberFn.NUMBER, Options.EMPTY );
             fvfBuilder.setTemporalFormatter( TemporalFn.TEMPORAL, Options.EMPTY );
 
-            // TODO: add the others when ready
-            System.err.println("--TODO-- add additional fn when ready");
+            // add *all* functions in FluentFunctions (including IMPLICITS)
+            // (since the default IMPLICITS can also be called as functions)
+            for (FluentFunctions ffns : FluentFunctions.values()) {
+                for ( FluentFunction fn : ffns.functions()) {
+                    functions.put(fn.name(), fn);
+                }
+            }
 
             return this;
         }

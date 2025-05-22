@@ -28,6 +28,8 @@ public interface ImplicitFormatter<T> {
 
 // todo: likely will want to look at caching formatters and what not, but need to do performance eval first
 //
+     // if a Function implements this AND FluentFunction, we should override
+    // apply() to return a List<FluentString>
 
     String format(FluentValue<? extends T> in, Scope scope);
 
