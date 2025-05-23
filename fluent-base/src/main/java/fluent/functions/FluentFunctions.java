@@ -5,6 +5,7 @@ import fluent.functions.list.NumSortFn;
 import fluent.functions.list.StringSortFn;
 import fluent.functions.list.reducer.ListFn;
 import fluent.functions.numeric.*;
+import fluent.functions.other.BooleanFn;
 import fluent.functions.string.CaseFn;
 import fluent.functions.temporal.TemporalFn;
 import org.jspecify.annotations.NullMarked;
@@ -31,8 +32,10 @@ public enum FluentFunctions {
     LIST( Set.of( ListFn.LIST, CountFn.COUNT, NumSortFn.NUMSORT, StringSortFn.STRINGSORT ) ),
 
     /// Functions that may operate on units of time or durations
-    TEMPORAL( Set.of( TemporalFn.TEMPORAL ) );
+    TEMPORAL( Set.of( TemporalFn.TEMPORAL ) ),
 
+    /// Miscellanous functions
+    MISC( Set.of( BooleanFn.BOOLEAN ));
 
     ///  Complete set without the required implicits specified in IMPLICITS
     public static final Set<FluentFunction> ALL_NONIMPLICIT = makeSet();
@@ -52,6 +55,7 @@ public enum FluentFunctions {
         return Set.copyOf( set );
     }
 
-    public Set<FluentFunction> functions() {return functions;}
+    /// FluentFunctions for the given type
+    public Set<FluentFunction> functions() {return Set.copyOf( functions );}
 
 }

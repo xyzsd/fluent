@@ -23,11 +23,9 @@
 
 package fluent.types;
 
-import fluent.bundle.resolver.Scope;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
-import java.util.stream.Stream;
 
 
 ///

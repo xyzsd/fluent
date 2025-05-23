@@ -23,12 +23,12 @@
 
 package fluent.syntax.AST;
 
+import org.jspecify.annotations.NullMarked;
+
 /// Any SyntaxNode that has an Identifier should be Identifiable.
 ///
 /// This permits this interface permits direct access to the name of the identifier as a String, and also
 /// ensures uniformity of the method name (`identifier()` to access the identifier.
-import org.jspecify.annotations.NullMarked;
-
 @NullMarked
 public interface Identifiable {
 

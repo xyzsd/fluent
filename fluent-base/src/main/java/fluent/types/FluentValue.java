@@ -29,8 +29,6 @@ import org.jspecify.annotations.Nullable;
 import java.time.temporal.TemporalAccessor;
 import java.util.*;
 
-import static java.util.Objects.requireNonNull;
-
 
 /// Interface for all FluentValues.
 ///
@@ -45,31 +43,36 @@ public sealed interface FluentValue<T>
         permits FluentCustom, FluentNumber, FluentString, FluentTemporal, FluentError {
 
     ///  Value used for null
-    static final FluentString FLUENT_NULL = new FluentString( "null" );
+    FluentString FLUENT_NULL = new FluentString( "null" );
 
     ///  the Value
     T value();
 
 
-    /// Map objects to FluentValues.
+    /// Map (singular) objects to FluentValues.
     ///
-    /// It is not guaranteed that the FluentValue type will be the same as the input type.
-    /// This does NOT handle collections; it will wrap them in a FluentCustom.
+    /// It is not guaranteed that the FluentValue type will be the same as the input type,
+    /// however this is generally true. Number types are widened to the value that is
+    /// most appropriate (long, double, or BigDecimal).
     ///
-    /// See FluentValueFactory for default mappings.
+    /// FluentValues passed in will return out without modification (they will
+    /// not be wrapped within another FluentValue).
+    ///
+    /// If a null or a Collection is provided, an exception will be thrown.
+    /// For Collections, use {@link #ofCollection(Object)}.
+    ///
     ///
     /// @param any non-null input
-    /// @param <T> type
+    /// @param <V> type
     /// @return FluentValue
-    static <V> FluentValue<?> toFluentValue(final V any) {
-        requireNonNull( any );
-        checkNested(any);   // could put as case Collection<?> instead..
-
+    static <V> FluentValue<?> of(final V any) {
         return switch(any) {
+            case null -> throw new NullPointerException("null values not allowed");
             case FluentValue<?> v -> v; // prevent re-wrapping
             case String s -> FluentString.of(s);
             case Number n -> FluentNumber.from(n);
             case TemporalAccessor t -> FluentTemporal.of(t);
+            case Collection<?> _, Map<?,?> _-> throw invalid(any);  // illegal!
             default -> FluentCustom.of(any);
         };
     }
@@ -82,46 +85,44 @@ public sealed interface FluentValue<T>
     /// in the event of a program error.
     ///
     /// @param any input
-    /// @param <T> any type
+    /// @param <V> any type
     /// @return FluentValue created
-    static <V> FluentValue<?> toFluentValueNullsafe(final V any) {
-        return toFluentValue( (any == null) ? FLUENT_NULL : any );
+    static <V> FluentValue<?> ofNullable(@Nullable final V any) {
+        return of( (any == null) ? FLUENT_NULL : any );
     }
 
-    /// Convert the given Set to a List of FluentValues.
-    /// Note that depending upon the Set implementation, the argument
-    /// order may vary.
+    /// Convert a Collection to a List of FluentValues.
     ///
-    /// Nested collections are not supported!
+    /// Single items can be specified, to create a single-item list. But Collections
+    /// must implement the {@link SequencedCollection} interface, to maintain a well-defined and
+    /// consistent iteration order.
     ///
-    /// Note that only SequencedCollections are allowed, if a colletion is given.
-    ///
+    /// @param in input; for single items, this will result in a single-item list.
     /// @return return the Collection as a List of FluentValues.
-    static List<FluentValue<?>> toCollection(@Nullable final Object item) {
-        return switch(item) {
+    static List<FluentValue<?>> ofCollection(@Nullable final Object in) {
+        return switch(in) {
             case null -> List.of(FLUENT_NULL);
             case SequencedCollection<?> seq -> convertCollection(seq);
             // These could be passed, but do not make sense. Must check AFTER SequencedCollection
             case Collection<?> _, Map<?,?> _ -> throw new IllegalArgumentException("Only SequencedCollections are supported");
-            // default
-            default -> List.of(toFluentValue( item ));
+            // default (including singular items)
+            default -> List.of( of( in ));
         };
     }
 
 
-    //  Helper method
+    //  Helper method. map(ofNullable()) also checks for (disallowed) nested collections
     private static List<FluentValue<?>> convertCollection(final Collection<?> collection) {
         return collection.stream()
-                .map(FluentValue::checkNested)
-                .<FluentValue<?>>map( FluentValue::toFluentValueNullsafe )
+                .<FluentValue<?>>map( FluentValue::ofNullable )
                 .toList();
     }
 
-    // Helper method, to check for a Collection within a Collection (which is not allowed)
-    private static <V> @Nullable V checkNested(@Nullable final V in) {
-        if(in instanceof Collection<?>) {
-            throw new IllegalArgumentException("Invalid arguments. Cannot have a collection nested within another collection. "+in);
-        }
-        return in;
+    private static IllegalArgumentException invalid(final Object in) throws IllegalArgumentException {
+        return new IllegalArgumentException(String.format(
+                """
+                Invalid: '%s' FluentValues cannot contain objects of this type. 
+                Values cannot be Collection types (or Map).
+                """, in.getClass()));
     }
 }

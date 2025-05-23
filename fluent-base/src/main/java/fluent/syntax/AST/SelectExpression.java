@@ -27,7 +27,6 @@ package fluent.syntax.AST;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
-import java.util.Optional;
 
 ///  SelectExpression
 @NullMarked
@@ -38,53 +37,32 @@ public record SelectExpression(Expression selector,
         variants = List.copyOf( variants );
     }
 
-    /**
-     * Returns the default variant for this SelectExpression
-     */
+    /// Returns the default variant for this SelectExpression
     public Variant defaultVariant() {
-        return variants.stream()
-                .filter( Variant::isDefault )
-                .findFirst()
-                // the following should not occur, as the parser ensures there is a default
-                .orElseThrow( () -> new IllegalStateException( "Missing default!" ) );
+        for(Variant variant : variants) {
+            if(variant.isDefault()) {
+                return variant;
+            }
+        }
+        // parser error
+        throw new IllegalStateException("Missing default variant");
     }
 
 
-    /**
-     * Match a variant based on name.
-     */
-    public Optional<Variant> matchVariant(final String s) {
-        return variants.stream()
-                .filter( variant -> variant.key().equals( s ) )
-                .findFirst();
-    }
-
-
-    /**
-     * Match a variant by name (case-sensitive exact match); if there
-     * is no match, return the default variant.
-     *
-     * @param name name to match (case sensitive)
-     * @return matching variant, or default variant if there is no match
-     */
+    /// Match a variant by name (case-sensitive exact match); if there
+    /// is no match, return the default variant.
+    ///
+    /// @param name name to match (case sensitive)
+    /// @return matching variant, or default variant if there is no match
     public Variant matchOrDefault(final String name) {
-        Variant defaultVariant = null;
-        for (Variant v : variants) {
-            if (v.key().equals( name )) {
-                return v;
-            }
-
-            if (v.isDefault() && defaultVariant == null) {
-                defaultVariant = v;
+        // NOTE: The parser enforces that there is always one and only one default Variant.
+        for (Variant variant : variants) {
+            if (variant.key().equals( name )) {
+                return variant;
             }
         }
 
-        // this should not occur ... presence of a default is enforced by the parser
-        if (defaultVariant == null) {
-            throw new IllegalStateException( "Missing default!" );
-        }
-
-        return defaultVariant;
+        return defaultVariant();
     }
 
 }

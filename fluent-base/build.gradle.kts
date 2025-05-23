@@ -23,6 +23,8 @@
 import com.vanniktech.maven.publish.SonatypeHost
 import com.vanniktech.maven.publish.JavaLibrary
 import com.vanniktech.maven.publish.JavadocJar
+import com.github.spotbugs.snom.Confidence
+import com.github.spotbugs.snom.Effort
 
 plugins {
     id("com.vanniktech.maven.publish") version "0.31.0"
@@ -81,7 +83,7 @@ tasks.jar {
 
 tasks.javadoc {
     val javadocOptions = options as CoreJavadocOptions
-    //javadocOptions.addStringOption("source", "16")
+    //javadocOptions.addStringOption("source", "21")
     //javadocOptions.addBooleanOption("-enable-preview", true)
     javadocOptions.addStringOption("Xdoclint:none", "-quiet")   // for sanity
 }
@@ -89,6 +91,8 @@ tasks.javadoc {
 spotbugs {
     // for now, we won't break the build on failures.
     ignoreFailures = true
+    effort = Effort.MAX
+    reportLevel = Confidence.LOW
     // our format strings are specific, so will will disable "FormatStringChecker".
     // "FindReturnRef": fails on Scope.java (which is mutable);
     omitVisitors = listOf("FormatStringChecker")

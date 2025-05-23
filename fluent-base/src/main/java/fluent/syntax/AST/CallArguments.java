@@ -30,10 +30,9 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 public record CallArguments(List<Expression> positionals,
                             List<NamedArgument> named) implements SyntaxNode {
+
     public CallArguments {
         positionals = List.copyOf( positionals );
         named = List.copyOf( named );
     }
-
-
 }

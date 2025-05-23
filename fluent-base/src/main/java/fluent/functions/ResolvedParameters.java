@@ -38,15 +38,12 @@ import static java.util.Objects.requireNonNull;
 
 /// Resolved Parameters for Fluent Functions.
 //TODO: probably should limit # of positionals, to say 8 or so
-// should be sufficient. each positionl can be a list
 @NullMarked
 public sealed interface ResolvedParameters
         permits RPImpl.RP0, RPImpl.RP11, RPImpl.RP1n, RPImpl.RPNn {
 
-    ///  Constant ResolvedParameters without positionals arguments and without options
+    ///  Constant ResolvedParameters without positional arguments and without options
     ResolvedParameters RP_EMPTY = new RPImpl.RP0( Options.EMPTY );
-
-
 
     ///  Create a ResolvedParameters from a CallArguments AST node.
     static ResolvedParameters from(@Nullable CallArguments callArgs, final Scope scope) {
@@ -74,18 +71,24 @@ public sealed interface ResolvedParameters
         };
     }
 
+    ///  named Options
     Options options();
 
+    ///  Argument at the given position, if any.
+    ///  This may return an empty list.
     List<FluentValue<?>> positional(int index);
 
-    List<FluentValue<?>> firstPositional();
+    ///  Get the first positional argument.
+    /// If there is none, throw NoSuchElementException
+    List<FluentValue<?>> firstPositional() throws NoSuchElementException;
 
     ///  `true` if there is at least one positional argument with one value.
     boolean hasPositionals();
 
-    // stream ALL arguments, in order
+    /// stream all positional arguments, in order.
     Stream<FluentValue<?>> positionals();
 
+    ///  Number of positional arguments (always >= 0)
     int positionalCount();
 
     // true if single argument with single value (not a list); just one FluentValue<?>
@@ -97,34 +100,5 @@ public sealed interface ResolvedParameters
     default FluentValue<?> singleValue() throws NoSuchElementException {
         throw new NoSuchElementException();
     }
-
-
-    /*
-    // typically used by FluentValue<> formatters
-    // uses options supplied in scope -- if any
-    public static ResolvedParametersNEW from(FluentValue<?> value, final Scope scope) {
-        return new ResolvedParametersNEW( List.of(List.of(value)), scope.options() );
-    }
-
-    public static ResolvedParametersNEW from(List<FluentValue<?>> list, final Scope scope) {
-        if(list.isEmpty()) {
-            return new ResolvedParametersNEW( List.of(), scope.options() );
-        }
-        return new ResolvedParametersNEW( List.of(List.copyOf(list)), scope.options() );
-    }
-
-
-    // replace options with new options
-    public ResolvedParametersNEW with(Options options) {
-        return new ResolvedParametersNEW( this.pos, Objects.requireNonNull( options ) );
-    }
-
-
-    private ResolvedParametersNEW(List<List<FluentValue<?>>> list, Options opts) {
-        this.pos = list;
-        this.options = opts;
-    }
-    */
-
 
 }

@@ -23,11 +23,9 @@
 
 package fluent.types;
 
-import fluent.bundle.resolver.Scope;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
-import java.util.stream.Stream;
 
 /// An error value.
 /// This is used instead of throwing an Exception in order to preserve more of the message,

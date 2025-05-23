@@ -28,7 +28,6 @@ import org.jspecify.annotations.NullMarked;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 
 /// FluentNumber wraps a numeric type.

@@ -36,7 +36,7 @@ import java.util.List;
  * IADD(): Integral-add function
  * <p>
  * Adds the named option "addend" (which must be a long or integer) to each positionals value.
- *
+ * <p>
  * </p>
  * <p>
  * Examples:

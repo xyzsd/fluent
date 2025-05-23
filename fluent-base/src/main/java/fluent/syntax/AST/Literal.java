@@ -64,6 +64,7 @@ public sealed interface Literal<T> extends InlineExpression {
             }
         }
 
+        ///  Type suitable for a map key.
         @Override
         default String key() {
             return String.valueOf( value() );

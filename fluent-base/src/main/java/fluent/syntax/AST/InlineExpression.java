@@ -58,7 +58,9 @@ public sealed interface InlineExpression extends Expression
     }
 
 
-    // note: we use CallArguments BUT there are never any positionals.
+    /// Term reference.
+    ///
+    /// NOTE: we use CallArguments for named values, but there are never any positionals.
     record TermReference(Identifier identifier, @Nullable Identifier attributeID, @Nullable CallArguments arguments)
             implements InlineExpression, Identifiable {
 
@@ -73,13 +75,14 @@ public sealed interface InlineExpression extends Expression
 
     }
 
-
+    ///  Variable reference.
     record VariableReference(Identifier identifier) implements InlineExpression, Identifiable {
         public VariableReference {
             requireNonNull(identifier);
         }
     }
 
+    ///  Function reference
     record FunctionReference(Identifier identifier, @Nullable CallArguments arguments)
             implements InlineExpression, Identifiable {
 

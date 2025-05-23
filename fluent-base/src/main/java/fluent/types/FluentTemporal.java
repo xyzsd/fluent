@@ -27,7 +27,6 @@ import org.jspecify.annotations.NullMarked;
 
 import java.time.temporal.TemporalAccessor;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 /// Temporal type (date, time, ...)
 @NullMarked

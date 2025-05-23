@@ -610,6 +610,23 @@ class FTLParserSmokeTest {
     }
 
     @Test
+    void selectorWithFunctionChain() {
+        String s1 = """
+                
+                owned = You own { COUNT($names) ->
+                     [1] a thing
+                    *[other] many things
+                 }.
+                 
+                """;
+        assertEquals(
+                "You own a thing.",
+                msg( s1, "owned" , Map.of("names", List.of("car","boat","plane")) )
+        );
+    }
+
+
+    @Test
     void selectorTermTest() {
         String s1 = """
                 -thing = { $count ->

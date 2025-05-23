@@ -24,13 +24,13 @@ public class Resolver {
     /** The maximum number of placeables which can be expanded in a single call to 'formatPattern' */
     static final int MAX_PLACEABLES = 100;
 
-    /** Unicode bidi isolation characters */
+    /** Unicode bidi isolation character */
     private static final char FSI = '\u2068';
 
-    /** Unicode bidi isolation characters */
+    /** Unicode bidi isolation character */
     private static final char PDI = '\u2069';
 
-    // initial size of StringBuilder (todo: determine a good initial size or perhaps allow tuning)
+    /* initial size of StringBuilder (todo: determine a good initial size or perhaps allow tuning) */
     private static final int SB_SIZE = 128;
 
 
@@ -203,7 +203,7 @@ public class Resolver {
     // TODO:
     private static List<FluentValue<?>> resolveSelectExpression(final SelectExpression se, final Scope scope) {
         final List<FluentValue<?>> resolved = resolve(se.selector(),  scope ); // recurse
-
+        System.out.println("Resolver:resolveSelectExpression: selectExpress: "+se  );
         throw new UnsupportedOperationException("TODO: select expression resolution");
         /*
         return scope.bundle().implicit_OLD( FluentImplicit.Implicit.JOIN )

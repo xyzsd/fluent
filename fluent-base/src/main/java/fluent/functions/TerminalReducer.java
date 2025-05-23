@@ -1,12 +1,10 @@
 package fluent.functions;
 
 import fluent.bundle.resolver.Scope;
-import fluent.types.FluentString;
 import fluent.types.FluentValue;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 ///
 /// Reduce a value (or multiple values) to a single value.

@@ -25,6 +25,7 @@ package fluent.functions.list;
 
 import fluent.functions.*;
 import fluent.bundle.resolver.Scope;
+import fluent.syntax.AST.SelectExpression;
 import fluent.types.FluentNumber;
 import fluent.types.FluentValue;
 import org.jspecify.annotations.NullMarked;
@@ -60,6 +61,7 @@ public enum CountFn implements FluentFunction {
 
     @Override
     public List<FluentValue<?>> apply(final ResolvedParameters parameters, final Scope scope) throws FluentFunctionException {
+        System.out.println("COUNT: apply(): " + parameters.positionals().count());
         if (!parameters.hasPositionals()) {
             return List.of( FluentNumber.of( 0L ) );
         }
@@ -71,4 +73,12 @@ public enum CountFn implements FluentFunction {
                 parameters.positionals().count()
         ) );
     }
+
+    @Override
+    public FluentValue<?> select(SelectExpression selectExpression, ResolvedParameters parameters, Scope scope) throws FluentFunctionException {
+        System.out.println("COUNT: select(): " + parameters.positionals().count());
+        return FluentFunction.super.select( selectExpression, parameters, scope );
+    }
+
+
 }

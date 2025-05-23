@@ -75,7 +75,7 @@ public interface FluentFunction {
             // We do not want FluentErrors to be modified.
             if (!(in instanceof FluentError) && cls.isInstance( in.value() )) {
                 final T value = cls.cast( in.value() );
-                consumer.accept( FluentValue.toFluentValue( fn.apply( value ) ) );
+                consumer.accept( FluentValue.of( fn.apply( value ) ) );
             } else {
                 // passthrough
                 consumer.accept( in );
@@ -96,7 +96,7 @@ public interface FluentFunction {
                 consumer.accept( in );
             } else if (cls.isInstance( in.value() )) {
                 final T value = cls.cast( in.value() );
-                consumer.accept( FluentValue.toFluentValue( fn.apply( value ) ) );
+                consumer.accept( FluentValue.of( fn.apply( value ) ) );
             }
         };
     }
@@ -143,7 +143,8 @@ public interface FluentFunction {
     default FluentValue<?> select(final SelectExpression selectExpression,
                                   final ResolvedParameters parameters,
                                   final Scope scope) throws FluentFunctionException {
-        return new FluentError( String.format( "%s(): cannot select().", name() ) );
+        throw new UnsupportedOperationException("SELECTION NOT YET IMPLEMENTED. selectExpression: "+selectExpression+"; rp: "+parameters);
+     //   return new FluentError( String.format( "%s(): cannot select().", name() ) );
     }
 
 }

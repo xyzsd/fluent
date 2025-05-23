@@ -24,7 +24,6 @@
 package fluent.functions.numeric;
 
 import fluent.functions.*;
-import fluent.functions.PluralSelector;
 import fluent.syntax.AST.SelectExpression;
 import fluent.bundle.resolver.Scope;
 import fluent.types.FluentValue;
@@ -155,7 +154,7 @@ public enum NumberFn implements FluentFunction, ImplicitFormatter<Number> {
 
 
 
-
+    // TODO: rename 'string' to EXACT (?)
     private enum SelectType {
         // CLDR categories:
         CARDINAL, ORDINAL,
