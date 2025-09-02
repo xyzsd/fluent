@@ -1,356 +1,72 @@
 
 
 MASTER TO DO LIST
-===================
+=================
 
-REALLY clean up swar class
-
-look at todos in FTLStream and Parser
-look at skipXXX methods, etc.
-esp blank blocks
-
-skipToEOL (SWAR::nextLF) use in skipBlankBlock??
-    not sure we really need to look for cr-lf there. yeah we do
-    crMultikey tests -- need to take into account EOF and then NOT strip
-
-    also: optimize nextLF (eliminate uneeded variables)
-
-need SWAR to handle     void skipBlank() {
-                            while (pos < size) {
-                                final byte b = seq[pos];
-                                if (b == ' ' || b == '\n') {
-                                    pos++;
-                                } else if (b == '\r' && isNextChar( (byte) '\n' )) {
-                                    pos += 2;
-                                } else {
-                                    break;
-                                }
-                            }
-                        }
-    which could be adapted for skipBlankBlock() too
-    the main difference is the 'rewind' vs just continue
-
-    trickier SWAR though b/c of CRLF
-        x x x x     cr
-          y y y y   lf
-
-        x x x x block:
-            search for cr, lf, ' '
-            but cr kept for later, & with y block, then merged with lf/' '
-            y y y y block : search for lf ONLY
-
-
-
-
-** plan **
 (1) parser fixes/improvements
 
 (2) parser performance
-    simple:
-        loop bounds/etc speedups (see: 'eliminate getfield' in string.java as an example)
 
-
-        instead of searching for whitespace, etc. we could use find delimineters (3,4)
-
-
-    **
-        Pattern init : List.copyOf()
-        PatternParser::getTextSlice
-        FTLParser.getTerm
-
-        not sure these statistics are correct
-
-        skipBlankBlock():
-        IntSummaryStatistics{count=1520, sum=269, min=0, average=0.176974, max=3}
-        skipBlankBlockInline():
-        IntSummaryStatistics{count=6301, sum=8705, min=0, average=1.381527, max=11}     // min/max is # of blanks skipped i think
-        skipBlank():
-        IntSummaryStatistics{count=337, sum=521, min=0, average=1.545994, max=12}
-
-    time:
-        DONE: getCOmment(): make it faster when skipping
-            skipEOL to optimize ** DONE
-        DONE: getPattern/getAttribute : remove Optional.map()
-
-https://blog.morazow.com/2024/02/11/finding-semicolons/
-
-    getIdentifier():
-        A-Z : 0x41 - 0x5A
-        a-z : 0x61 - 0x7A
-        digits,-,_
-        could do ascii check (0x808080..) first; if NOT asci, definitely not valid
-        so:
-        (1)
-            input & HI_BITS;    // 0x808080
-            // subtract 0x41 from input; if any byte 0x41, MSB set
-            // subtract 0x5B from input; if any byte > 0x5B, NOT set MSB
-            // combine
-
-            x ^ 0x2222222222222222: This XOR operation will result in 0 for any byte that matches the 0x22 value.
-            - 0x0101010101010101: Subtracting 1 from each byte will cause a borrow and set the MSB of a byte only if that byte was 0.
-            & 0x8080808080808080: A final AND isolates the MSBs, leaving a mask that identifies matching bytes.
-SIMD techniques for range checking Since SIMD typically only supports equality comparisons, range checks are handled with a few clever numeric tricks: The signed comparison trick: One common method involves shifting the range into the negative number space using a subtraction or XOR operation. By manipulating the most significant bit, a single signed comparison can check if a value is above a lower bound. For example, subtracting a constant min from both the character and the upper bound of the range can effectively check for char >= min and char <= max with fewer instructions.Unsigned comparison with subtraction: To check for char between min and max (inclusive), you can use the expression \((char-min)\le (max-min)\) with an unsigned comparison. The result of the (char - min) subtraction will wrap around for values below min, making the unsigned result very large and failing the comparison. This single unsigned comparison is a highly efficient SIMD operation. 
-
-
-
-(2) crMultiKeyTest, crMultilineValueTest, junk
+(3) crMultiKeyTest, crMultilineValueTest
     <CR> :
         omitting CR at EOF.
     handle <CR> appropriately
     seems to be mainly at/near EOF
-    but some spacing difference on multikey test
+    but evaluate potential spacing difference on multikey test
+    junk test fixed after changing to octet-based stream parser, which could potentially fix additional bugs
 
-    junk test : may be due to EOF marker
+(4) ? AST optimizations ?
+    - nested placeables -> collapse (if constant)
+    - merge adjacent TextElements/constant placeables into a single TextElement
+    - need to look at actual ASTs in more detail, to see if this is useful
 
-    see FTLPatternParser
-    has to do with strip-trailing-whitespace
-    RUST: https://github.com/projectfluent/fluent-rs/blob/main/fluent-syntax/src/parser/slice.rs
-        trim_end_matches(matches_fluent_ws)
-        where matches_fluent_ws == (' ' || '\r' || '\n')
+(5) ? feature (low priority)
+    easier ways to extract comments from a resource bundle (if we parse them)
 
+(6) function tests
+    this is a very large test surface, so we may only test essentials
 
-    see: FTLPAtternParser:
-    BEFORE we convert to substring, we could strip off whitespace since we are NOT stripping unicode WS,
-    and we are really still operating on ASCII (no need for codepoints). I think.
-    ASCII will not match any high-surrogates, or low-hi surrogate pairs.
-    lone surrogates are invalid UTF16
+(7) make sure fluentBundle has a formatPattern(Pattern)
+    useful for term formatting/usage/etc.
 
+(8) simple diagnostics
+    FluentBundle::toString(): should print bundle name, # of terms, messages, locale (simple diagnostic info)
+(9) FluentBundle / API streamlining. Error handling has been markedly improved.
 
-    e.g.,
-        go through array from end, is matches \t, \r, \n then decrement 'end'.
-        then use the modified end in the ps.substring
+(10) look at all code 'TODOs'
 
+(11) smoketest bugs
+    literal doubles / formatting
+    EN_US_POSIX uses 6 digits, otherwise 3 (!)
+    need to investigate ICU number format
 
-                        String text = ps.subString( start, end );
+(12) spotbugs / errorprone
 
-                        if (lastNonBlank == count) {
-                            int endIndex = text.length();
-                            while (0 < endIndex) {
-                                int codepoint = text.codePointBefore(endIndex);
-                                if (codepoint != ' ' && codepoint != '\t' && codepoint != '\r' && codepoint != '\n') {
-                                    break;
-                                }
-                                endIndex -= Character.charCount(codepoint);
-                            }
-                            text = text.substring(0, endIndex);
-                        }
-asssert (condition) : "error message"
+(13) DOCUMENTATION (particularly functions, etc.) and FluentBundle/etc.
+        * also why Fluent vs. ICU::MF2
 
-optimizations
-    https://richardstartin.github.io/posts/finding-bytes
-    https://docs.rs/memchr/latest/memchr/fn.memchr3.html and https://github.com/BurntSushi/memchr
+(14) EXAMPLES in documentation
+        * how to read in FTL
+        * how to replace DATETIME with TEMPORAL
 
-could be subtle bugs in UTF8-UTF16 conversion and then parsing
-Bytes that never appear in UTF-8: 0xC0, 0xC1, 0xF5–0xFF
+(15) performance testing, w/and w/o cache. cache improvements.
+     Message rendering performance (more important than parser improvements, really)
 
-
-
-WORKING swar (with LONG) for LF detection
-use for LF/CR detection
-    skipBlankBlock
-    skipBlankInline
-    etc.
-
-what about consecutive delimiters
-
-e.g. xxxx0a0a0a0axxxx
-
-https://lemire.me/blog/2018/03/08/iterating-over-set-bits-quickly-simd-edition/
-
-get indices of all bits set to one:
-https://lemire.me/blog/2018/03/08/iterating-over-set-bits-quickly-simd-edition/
-    could be useful to find CR/LF/etc.
-
-https://lemire.me/blog/2024/07/20/scan-html-even-faster-with-simd-instructions-c-and-c/
-https://arxiv.org/pdf/1902.08318   vectorized classification (used in SIMD json parsing)
-https://lemire.me/blog/2018/09/30/quickly-identifying-a-sequence-of-digits-in-a-string-of-characters/
-https://lemire.me/blog/2023/02/07/bit-hacking-with-go-code/
-
-also see :: 0x80.pl/notesen/
-see foreign function java and the following:
-ruby/simd and simd-java
-
-    string search
-    (2 blocks, offset 1) for cr/lf
-    e.g.
-        a  b  cr lf c d e
-        0  1  2  3  4 cr 6
-        cr-cr-cr-cr
-           lf-lf-lf-lf
-               1  1
-        then would have to & it with ffff0000, 0000ffff, ...
-        so shift by 1 and AND with FFFF to see if 1 or 0
-            then shift again
-
-        n & (n >> 1) == 1  then at least two adjacent bits are set
-
-        so that the two adacent would either end up as a '1' or zero
-
-               adjacent ones then
-               we know the index
-               potentially
-
-               or we could search for 'lf' check 1-lf for 'cr'
-                (but .. slower since most of the time likely just lf)
-               search for 'cr' and see if next is 'lf'
-
-
-    and also multi-search (> 1 delimeter)
-first convert to UTF8 searching
-then do some profiling
-
-could search for =
-but real gains likely:
-a) comment-skipping '#' -> newline/eof
-b) delimiter searching (mainly newline) but also '}'
-c) whitespace skipping
-
-
-todo: should read in bytes
-      bytes are assumed UTF8
-      can still process bytes since UTF8 encodes ascii
-      but need to process as bytes
-      ByteBuffer
-
-      ByteBuffer allocateDirect<<NO
-      also could used MappedByteBuffer to read in file
-
-    ByteBuffer.allocateDirect(int capacity)
-        (then copy)
-
-        get()
-        get(index)
-        get(..bulk methods)
-        slice(int index, int length)
-        mark/reset
-        position(int) : set position
-        int position() : get position
-
-    ascii: 00->127 (00->7F)
-    UTF8: single byte if 00-7F
-
-    U0080->07FF
-
-
-
-
-
-(3) asserts in FTLStream (remove?)
-
-??) optimizer
-    nested placeables -> collapse
-    textelements/placeables that are consecutive: merge
-
-
-??)
-    easier way to get comment/group comment/message comment from bundle ?
-
-    ** placeable number literals : formatting
-
-
-6) make sure fluentBundle has a formatPattern(Pattern)
-    useful for term stuff
-
-9) function tests
-
-6) fluentbundle :
-    toString(): should print bundle name, # of terms, messages, etc. just
-    basic diagnostics
-7) FluentBundle / API streamlining. Error handling has been markedly improved.
-8) tests!! maybe AI can help generate/translate
-    create a 'testutils'
-    have smoketest use it
-    then create code for first few test files
-    see if AI can generate the rest
-        use json (part of) to verify
-
-13) look at all code 'TODOs'
-14) bug fixes
-        * smoketest bugs
-            *   literal doubles / formatting
-                see what spec says
-
-                Expected :-3.142
-                Actual   :-3.141593
-
-                EN_US_POSIX uses 6 digits, otherwise 3 (!)
-                need to investigate ICU number format
-
-17) spotbugs / errorprone
-18) performance testing, w/and w/o cache. cache improvements.
-    need test fixtures, and maybe the firefox FTL, to best test
-19) DOCUMENTATION (particularly functions, etc.) and FluentBundle/etc.
-22) ** MANY MORE TESTS ** and fixture for handling json / ftl tests
-23) inform Fluent project of existence
-24) docs docs docs
-    how to initialize
-    how to replace datetime with temporal
-    etc.
-    why fluent vs. MF2
-25) locale fallback
-26) javadoc.io
-27) performance
-    * message formatting/construction
-    * re-look at parsing
-    * AST optimizations
------------------------------
-future versions
-
-TESTS
-    first:
-        more smoketests
-    then:
-        spec conformance tests
-        https://github.com/projectfluent/fluent/tree/master/test/fixtures
-        will need json in/out for AST
-
-
-NEXT STEPS:
-- language matching
-  - how to search/match classpath for resource fork/language matching
-      - or a group of files/urls/etc.
-      - a couple of ways:
-        - provide known languages ahead of time
-          - string paths, 'paths', URIs, depends. associate with locale
-          - then use localematcher
-        - OR
-        - probe (e.g., en_gb -> en -> root) (root or fallback)
-        - via constructing an array of names:
-              'en_gb_xx' -> en_gb_xx, en_gb, en, FALLBACK (if defined) or ""
-              but really what if there was en_gb, en_us, and fr
-             how would en_xx fall back to en_gb/en_us ? unless we knew about it
-             how would en_xx fall back to en_gb/en_us ? unless we knew about it
-
-- AST optimization (likely as an optional step)
-    - quoted text merging, escape sequences merging
-    - merge adjacent TextElements into a single TextElement
-- Re-evaluate (particularly for JDK17) FTLStream and basic parsing/character conversion
-- Vectorization? SWAR?
-- Test Framework
-    - more tests!
-    - more detailed parser-level tests
-    - assure spec compliance
-    - more detailed function tests
-    - better test organization
-    - JSON serializer for checking AST?
-- Message rendering:
-    - e.g., StringBuilder initial size; look at best defaults for general case
-    - perhaps allow parameter tuning in FluentBundle.Builder ?
-- Performance
-    - parsing (some work has been done on this)
-    - make sure we use JDK intrinsic where applicable
-      - Arrays.xxx
-      - string.indexOf
-      - https://chriswhocodes.com/hotspot_intrinsics_openjdk23.html
-    - vectorization? SWAR?
-    - formatting/rendering
-        - need to profile
-        - JMH harness
-        - consider caching, etpattc. but caution w.r.t. concurrency
-(3)
-    parser, vectorizer  vs. make sure intrinsics used with JDK
-        particularly when finding bounds {$}
-        make sure we are fast esp.w/latest jdk versions
-
+(16) Locale fallback
+    need a simple/easy approach; currently we have no fallback process
+    - language matching
+      - how to search/match classpath for resource fork/language matching
+          - or a group of files/urls/etc.
+          - a couple of ways:
+            - provide known languages ahead of time
+              - string paths, 'paths', URIs, depends. associate with locale
+              - then use localematcher
+            - OR
+            - probe (e.g., en_gb -> en -> root) (root or fallback)
+            - via constructing an array of names:
+                  'en_gb_xx' -> en_gb_xx, en_gb, en, FALLBACK (if defined) or ""
+                  but really what if there was en_gb, en_us, and fr
+                 how would en_xx fall back to en_gb/en_us ? unless we knew about it
+                 how would en_xx fall back to en_gb/en_us ? unless we knew about it
 
 
