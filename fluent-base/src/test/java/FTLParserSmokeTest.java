@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2021, xyzsd (Zach Del)
+ *  Copyright (c) 2025, xyzsd (Zach Del)
  *
  *  Licensed under either of:
  *
@@ -19,33 +19,97 @@
  *
  *
  *
+ *
  */
 
 import fluent.bundle.FluentBundle;
+import fluent.bundle.FluentFunctionRegistry;
 import fluent.bundle.FluentResource;
-import fluent.syntax.AST.Pattern;
-import fluent.syntax.parser.FTLParser;
-import fluent.syntax.parser.FTLStream;
-import fluent.syntax.parser.ParseException;
+import fluent.bundle.LRUFunctionCache;
+import fluent.function.functions.list.CountFn;
+import fluent.syntax.parser.*;
 import fluent.types.FluentNumber;
 import fluent.types.FluentString;
-import fluent.types.FluentValue;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * High-level tests of functionality
- *
+ * <p>
  * NOTE:
- *      Watch leading alignment in multi-line text blocks!
+ * Watch leading alignment in multi-line text blocks!
  */
 class FTLParserSmokeTest {
 
     static final boolean SHOW_TEST_RESULTS = true;
 
+    static final Consumer<FluentBundle.ErrorContext> ERROR_LOGGER = (ec) -> {
+        System.err.printf("ERROR encountered during formatting of message '%s' (%s), locale %s; [%d errors]:\n",
+            ec.messageID(), ec.attributeID(), ec.locale(), ec.exceptions().size() );
+        ec.exceptions().forEach( e -> System.err.println( "  " + e ) );
+    };
+
+    private static FluentBundle parse(String in) {
+        final FluentResource parse = FTLParser.parse( FTLStream.of( in ) );
+        if (parse.hasErrors()) {
+            System.err.println( "errors on parse: " + parse.errors() );
+        }
+
+        final FluentFunctionRegistry registry = FluentFunctionRegistry.builder()
+                .addFactory( CountFn.COUNT )
+                .build();
+
+        return FluentBundle.builder( Locale.US, registry, LRUFunctionCache.of() )
+                .addResource( parse )
+                .withLogger( ERROR_LOGGER )
+                .build();
+    }
+
+    private static String msg(String in, String id) {
+        return msg( in, id, Map.of() );
+    }
+
+    private static String msg(String in, String id, Map<String, Object> args) {
+        assertNotNull( id );
+        assertNotNull( args );
+
+        FluentBundle bundle = parse( in );
+        final String formatted = bundle.format( id, args );
+        if (SHOW_TEST_RESULTS) {
+            System.out.println( "msg() '" + formatted + "'" );
+        }
+        return formatted;
+    }
+
+    private static String msg(String in, String msgID, String attribID) {
+        assertNotNull( msgID );
+        assertNotNull( attribID );
+
+        FluentBundle bundle = parse( in );
+        final String formatted = bundle.format( msgID, attribID, Map.of() );
+        if (SHOW_TEST_RESULTS) {
+            System.out.println( "msg() '" + formatted + "'" );
+        }
+        return formatted;
+    }
+
+    private static void printMsg(String result, List<Exception> errors) {
+        if (SHOW_TEST_RESULTS) {
+            if (errors.isEmpty()) {
+                System.out.println( "msg() '" + result + "' (no errors)" );
+            } else {
+                System.out.printf( "msg() '%s' %d error(s): %s\n",
+                        result,
+                        errors.size(),
+                        errors
+                );
+            }
+        }
+    }
 
     @Test
     void helloTest() {
@@ -63,30 +127,30 @@ class FTLParserSmokeTest {
 
     @Test
     void highLevelTestNoArgs() {
-        FluentBundle bundle = parse("hello = Hello, world!\n");
-        String output = bundle.format("hello");
+        FluentBundle bundle = parse( "hello = Hello, world!\n" );
+        String output = bundle.format( "hello" );
         assertEquals(
                 "Hello, world!",
                 output
 
         );
-        if(SHOW_TEST_RESULTS) {
-            System.out.printf("highLevel: '%s'\n", output);
+        if (SHOW_TEST_RESULTS) {
+            System.out.printf( "highLevel: '%s'\n", output );
         }
     }
 
     @Test
     void highLevelTestSimple() {
-        FluentBundle bundle = parse("hellothere = Hello there, {$name}!\n");
-        String output = bundle.format("hellothere", Map.of("name","Fluent User"));
+        FluentBundle bundle = parse( "hellothere = Hello there, {$name}!\n" );
+        String output = bundle.format( "hellothere", Map.of( "name", "Fluent User" ) );
 
         assertEquals(
                 "Hello there, Fluent User!",
 
                 output
         );
-        if(SHOW_TEST_RESULTS) {
-            System.out.printf("highLevel: '%s'\n", output);
+        if (SHOW_TEST_RESULTS) {
+            System.out.printf( "highLevel: '%s'\n", output );
         }
     }
 
@@ -133,7 +197,7 @@ class FTLParserSmokeTest {
     @Test
     void blankUnicodeTest() {
         // These tests use string concatenation because triple-quotes strip trailing whitespace
-        String thinSpace = String.valueOf(Character.toChars(0x2009));
+        String thinSpace = String.valueOf( Character.toChars( 0x2009 ) );
 
         assertEquals(
                 thinSpace,
@@ -149,7 +213,7 @@ class FTLParserSmokeTest {
 
         assertEquals(
                 thinSpace,
-                msg( s1, "example", Map.of("cnt", 0) )
+                msg( s1, "example", Map.of( "cnt", 0 ) )
         );
     }
 
@@ -158,7 +222,7 @@ class FTLParserSmokeTest {
         String s1 = """
                 literal-string = {"abc123"}
                 literal-number-test1 = {123}
-                literal-number-test2 = {-3.1415}
+                literal-number-test2 = {-3.14159265358}
                 """;
 
         assertEquals(
@@ -178,9 +242,8 @@ class FTLParserSmokeTest {
         );
     }
 
-
     @Test
-    void termTest() {
+    void termTest1() {
         String s1 = """
                 -brand-name = SuperAwesomeProduct
                 update-successful = { -brand-name } has been updated.
@@ -190,8 +253,11 @@ class FTLParserSmokeTest {
                 "SuperAwesomeProduct has been updated.",
                 msg( s1, "update-successful" )
         );
+    }
 
-        s1 = """
+    @Test
+    void termTest2() {
+        String s1 = """
                 -brand-name = SuperAwesomeProduct\r
                 update-successful = { -brand-name } has been updated.\r
                 """;
@@ -207,9 +273,9 @@ class FTLParserSmokeTest {
         // contrived example as per docs, but simple; avoids selectors (separate test)
         String s1 =
                 """
-                -https = https://{ $host }
-                visit = Visit { -https(othervalue: "asdf", host: "example.com") } for more information.
-                """;
+                        -https = https://{ $host }
+                        visit = Visit { -https(othervalue: "asdf", host: "example.com") } for more information.
+                        """;
 
         assertEquals(
                 "Visit https://example.com for more information.",
@@ -241,7 +307,6 @@ class FTLParserSmokeTest {
         assertEquals( parse.errors().get( 0 ).errorCode(), ParseException.ErrorCode.E0031 );
     }
 
-
     @Test
     void missingTermTest() {
         String s1 = """
@@ -252,13 +317,12 @@ class FTLParserSmokeTest {
         // one ReferenceException will be generated. This test is correct though
         // we don't yet verify the exception
         assertEquals(
-                "{brand-name} has been updated.",
+                "{Unknown term: -brand-name} has been updated.",
                 msg( s1, "update-successful" )
         );
 
 
     }
-
 
     @Test
     void messageRefTest() {
@@ -343,11 +407,10 @@ class FTLParserSmokeTest {
         );
 
         assertEquals(
-                "no pattern for message: contact",
+                "{No pattern specified for message: 'contact'}",
                 msg( s, "contact" )
         );
     }
-
 
     @Test
     void messageAttributeRefTest() {
@@ -356,7 +419,7 @@ class FTLParserSmokeTest {
                 message = a general message
                     .text = a TEXT message
                     .phone = a TELEPHONE message
-                            
+                
                 output = { message } has been sent.
                 output2 = { message.text } has been sent.
                 output3 = {message.phone} has been sent.
@@ -374,13 +437,12 @@ class FTLParserSmokeTest {
         );
 
 
-
-        // no value (pattern) after message
+        // no pattern (pattern) after message
         s = """
                 message =
                     .text = a TEXT message
                     .phone = a TELEPHONE message
-                            
+                
                 output = { message } has been sent.
                 output2 = { message.text } has been sent.
                 output3 = {message.phone} has been sent.
@@ -393,7 +455,7 @@ class FTLParserSmokeTest {
 
         // an error, because 'message' alone is invalid
         assertEquals(
-                "{message} has been sent.",
+                "{No pattern specified for message: 'message'} has been sent.",
                 msg( s, "output" )
         );
     }
@@ -461,9 +523,9 @@ class FTLParserSmokeTest {
 
     @Test
     void spaceyTest() {
-        String s = "leading-spaces =     This message's value starts with the word \"This\".\n";
+        String s = "leading-spaces =     This message's pattern starts with the word \"This\".\n";
         assertEquals(
-                "This message's value starts with the word \"This\".",
+                "This message's pattern starts with the word \"This\".",
                 msg( s, "leading-spaces" )
         );
     }
@@ -479,18 +541,18 @@ class FTLParserSmokeTest {
                 "leading-lines =\n" +
                         "\n" +
                         "\n" +
-                        "    This message's value also starts with the word \"This\".\n";
+                        "    This message's pattern also starts with the word \"This\".\n";
         assertEquals(
-                "This message's value also starts with the word \"This\".",
+                "This message's pattern also starts with the word \"This\".",
                 msg( s, "leading-lines" )
         );
 
         s = "leading-lines =\r\n" +
                 "\r\n" +
                 "\r\n" +
-                "    This message's value also starts with the word \"This\".\r\n";
+                "    This message's pattern also starts with the word \"This\".\r\n";
         assertEquals(
-                "This message's value also starts with the word \"This\".",
+                "This message's pattern also starts with the word \"This\".",
                 msg( s, "leading-lines" )
         );
 
@@ -549,13 +611,13 @@ class FTLParserSmokeTest {
 
     @Test
     void simpleVariableTest() {
-        // value as a FluentString
+        // pattern as a FluentString
         assertEquals(
                 "Hello, world!",
                 msg( "hello = Hello, {$name}!\n", "hello", Map.of( "name", new FluentString( "world" ) ) )
         );
 
-        // value as a String
+        // pattern as a String
         assertEquals(
                 "Hello, world!",
                 msg( "hello = Hello, {$name}!\n", "hello", Map.of( "name", "world" ) )
@@ -570,61 +632,109 @@ class FTLParserSmokeTest {
                 msg( "hello = Hello, {COUNT()}!\n", "hello", Map.of( "name", "world" ) )
         );
 
-        // COUNT() 1 arg with 1 value
+        // COUNT() 1 arg with 1 pattern
         assertEquals(
                 "Hello, 1!",
                 msg( "hello = Hello, {COUNT($name)}!\n", "hello", Map.of( "name", new FluentString( "world" ) ) )
         );
 
-        // COUNT() 2 args with 1 value each
+        // COUNT() 2 args with 1 pattern each
         assertEquals(
                 "Hello, 2!",
                 msg( "hello = Hello, {COUNT($name, $age)}!\n", "hello",
                         Map.of( "name", new FluentString( "world" ),
-                                "age", FluentNumber.of(99)) )
+                                "age", FluentNumber.of( 99 ) ) )
         );
 
         // COUNT() 1 arg with a list of 3 items
         assertEquals(
                 "Hello, 3!",
                 msg( "hello = Hello, {COUNT($names)}!\n", "hello",
-                        Map.of( "names", List.of("Alfonso","Betty","Charlie"),
-                                "age", FluentNumber.of(99)) )
+                        Map.of( "names", List.of( "Alfonso", "Betty", "Charlie" ),
+                                "age", FluentNumber.of( 99 ) ) )
         );
 
         // COUNT() 2 args with a list and a non-list
         assertEquals(
                 "Hello, 4!",
                 msg( "hello = Hello, {COUNT($names, $age)}!\n", "hello",
-                        Map.of( "names", List.of("Alfonso","Betty","Charlie"),
-                                "age", FluentNumber.of(99)) )
+                        Map.of( "names", List.of( "Alfonso", "Betty", "Charlie" ),
+                                "age", FluentNumber.of( 99 ) ) )
         );
     }
 
     @Test
     void missingVariableTest() {
         assertEquals(
-                "Hello, {$name}!",
+                "Hello, {Unknown variable: $name}!",
                 msg( "hello = Hello, {$name}!\n", "hello", Map.of( "xxxxx", "world" ) )
         );
     }
 
+    /// https://www.unicode.org/cldr/charts/45/supplemental/language_plural_rules.html
+    ///  COUNT() -> number; number default select is cardinal plural form.
+    /// for US English: those are 'one' and 'other'
     @Test
-    void selectorWithFunctionChain() {
+    void selectorWithFunctionChain3() {
         String s1 = """
-                
                 owned = You own { COUNT($names) ->
-                     [1] a thing
+                     [one] a thing
                     *[other] many things
                  }.
-                 
                 """;
         assertEquals(
-                "You own a thing.",
-                msg( s1, "owned" , Map.of("names", List.of("car","boat","plane")) )
+                "You own many things.",
+                msg( s1, "owned", Map.of( "names", List.of( "car", "boat", "plane" ) ) )
         );
     }
 
+    @Test
+    void selectorWithFunctionChain1Exact() {
+        String s1 = """
+                owned = You own { NUMBER(COUNT($names), kind:"exact") ->
+                     [1] ONE thing
+                     [2] TWO things
+                     [one] a thing
+                    *[other] many things
+                 }.
+                """;
+        assertEquals(
+                "You own ONE thing.",
+                msg( s1, "owned", Map.of( "names", List.of( "a car" ) ) )
+        );
+    }
+
+    @Test
+    void selectorWithFunctionChain2Exact() {
+        String s1 = """
+                owned = You own { NUMBER(COUNT($names), kind:"exact") ->
+                     [1] ONE thing
+                     [2] TWO things
+                     [one] a thing
+                    *[other] many things
+                 }.
+                """;
+        assertEquals(
+                "You own TWO things.",
+                msg( s1, "owned", Map.of( "names", List.of( "a car", "a boat" ) ) )
+        );
+    }
+
+    @Test
+    void selectorWithFunctionChain1() {
+        String s1 = """
+                owned = You own { COUNT($names) ->
+                     [1] ONE thing
+                     [2] TWO things
+                     [one] a thing
+                    *[other] many things
+                 }.
+                """;
+        assertEquals(
+                "You own a thing.",
+                msg( s1, "owned", Map.of( "names", List.of( "just a car" ) ) )
+        );
+    }
 
     @Test
     void selectorTermTest() {
@@ -638,86 +748,20 @@ class FTLParserSmokeTest {
                      [one] a {-thing(count: "one")}
                     *[other] {-thing(count: "other")}
                  }.
-                 
+                
                 """;
 
         assertEquals(
                 "You have a thing.",
-                msg( s1, "you-own" , Map.of("count", "one") )
+                msg( s1, "you-own", Map.of( "count", "one" ) )
         );
 
         assertEquals(
                 "You have things.",
-                msg( s1, "you-own" , Map.of("count", "ten") )
+                msg( s1, "you-own", Map.of( "count", "ten" ) )
         );
 
 
-
-    }
-
-
-
-
-    private static FluentBundle parse(String in) {
-        final FluentResource parse = FTLParser.parse( FTLStream.of( in ) );
-        if(parse.hasErrors()) {
-            System.err.println("errors on parse: "+parse.errors());
-        }
-        return FluentBundle.builder( Locale.US )
-                .withDefaultFunctions()
-                .addResource( parse )
-                .build();
-    }
-
-    private static String msg(String in, String id) {
-        return msg( in, id, Map.of() );
-    }
-
-    private static String msg(String in, String id, Map<String, ?> args) {
-        FluentBundle bundle = parse( in );
-        final Optional<Pattern> messagePattern = bundle.getMessagePattern( id );
-        if (messagePattern.isEmpty()) {
-            return "no pattern for message: " + id;
-        }
-        Pattern pattern = messagePattern.get();
-
-        List<Exception> errors = new ArrayList<>();
-        String result = bundle.formatPattern( pattern, args , errors);
-        printMsg(result, errors);
-        return result;
-    }
-
-    private static String msg(String in, String msgID, String attribID) {
-        assertNotNull( msgID );
-        assertNotNull( attribID );
-        FluentBundle bundle = parse( in );
-
-        final Optional<Pattern> optionalPattern = bundle.getAttributePattern( msgID, attribID );
-        assertTrue( optionalPattern.isPresent(), String.format( "Could not find message '%s' attribute '%s'" ,
-                msgID, attribID));
-
-        final Pattern pattern = optionalPattern.get();
-
-        List<Exception> errors = new ArrayList<>();
-        String result =  bundle.formatPattern( pattern, Map.of() , errors);
-        printMsg(result, errors);
-        return result;
-
-    }
-
-
-    private static void printMsg(String result, List<Exception> errors) {
-        if(SHOW_TEST_RESULTS) {
-            if(errors.isEmpty()) {
-                System.out.println("msg() '"+result+"' (no errors)");
-            } else {
-                System.out.printf("msg() '%s' %d error(s): %s\n",
-                        result,
-                        errors.size(),
-                        errors
-                        );
-            }
-        }
     }
 
 }

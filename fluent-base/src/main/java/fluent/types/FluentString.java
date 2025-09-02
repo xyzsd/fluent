@@ -1,7 +1,6 @@
 /*
  *
- *  Copyright (C) 2021, xyzsd (Zach Del)
- *
+ *  Copyright (C) 2021-2025, xyzsd (Zach Del) 
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -27,7 +26,7 @@ import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
 
-/// Wrapper for a String
+/// Wrapper for a String / CharSequence
 ///
 ///  String values may not be null. Null strings may be encoded to "null" by a FluentValueCreator if so desired.
 ///
@@ -39,10 +38,9 @@ public record FluentString(String value) implements FluentValue<String> {
     }
 
     /// Create a FluentString
-    public static FluentString of(String s) {
-        return new FluentString( s );
+    public static FluentString of(CharSequence s) {
+        return new FluentString( s.toString() );
     }
-
 
 
 }

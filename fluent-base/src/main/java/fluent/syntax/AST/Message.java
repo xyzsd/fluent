@@ -1,7 +1,6 @@
 /*
  *
- *  Copyright (C) 2021, xyzsd (Zach Del)
- *
+ *  Copyright (C) 2021-2025, xyzsd (Zach Del) 
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -33,8 +32,8 @@ import static java.util.Objects.requireNonNull;
 
 /// A Message
 ///
-/// Messages can have a Pattern and/or Attributes, or both.
-/// However a Message cannot have neither a Pattern nor Attributes.
+/// Messages must have a Pattern, an Attribute, or both
+/// a Pattern and Attribute.
 ///
 @NullMarked
 public record Message(Identifier identifier, @Nullable Pattern pattern,
@@ -54,8 +53,13 @@ public record Message(Identifier identifier, @Nullable Pattern pattern,
 
 
     /// Find matching attribute, if any
-    public Optional<Attribute> attribute(final String id) {
-        return Attribute.match( attributes(), id );
+    public @Nullable Attribute attribute(final String id) {
+        for (final Attribute attr : attributes) {
+            if (attr.name().equals( id )) {
+                return attr;
+            }
+        }
+        return null;
     }
 
     /// Find matching attribute, if any
@@ -66,6 +70,11 @@ public record Message(Identifier identifier, @Nullable Pattern pattern,
     /// Create a new Message, with the given Comment.
     public Message withComment(Commentary.@Nullable Comment newComment) {
         return new Message( identifier, pattern, attributes, newComment );
+    }
+
+    /// True if this Message contains attribute with given ID
+    public boolean hasAttribute(final String attributeID) {
+        return attribute( attributeID ) != null;
     }
 
 }

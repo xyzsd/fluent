@@ -1,7 +1,6 @@
 /*
  *
- *  Copyright (C) 2021, xyzsd (Zach Del)
- *
+ *  Copyright (C) 2021-2025, xyzsd (Zach Del)
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -22,32 +21,26 @@
  */
 package fluent.bundle;
 
-import fluent.bundle.resolver.FluentValueFormatter;
 import fluent.bundle.resolver.Resolver;
-import fluent.functions.*;
-import fluent.functions.list.reducer.ListFn;
-import fluent.functions.numeric.NumberFn;
-import fluent.functions.temporal.TemporalFn;
-import fluent.syntax.AST.*;
-import fluent.bundle.resolver.ReferenceException;
 import fluent.bundle.resolver.Scope;
+import fluent.function.FluentFunctionException;
+import fluent.function.Options;
+import fluent.syntax.AST.*;
 import fluent.types.FluentValue;
-
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-// TODO: this class deserves the best documentation... we are not there yet
-// TODO: also discuss 'global' options and usage
-/**
- *  FluentBundle: This the primary class used for localization.
- *  <p>
- *
- *
- *
- *  <p>
- *      Example:
- *      <pre>
+import static fluent.bundle.resolver.ResolutionException.ReferenceException.ReferenceException;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
+
+/// FluentBundle: This the primary class used for localization.
+// TODO: document well!, convert any non-markdown comments to markdown
+/* OLD example: need to update
  *      {@code
  *
  *          String in = Files.readString( Path.of( "mydir/myfile.ftl" ) );
@@ -67,9 +60,6 @@ import java.util.*;
  *          System.out.println(output);     // "Hello there, Billy!"
  *
  *      }
- *      </pre>
- *
- *
  */
 @NullMarked
 public class FluentBundle {
@@ -79,12 +69,10 @@ public class FluentBundle {
     private final Map<String, Term> terms;
     private final Map<String, Message> messages;
 
-    private final Map<String, FluentFunction> functions;
-    // TODO: implicit formatters should be derived from functions (probably) or set explicitly
-    private final PluralSelector pluralSelector;    // accessed only via Scope
-    private final FluentValueFormatter formatter;   // accessed only via Scope
-
-    private final Options globalOpts;
+    private final FluentFunctionRegistry registry;   // accessed only via Scope
+    private final FluentFunctionCache cache;
+    private final Map<String, Options> defaultOptions;
+    private final @Nullable Consumer<ErrorContext> errorConsumer;
 
 
     private FluentBundle(Builder b) {
@@ -92,441 +80,602 @@ public class FluentBundle {
         this.useIsolation = b.useIsolation;
         this.terms = Map.copyOf( b.terms );
         this.messages = Map.copyOf( b.messages );
-        this.functions = Map.copyOf( b.functions );
-        this.pluralSelector = b.pluralSelector;
-        this.formatter = b.formatter;
-        this.globalOpts = b.globalOpts;
+        this.registry = b.registry;
+        this.cache = b.cache;
+        this.defaultOptions = Map.copyOf( b.defaultOptions );
+        this.errorConsumer = b.logger;
     }
 
 
-    /**
-     * Create a Builder to build a new FluentBundle.
-     * <p>
-     * build() will not throw an exception if this Builder is used, because all
-     * required parameters are supplied.
-     * </p>
-     *
-     * @param locale  Locale for the bundle to be built
-     * @return Builder
-     */
-    public static Builder builder(Locale locale) {
-        Objects.requireNonNull( locale );
-        return new Builder( locale );
+    ///  for diagnostics
+    @Override
+    public String toString() {
+        return "FluentBundle{" +
+                "locale=" + locale +
+                ", useIsolation=" + useIsolation +
+                ", terms (count)= " + terms.size() +
+                ", messages (count) = " + messages.size() +
+                ", cache=" + cache +
+                ", registry=" + registry +
+                '}';
     }
 
-    /**
-     * Create a Builder to build a new FluentBundle.
-     * <p>
-     * No required components are set. However, build() will throw an exception if
-     * a FluentFunctionFactory or Locale is not set.
-     * </p>
-     *
-     * @return Builder
-     */
-    public static Builder builder() {
-        return new Builder();
+    /// Create a Builder to build a new FluentBundle.
+    ///
+    /// Uses the default cache if no cache specified.
+    ///
+    /// @param locale Locale for the bundle to be built
+    /// @return Builder
+    public static Builder builder(Locale locale, FluentFunctionRegistry registry, final FluentFunctionCache cache) {
+        return new Builder( locale, registry, cache );
     }
 
-
-    /**
-     * Create a Builder to build a new FluentBundle, using an existing FluentBundle as a base.
-     */
-    public static Builder builderFrom(FluentBundle bundle) {
-        return new Builder( Objects.requireNonNull( bundle ) );
+    /// Create a Builder to build a new FluentBundle, using an existing FluentBundle as a base.
+    public static Builder builderFrom(FluentBundle bundle, FluentFunctionCache cache) {
+        return new Builder( bundle, cache );
     }
 
-    /**
-     * Bundle Locale
-     */
+    /// error text for unknown message IDs
+    private static String unknownMessage(final String msgID) {
+        return "{Unknown message: '" + msgID + "'}";
+    }
+
+    /// error text for unknown attribute IDs
+    private static String unknownAttribute(final String msgID, final String attributeID) {
+        return "{Unknown attribute '" + attributeID + "' for message '" + msgID + "'}";
+    }
+
+    /// error text for messages without patterns
+    private static String unknownPattern(final String msgID) {
+        return "{No pattern specified for message: '" + msgID + "'}";
+    }
+
+    /// Bundle Locale
     public Locale locale() {
         return locale;
     }
 
-    /**
-     * Bundle isolation setting
-     */
+    /// Bundle unicode isolation setting
     public boolean useIsolation() {
         return useIsolation;
     }
 
+    ///  Retrieve the default Options (if any) set for a given function.
+    ///  If none were set, this will return `Options.EMPTY`
+    public Options options(final String id) {
+        requireNonNull( id );
+        return defaultOptions.getOrDefault( requireNonNull( id ), Options.EMPTY );
+    }
 
-    /**
-     * Returns the Message for the given id
-     */
-    public Optional<Message> getMessage(final String id) {
+    /// Returns the Message for the given id
+    public Optional<Message> message(final String id) {
+        requireNonNull( id );
         return Optional.ofNullable( messages.get( id ) );
     }
 
-    /**
-     * Returns all Messages
-     */
-    public Map<String, Message> getMessages() {
+    /// Returns all Messages
+    public Map<String, Message> messages() {
         return messages;
     }
 
-    /**
-     * Returns the Term for the given id
-     */
-    public Optional<Term> getTerm(final String id) {
+    /// Returns the Term for the given id
+    ///
+    /// Use [#patternFormat(Pattern, Map, String, String)]
+    public Optional<Term> term(final String id) {
+        requireNonNull( id );
         return Optional.ofNullable( terms.get( id ) );
     }
 
-    /**
-     * Returns all Terms
-     */
-    public Map<String, Term> getTerms() {
+    /// Returns all Terms
+    public Map<String, Term> terms() {
         return terms;
     }
 
-
-    ///  Return the Function for the given ID
-    public Optional<FluentFunction> function(final String id) {
-        return Optional.ofNullable( functions.get( id ) );
+    ///  Get the cache
+    public FluentFunctionCache cache() {
+        return cache;
     }
 
+    ///  Get the registry.
+    public FluentFunctionRegistry registry() {return registry;}
 
-    /**
-     * Convenience method to get the Message Pattern for a given messageID.
-     * <p>
-     * A Message may not have a pattern if (and only if) the Message has attributes.
-     * </p>
-     *
-     * @param messageID id
-     * @return Pattern (if present)
-     */
-    public Optional<Pattern> getMessagePattern(final String messageID) {
-        return Optional.ofNullable( messages.get( messageID ) )
-                .flatMap( m -> Optional.ofNullable( m.pattern()) );
-    }
 
-    /**
-     * Convenience method to get the Pattern for an Attribute of a given Message.
-     * <p>
-     * This will return an empty Optional if the Message or Attribute cannot be found.
-     * </p>
-     *
-     * @param messageID id
-     * @return Pattern (if present)
-     */
-    public Optional<Pattern> getAttributePattern(final String messageID, final String attributeID) {
-        return Optional.ofNullable( messages.get( messageID ) )
-                .flatMap( msg -> Attribute.match( msg.attributes(), attributeID ) )
-                .map( Attribute::pattern );
-    }
+    ///  Format method for Messages.
+    ///
+    ///  Gets the message with the given name, and displays it. If there is an error,
+    ///  the error message is output instead.
+    ///
+    ///  This method should not throw in normal usage
+    ///
+    /// @param messageID Message ID
+    /// @param args      Name-Value pairing of arguments
+    /// @return the formatted message.
+    /// @throws NullPointerException if messageID or args is null
+    public String format(final String messageID, final Map<String, Object> args) {
+        requireNonNull( messageID );
+        requireNonNull( args );
 
-    /**
-     * Format the given pattern.
-     * <p>
-     * If an error occurs during format, an empty Optional is returned.
-     * </p>
-     *
-     * @param pattern Pattern
-     * @return formatted pattern
-     */
-    public Optional<String> formatPattern(Pattern pattern) {
-        return formatPattern( pattern, Map.of() );
-    }
+        final Message message = messages.get( messageID );
 
-    /**
-     * Format the given pattern, with the given arguments.
-     * <p>
-     * If an error occurs during format, an empty Optional is returned.
-     * </p>
-     *
-     * @param pattern Pattern
-     * @return formatted pattern
-     */
-    public Optional<String> formatPattern(Pattern pattern, Map<String, ?> args) {
-        List<Exception> errors = new ArrayList<>( 4 );
-        String result = patternFormat( pattern, args, errors );
-        if (errors.isEmpty()) {
-            return Optional.of( result );
+        if (message == null) {
+            consumeError( messageID, null, () -> ReferenceException.unknownMessageOrAttribute( messageID, null ) );
+            return unknownMessage( messageID );
+        } else if (message.pattern() == null) {
+            consumeError( messageID, null, () -> ReferenceException.noValue( messageID ) );
+
+            return unknownPattern( messageID );
+        } else {
+            return patternFormat( message.pattern(), args, messageID, null );
         }
-        return Optional.empty();
     }
 
-    /**
-     * Format the given pattern.
-     * <p>
-     * Errors will be placed in the errors list. The errors list MUST be a mutable (writable) list.
-     * As much of the message that can be formatted, will be formatted, if errors occur.
-     * </p>
-     *
-     * @param pattern Pattern
-     * @return formatted pattern
-     */
-    public String formatPattern(Pattern pattern, List<Exception> errors) {
-        return patternFormat( pattern, Map.of(), errors );
+    ///  Get the Pattern for a Message. Errors logged if not found, null if absent.
+    private @Nullable Pattern getMessagePattern(final String messageID) {
+        requireNonNull( messageID );
+
+        final Message message = messages.get( messageID );
+
+        if (message == null) {
+            consumeError( messageID, null, () -> ReferenceException.unknownMessageOrAttribute( messageID, null ) );
+        } else if (message.pattern() == null) {
+            consumeError( messageID, null, () -> ReferenceException.noValue( messageID ) );
+        } else {
+            return message.pattern();
+        }
+
+        return null;
     }
 
-    /**
-     * Format the given pattern, with the given arguments.
-     * <p>
-     * Errors will be placed in the errors list. The errors list MUST be a mutable (writable) list.
-     * As much of the message that can be formatted, will be formatted, if errors occur.
-     * </p>
-     * <p>
-     * For example, given the Message 'mymessage' in an FTL definition: {@code "mymessage = Hello there, {$name}"}
-     *     <ul>
-     *         <li>
-     *             {@code formatPattern(..., Map.of("name","Billy"), ...)} result: {@code "Hello there, Billy"}
-     *         </li>
-     *         <li>
-     *             {@code formatPattern(..., Map.of(), ...)} result: {@code "Hello there, {$name}"}, indicating
-     *             an error with the "$name" placeable.
-     *         </li>
-     *     </ul>
-     *
-     * @param pattern Pattern
-     * @return formatted pattern
-     */
-    public String formatPattern(Pattern pattern, Map<String, ?> args, List<Exception> errors) {
-        return patternFormat( pattern, args, errors );
+    ///  Format method for attributes.
+    ///
+    ///  Gets the message with the given name, and displays it. If there is an error,
+    ///  the error message is output instead.
+    ///
+    ///  This method should not throw in normal usage
+    ///
+    /// @param messageID   Message ID
+    /// @param attributeID Attribute ID containing the pattern to format.
+    /// @param args        Name-Value pairing of arguments
+    /// @return the formatted message.
+    /// @throws NullPointerException if messageID, attributeID, or args is null
+    public String format(final String messageID, final String attributeID, final Map<String, Object> args) {
+        requireNonNull( messageID );
+        requireNonNull( attributeID );
+        requireNonNull( args );
+
+        final Message message = messages.get( messageID );
+        if (message != null) {
+            final Attribute attribute = message.attribute( attributeID );
+            if (attribute != null) {
+                return patternFormat( attribute.pattern(), args, messageID, attributeID );
+            }
+        }
+
+        // error: either Message or Attribute is missing
+        consumeError( messageID, null, () -> ReferenceException.unknownMessageOrAttribute( messageID, attributeID ) );
+        return unknownAttribute( messageID, attributeID );
     }
 
+    ///  Get the Pattern for an Attribute
+    private @Nullable Pattern getAttributePattern(final String messageID, final String attributeID) {
+        requireNonNull( messageID );
+        requireNonNull( attributeID );
 
+        final Message message = messages.get( messageID );
+        if (message != null) {
+            final Attribute attribute = message.attribute( attributeID );
+            if (attribute != null) {
+                return attribute.pattern();
+            }
+        }
 
-    /**
-     *  The simplest format() method.
-     *  <p>
-     *      Gets the message with the given name, and displays it. If there is an error,
-     *      the error message is output instead.
-     *  </p>
-     *
-     *  @param messageID The name of the message to format.
-     * @return the formatted message.
-     */
+        // error: either Message or Attribute is missing
+        consumeError( messageID, null, () -> ReferenceException.unknownMessageOrAttribute( messageID, attributeID ) );
+        return null;
+    }
+
+    ///  The simplest format() method.
+    ///
+    ///  Gets the message with the given name, and displays it. If there is an error,
+    ///  the error message is output instead.
+    ///
+    ///  This method should not throw in normal usage
+    ///
+    /// @param messageID The name of the message to format.
+    /// @return the formatted message.
+    /// @throws NullPointerException if messageID is null
     public String format(String messageID) {
-        return format(messageID, Map.of());
+        return format( messageID, Map.of() );
     }
 
-    /**
-     * Simple message format.
-     *  <p>
-     *      Gets the message with the given name, and displays it. If there is an error,
-     *      the error message is output instead.
-     *  </p>
-     *
-     * @param messageID message name to format
-     * @param args argument map (name-value pairs)
-     * @return the formatted message.
-     */
-    public String format(String messageID, Map<String, ?> args) {
-        List<Exception> errors = new ArrayList<>( 4 );
-        return getMessagePattern(messageID)
-                .map( pattern -> patternFormat(pattern, args,  errors ) )
-                .orElse( "Unknown messageID '"+messageID+"'" );
+    ///  The simplest format() method for attributes.
+    ///
+    ///  Gets the message with the given name, and displays it. If there is an error,
+    ///  the error message is output instead.
+    ///
+    ///  This method should not throw in normal usage
+    ///
+    /// @param messageID   Message ID
+    /// @param attributeID Attribute ID containing the pattern to format.
+    /// @return the formatted message.
+    /// @throws NullPointerException if messageID or attributeID
+    public String format(String messageID, String attributeID) {
+        return format( messageID, attributeID, Map.of() );
     }
 
 
+    ///  Error handler for logging/etc.
+    private void consumeError(final @Nullable String msgID, final @Nullable String attrID, final Scope scope) {
+        if (errorConsumer != null && scope.containsExceptions()) {
+            final ErrorContext context = ErrorContext.of( msgID, attrID, locale(), scope.exceptions() );
+            errorConsumer.accept( context );
+        }
+    }
 
-    private String patternFormat(Pattern pattern, Map<String, ?> args, List<Exception> errors) {
-        final Scope scope = new Scope( this, pluralSelector, formatter, args, errors, globalOpts );
-        final List<FluentValue<?>> resolved = Resolver.resolve( pattern, scope );
-        return scope.reduce( resolved );
+    ///  Error handler for a single exception w/o a Scope
+    private void consumeError(final @Nullable String msgID, final @Nullable String attrID, Supplier<Exception> e) {
+        if (errorConsumer != null) {
+            final ErrorContext context = ErrorContext.of( msgID, attrID, locale(), List.of( e.get() ) );
+            errorConsumer.accept( context );
+        }
+    }
+
+
+    /// format-builder : WIP
+    // TODO: finalize
+    public FmtBldr fmtBuilder(final String messageID) {
+        return new FmtBldr( messageID );
     }
 
 
 
-    /**
-     * Build a FluentBundle
-     * <p>
-     * If required parameters are not set, an exception will be thrown during build.
-     * <p>
-     * If Functions are to be added, replaced, or removed outside of a FluentFunctionFactory, the factory must
-     * be set in this Builder prior to adding/replacing/removing functions.
-     * <p>
-     * Builders can be re-used. Builders are not guaranteed to be threadsafe.
-     * </p>
-     */
+    // format the pattern. The msgID and attrID are optional (can be null) and arw only for
+    // providing error context information.
+    private String patternFormat(final Pattern pattern, final Map<String, ?> args,
+                                 final @Nullable String msgID, final @Nullable String attrID) {
+        final Scope scope = new Scope( this, args );
+        final List<FluentValue<?>> resolved = Resolver.resolvePattern( pattern, scope );
+        try {
+            return registry.reduce( resolved, scope );
+        } catch (FluentFunctionException e) {
+            scope.addException( e );    // for error logging
+            return '{' + e.getMessage() + '}';
+        } finally {
+            consumeError( msgID, attrID, scope );
+        }
+    }
+
+    // TODO: document
+    // public version of pattern format
+    // e.g., to format a Term/Term attribute
+    public String patternFormat(final Pattern pattern, final Map<String, Object> args) {
+        return patternFormat( pattern, args, null, null );
+    }
+
+
+
+    /// Build a FluentBundle
+    ///
+    /// If required parameters are not set, an exception will be thrown during build.
+    ///
+    /// If Functions are to be added, replaced, or removed outside a FluentFunctionFactory, the factory must
+    /// be set in this Builder prior to adding/replacing/removing functions.
+    ///
+    /// Builders can be re-used. Builders are not guaranteed to be threadsafe.
+    ///
+    @NullMarked
     public static final class Builder {
-        final FluentValueFormatter.Builder fvfBuilder;
+        final Map<String, Options> defaultOptions = new HashMap<>();
+        FluentFunctionRegistry registry;
         Locale locale;
+        FluentFunctionCache cache;
         Map<String, Term> terms = new HashMap<>();
         Map<String, Message> messages = new HashMap<>();
-        Map<String, FluentFunction> functions = new HashMap<>();
         boolean useIsolation = false;
-        PluralSelector pluralSelector;
-        FluentValueFormatter formatter;
-        Options globalOpts = Options.EMPTY;
+        @Nullable Consumer<ErrorContext> logger = null;
 
-        private Builder() {
-            this.fvfBuilder = FluentValueFormatter.builder();
+        // Builder with Locale, Registry, and Cache
+        private Builder(final Locale locale, final FluentFunctionRegistry registry, final FluentFunctionCache cache) {
+            this.locale = requireNonNull( locale );
+            this.registry = requireNonNull( registry );
+            this.cache = requireNonNull( cache );
         }
 
-        // Builder with Locale & Function Factory
-        private Builder(Locale locale) {
-            this.fvfBuilder = FluentValueFormatter.builder();
-            this.locale = locale;
-        }
+        // Builder from existing bundle, share registry.
+        private Builder(final FluentBundle from, final FluentFunctionCache cache) {
+            requireNonNull( from );
+            requireNonNull( cache );
 
-        // Builder from existing bundle
-        private Builder(final FluentBundle from) {
-            this.fvfBuilder = FluentValueFormatter.builder();
             this.locale = from.locale;
             this.useIsolation = from.useIsolation;
             this.terms = new HashMap<>( from.terms );
             this.messages = new HashMap<>( from.messages );
-            this.functions = new HashMap<>( from.functions );
-            this.globalOpts = from.globalOpts;
+            this.registry = from.registry;
+            this.cache = cache;
         }
 
-        /**
-         * Use the given Locale when creating this bundle.
-         * <p>
-         * A Locale is required for a bundle to be created
-         * without error.
-         *
-         * @param locale Locale
-         * @return Builder
-         */
-        public Builder withLocale(Locale locale) {
-            this.locale = Objects.requireNonNull( locale );
+        /// Use the given Locale when creating this bundle.
+        ///
+        /// A Locale is required for a bundle to be created
+        /// without error.
+        ///
+        /// @param locale Locale
+        /// @return Builder
+        public Builder withLocale(final Locale locale) {
+            this.locale = requireNonNull( locale );
             return this;
         }
 
-        /**
-         * Set whether this builder should use unicode isolating characters
-         */
-        public Builder withIsolation(boolean value) {
+        /// Set whether this builder should use Unicode isolating characters
+        ///
+        /// For more information, see:
+        ///
+        /// [Project Fluent](https://github.com/projectfluent/fluent.js/wiki/Unicode-Isolation)
+        /// [unicode.org](https://unicode.org/reports/tr9/#Directional_Formatting_Characters)
+        /// [W3C](https://www.w3.org/International/articles/inline-bidi-markup/#nomarkup)
+        public Builder withIsolation(final boolean value) {
             useIsolation = value;
             return this;
         }
 
 
-        /// Add default functions from FluentFunctions.
-        public Builder withDefaultFunctions() {
-            fvfBuilder.setTerminalReducer( ListFn.LIST );
-            fvfBuilder.setNumberFormatter( NumberFn.NUMBER, Options.EMPTY );
-            fvfBuilder.setTemporalFormatter( TemporalFn.TEMPORAL, Options.EMPTY );
-
-            // add *all* functions in FluentFunctions (including IMPLICITS)
-            // (since the default IMPLICITS can also be called as functions)
-            for (FluentFunctions ffns : FluentFunctions.values()) {
-                for ( FluentFunction fn : ffns.functions()) {
-                    functions.put(fn.name(), fn);
-                }
-            }
-
-            return this;
-        }
-
-        /**
-         * Add the given resource.
-         *
-         * @param resource FluentResource to add
-         * @return Builder
-         * @throws ReferenceException if term or message entry already exists
-         */
+        /// Add the given resource.
+        ///
+        /// This can be used multiple times, to add multiple resources.
+        ///
+        /// If a Term or Message in the resource added collides with a Term or Message already added, a
+        /// ReferenceException will be thrown.
+        ///
+        /// @param resource FluentResource to add
+        /// @return Builder
+        /// @throws RuntimeException if term or message entry already exists
         public Builder addResource(final FluentResource resource) {
-            return addResource( resource, true );
-        }
-
-
-        /**
-         * Add the given resource.
-         * <p>
-         * Terms and Messages added will replace existing Terms or Messages with the
-         * same name.
-         * </p>
-         *
-         * @param resource FluentResource to add
-         * @return Builder
-         */
-        public Builder addResourceOverriding(final FluentResource resource) {
-            return addResource( resource, false );
-        }
-
-
-        private Builder addResource(final FluentResource resource, final boolean checkClash) {
-            Objects.requireNonNull( resource );
+            requireNonNull( resource );
 
             List<String> clashes = new ArrayList<>();
 
             for (Entry entry : resource.entries()) {
                 if (entry instanceof Message msg) {
                     final Message existing = messages.putIfAbsent( msg.name(), msg );
-                    if (checkClash && existing != null) {
+                    if (existing != null) {
                         clashes.add( msg.name() );
                     }
                 } else if (entry instanceof Term term) {
                     final Term existing = terms.putIfAbsent( term.name(), term );
-                    if (checkClash && existing != null) {
+                    if (existing != null) {
                         clashes.add( '-' + term.name() );
                     }
                 }
             }
 
             if (!clashes.isEmpty()) {
-                throw ReferenceException.duplicateEntry( String.join( ", ", clashes ) );
+                throw new RuntimeException( "Duplicate Messages or Terms: " +
+                        String.join( ", ", clashes ) );
             }
 
             return this;
         }
 
 
-        /**
-         * Add or Replace a single FluentFunction
-         * <p>
-         * If multiple functions are to be initialized, consider initialization via a FluentFunction.Factory
-         * instead. Implicit functions may NOT be altered by this method.
-         * </p>
-         *
-         * @param fn Initialized FluentFunction
-         * @throws NullPointerException if FluentFunction is null
-         */
-        public Builder addFunction(final FluentFunction fn) {
-            Objects.requireNonNull( fn );
-            functions.put( fn.name(), fn );
-            return this;
-        }
-
-        /**
-         * Remove a FluentFunction by name.
-         * <p>
-         * If the named function does not exist (or has already been removed), there is no effect or error.
-         * </p>
-         *
-         * @throws NullPointerException if name is null
-         */
-        public Builder removeFunction(final String name) {
-            functions.remove( Objects.requireNonNull( name ) );
+        /// Add the given resource.
+        ///
+        /// This can be used multiple times, to add multiple resources.
+        ///
+        /// Newly-added Terms and Messages will replace existing Terms or Messages with the
+        /// same name.
+        ///
+        /// @param resource FluentResource to add
+        /// @return Builder
+        public Builder addResourceOverriding(final FluentResource resource) {
+            requireNonNull( resource );
+            for (Entry entry : resource.entries()) {
+                if (entry instanceof Message msg) {
+                    messages.put( msg.name(), msg );
+                } else if (entry instanceof Term term) {
+                    terms.putIfAbsent( term.name(), term );
+                }
+                // else Commentary, which we ignore
+            }
             return this;
         }
 
 
-        /**
-         * Set global options / default options, that apply to all functions.
-         */
-        public Builder setGlobalOptions(Options options) {
-            this.globalOpts = Objects.requireNonNull( options );
+        ///  Set the FluentFunctionRegistry
+        ///
+        /// This replaces the existing FluentFunctionRegistry. A FluentBundle can have only a
+        /// single FluentFunctionRegistry.
+        public Builder withRegistry(final FluentFunctionRegistry registry) {
+            this.registry = requireNonNull( registry );
+            return this;
+        }
+
+        ///  Set the function cache
+        ///
+        /// This replaces the existing FluentFunctionCache. A FluentBundle can have only a
+        /// single FluentFunctionCache.
+        public Builder withCache(final FluentFunctionCache cache) {
+            this.cache = requireNonNull( cache );
             return this;
         }
 
 
-        /**
-         * Create the FluentBundle.
-         *
-         * @return a new FluentBundle
-         */
+        ///  Programmatically set default options for a given function.
+        ///
+        /// Options set by this method become the default for a given FluentFunction. However, these default
+        /// options can be overridden within the Fluent FTL.
+        ///
+        /// If the function does not exist, this will throw an exception.
+        ///
+        /// If this method is called more than once for the same function, subsequent options will replace
+        /// the earlier options.
+        ///
+        /// Options.EMPTY can be used to remove any existing options, if present.
+        ///
+        /// {@snippet :
+        ///        // all calls to STRINGSORT() will be reversed, unless "order" is specified otherwise
+        ///        FluentBundle.Builder builder;
+        ///        // ...
+        ///        builder.withFunctionOptions("STRINGSORT", Options.of("order","reversed"));
+        ///        // ...
+        ///}
+        ///
+        public Builder withFunctionOptions(final String functionName, final Options options) {
+            requireNonNull( functionName );
+            requireNonNull( options );
+
+            if (!registry.contains( functionName )) {
+                throw new IllegalArgumentException( String.format(
+                        """
+                                Cannot find the function factory named '%s';\
+                                check spelling and make sure this was set in FluentFunctionRegistry.
+                                """, functionName ) );
+            }
+
+            if (options == Options.EMPTY) {
+                defaultOptions.remove( functionName );
+            } else {
+                defaultOptions.put( functionName, options );
+            }
+
+            return this;
+        }
+
+        ///  Add a logger, that will log any Scope exceptions.
+        ///  If this is set to `null` (default), no logging will occur.
+        public Builder withLogger(final @Nullable Consumer<ErrorContext> logger) {
+            this.logger = logger;
+            return this;
+        }
+
+        /// Create the FluentBundle.
+        ///
+        /// @return a new FluentBundle
         public FluentBundle build() {
-            Objects.requireNonNull( locale, "Locale not set." );
-
-            // plural selector
-            pluralSelector = new PluralSelector(locale);
-
-            // map implicits into the 'regular' function map
-            // implicits will (and must!) override any non-implicit registered function with same name
-            // TODO: re-look at this
-            //implicits.forEach( (key, value) -> functions.put( key.name(), value ) );
-
-            formatter = fvfBuilder.build();
-
+            requireNonNull( locale, "Locale not set." );
+            requireNonNull( registry, "FluentFunctionRegistry not set." );
             return new FluentBundle( this );
         }
 
 
-   }
+    }
+
+    ///  Error Context information for error handlers / loggers.
+    @NullMarked
+    public record ErrorContext(
+            String messageID,                       // message we are trying to format.
+            @Nullable String attributeID,           // message attribute (often null)
+            Locale locale,                          // bundle Locale
+            List<Exception> exceptions              // exceptions that occured during processing
+    ) {
+        /// If messageID is not known, use this
+        public static final String UNSPECIFIED_PATTERN = "(Unspecified Pattern)";
+        public static final String NO_ATTRIBUTE = "no attribute";
 
 
+        public ErrorContext {
+            requireNonNull( messageID );
+            requireNonNull( locale );
+            exceptions = List.copyOf( exceptions );
+        }
+
+        ///  friendly attribute name, or NO_ATTRIBUTE if not set
+        public String attributeID() {
+            return requireNonNullElse( attributeID, NO_ATTRIBUTE );
+        }
+
+        ///  Handles potentially null messageID, and labels it 'unknown pattern'
+        public static ErrorContext of(@Nullable String msgID, @Nullable String attrID, Locale locale, List<Exception> exceptions) {
+            return new ErrorContext(
+                    requireNonNullElse( msgID, UNSPECIFIED_PATTERN ),
+                    attrID,
+                    locale,
+                    exceptions
+            );
+        }
+    }
+
+    /// Format Builder: **NOTE: this class is experimental**
+    public final class FmtBldr {
+        private final String msgID;
+        private @Nullable String attrID = null;
+        private Map<String, Object> args = Map.of();
+
+        private FmtBldr(final String msgID) {
+            this.msgID = msgID;
+        }
+
+        public FmtBldr attribute(final @Nullable String attributeID) {
+            this.attrID = attributeID;
+            return this;
+        }
+
+        // useful for when there is ONE argument; replaces any existing argument/arguments
+        public FmtBldr argument(final String argName, final Object argValue) {
+            this.args = Map.of( argName, argValue );
+            return this;
+        }
+
+        // for multiple arguments. will replace any existing arguments if present or called again
+        public FmtBldr arguments(Map<String, Object> argumentMap) {
+            this.args = Map.copyOf( argumentMap );
+            return this;
+        }
+
+
+        public String orElseGet(final Supplier<String> fallback) {
+            final String fmt = tryFormat();
+            return (fmt == null)
+                    ? fallback.get()
+                    : fmt;
+        }
+
+        public String orElse(final String fallback) {
+            final String fmt = tryFormat();
+            return (fmt == null)
+                    ? fallback
+                    : fmt;
+        }
+
+        public <X extends Throwable> String orElseThrow(final Supplier<? extends X> exceptionSupplier) throws X {
+            final String fmt = tryFormat();
+            if (fmt == null) {
+                throw exceptionSupplier.get();
+            }
+            return fmt;
+        }
+
+        public String format() {
+            if (attrID == null) {
+                return FluentBundle.this.format( msgID, attrID, args );
+            } else {
+                return FluentBundle.this.format( msgID, args );
+            }
+        }
+
+
+        private @Nullable String tryFormat() {
+            final Pattern pattern = (attrID == null)
+                    ? getAttributePattern( msgID, attrID )
+                    : getMessagePattern( msgID );
+
+            if (pattern == null) {
+                //getAttributePattern / getMessagePattern logs an error if pattern not found
+                return null;
+            }
+
+            final Scope scope = new Scope( FluentBundle.this, args );
+            final List<FluentValue<?>> resolved = Resolver.resolvePattern( pattern, scope );
+            String formatted = null;
+            try {
+                formatted = registry.reduce( resolved, scope );
+            } catch (FluentFunctionException e) {
+                scope.addException( e );
+            } finally {
+                consumeError( msgID, attrID, scope );
+            }
+
+            return scope.containsExceptions() ? null : formatted;
+        }
+
+    }
 }

@@ -1,7 +1,6 @@
 /*
  *
- *  Copyright (C) 2021, xyzsd (Zach Del)
- *
+ *  Copyright (C) 2021-2025, xyzsd (Zach Del) 
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -24,16 +23,27 @@
 package fluent.syntax.AST;
 
 
-
 import org.jspecify.annotations.NullMarked;
+
+import java.util.List;
 
 ///  A SyntaxNode usable as VariantKey (used by Variant)
 ///
 ///  A kind of sum-type pseudo-reference to an Identifier or Literal.NumberLiteral.
-///  `Keyable := NumberLiteral | Identifier`
 @NullMarked
 public sealed interface VariantKey permits Identifier, Literal.NumberLiteral {
 
-    /// The value that should be used as a key in a map.
-    String key();
+    ///  Match a key by name (case-sensitive) or return default.
+    static VariantKey matchKey(final String in, final List<VariantKey> variantKeys, final VariantKey defaultKey) {
+        for (final VariantKey variantKey : variantKeys) {
+            if (variantKey.name().equals( in )) {
+                return variantKey;
+            }
+        }
+        return defaultKey;
+    }
+
+    /// The pattern that should be used as a key in a map.
+    String name();
+
 }

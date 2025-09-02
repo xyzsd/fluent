@@ -1,7 +1,6 @@
 /*
  *
- *  Copyright (C) 2021, xyzsd (Zach Del)
- *
+ *  Copyright (C) 2021-2025, xyzsd (Zach Del) 
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -30,17 +29,16 @@ import fluent.syntax.AST.PatternElement;
 import fluent.syntax.parser.PEPlaceholder.PlaceableHolder;
 import fluent.syntax.parser.PEPlaceholder.TextElementHolder;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
-/**
- * This breaks out Pattern parsing from the main parser, to improve code clarity
- */
+
+
+/// This breaks out Pattern parsing from the main parser, to improve code clarity
 @NullMarked
 class FTLPatternParser {
-
 
     // This enum tracks the reason for which a text slice ended.
     // It is used by the pattern to set the proper state for the next line.
@@ -56,7 +54,7 @@ class FTLPatternParser {
 
 
     // This enum tracks the placement of the text element in the pattern, which is needed for
-    // deindentation logic.
+    // dedentation logic.
     enum TextElementPosition {
         InitialLineStart,
         LineStart,
@@ -81,7 +79,9 @@ class FTLPatternParser {
 
     // parse a pattern
     // NOTE: Profiling indicates that method dominates parsing time (expectedly)
-    static Optional<Pattern> getPattern(FTLStream ps) {
+    static @Nullable Pattern getPattern(final FTLStream ps) {
+        //System.out.println("getPattern(): ps="+ps.dbg());
+
         List<PEPlaceholder> elements = new ArrayList<>(4);
         int lastNonBlank = -1;
         int commonIndent = -1;
@@ -95,8 +95,10 @@ class FTLPatternParser {
             textElementRole = TextElementPosition.InitialLineStart;
         }
 
+        //System.out.println("     initial textElementRole="+textElementRole);
         while (ps.hasRemaining()) {
-            if (ps.isCurrentChar( '{' )) {
+
+            if (ps.isCurrentChar((byte) '{' )) {
                 if (textElementRole == TextElementPosition.LineStart) {
                     commonIndent = 0;
                 }
@@ -109,7 +111,9 @@ class FTLPatternParser {
                 int indent = 0;
                 if (textElementRole == TextElementPosition.LineStart) {
                     indent = ps.skipBlankInline();
-
+                    //System.out.println("     ps.hasRemaining(): "+ps.hasRemaining());
+                    //System.out.println("     indent = "+indent);
+                    //System.out.println("     ps.isEOL(): "+ps.isEOL());
                     // fixed with isEOL() to take into account blank lines in UNIX or Windows style
                     if (!ps.hasRemaining() || (indent == 0 && !ps.isEOL())) {
                         break;
@@ -121,6 +125,9 @@ class FTLPatternParser {
                 }
 
                 final TextSlice textSlice = getTextSlice( ps );
+                //System.out.println("     textSlice: "+textSlice);
+                //System.out.println("     lastNonBlank: "+lastNonBlank);
+                //System.out.println("     elements: "+elements);
                 if (textSlice.start() != textSlice.end()) {     // == for <CR> alone (ignored)
                     if (textElementRole == TextElementPosition.LineStart
                             && textSlice.textElementType() == TextElementType.NonBlank) {
@@ -141,6 +148,7 @@ class FTLPatternParser {
 
                         if (textSlice.textElementType() == TextElementType.NonBlank) {
                             lastNonBlank = elements.size();
+                            //System.out.println("   --> lastNonBlank = "+lastNonBlank);
                         }
 
                         elements.add( PEPlaceholder.of(
@@ -152,13 +160,14 @@ class FTLPatternParser {
                     }
                 }
 
-                switch (textSlice.terminationReason()) {
-                    case LineFeed -> textElementRole = TextElementPosition.LineStart;
-                    case CRLF, PlaceableStart, EOF -> textElementRole = TextElementPosition.Continuation;
-                }
+                textElementRole = switch (textSlice.terminationReason()) {
+                    case LineFeed, CRLF -> TextElementPosition.LineStart;
+                    case PlaceableStart, EOF -> TextElementPosition.Continuation;
+                };
             }
         }
 
+        //System.out.println("     (2) lastNonBlank: "+lastNonBlank);
         if (lastNonBlank != -1) {
             elements = elements.subList( 0, lastNonBlank + 1 );
             List<PatternElement> patternElements = new ArrayList<>( elements.size() );
@@ -174,32 +183,36 @@ class FTLPatternParser {
                                     : (start + Math.min( indent, commonIndent ));
                         }
 
-                        String text = ps.subString( start, end );
-
+                        // strip here, before we do a substring, by adjusting the end position. We can do this
+                        // since Fluent legal whitespace is only ' ' (ASCII space), '\r', and '\n'
+                        // this will work for valid UTF8, and if malformed, it will still be malformed (!)
+                        final String text;
                         if (lastNonBlank == count) {
-                            int endIndex = text.length();
-                            while (0 < endIndex) {
-                                int codepoint = text.codePointBefore(endIndex);
-                                if (codepoint != ' ' && codepoint != '\t' && codepoint != '\r' && codepoint != '\n') {
+                            int endIndex = end-1; // 'end' is exclusive, endIndex is not
+                            while (start < endIndex) {
+                                byte b = ps.at(endIndex);
+                                if (b != ' '  && b != '\r' && b != '\n') {
                                     break;
                                 }
-                                endIndex -= Character.charCount(codepoint);
+                                endIndex--;
                             }
-                            text = text.substring(0, endIndex);
+                            text = ps.subString( start, endIndex +1);
+                        } else {
+                            text = ps.subString( start, end );
                         }
 
                         patternElements.add( new PatternElement.TextElement( text ) );
-
                     }
                 }
                 count++;
             }
 
             assert (patternElements.size() == elements.size());
-            return Optional.of( new Pattern( patternElements ) );
+            //return Optional.of( new Pattern( patternElements ) );
+            return new Pattern(patternElements);
         }
 
-        return Optional.empty();
+        return null;
     }
 
 
@@ -208,15 +221,15 @@ class FTLPatternParser {
         TextElementType textElementType = TextElementType.Blank;
 
         while (ps.hasRemaining()) {
-            final char cb = ps.at();
+            final byte cb = ps.at();
             if (cb == ' ') {
                 ps.inc();
             } else if (cb == '\n') {
                 ps.inc();
                 return new TextSlice( startPosition, ps.position(),
                         textElementType, TextElementTermination.LineFeed );
-            } else if (cb == '\r' && ps.isNextChar( '\n' )) {
-                ps.inc();        // TODO: confirm this shouldn't this be +2?
+            } else if (cb == '\r' && ps.isNextChar( (byte)'\n' )) {
+                ps.inc();
                 return new TextSlice( startPosition,
                         ps.position() - 1,              // exclude '\r'
                         textElementType,
@@ -225,13 +238,13 @@ class FTLPatternParser {
                 return new TextSlice( startPosition, ps.position(),
                         textElementType, TextElementTermination.PlaceableStart );
             } else if (cb == '}') {
-                throw ParseException.of( ParseException.ErrorCode.E0027, ps );
+                throw FTLParser.parseException( ParseException.ErrorCode.E0027, ps );
             } else {
                 ps.inc();
                 textElementType = TextElementType.NonBlank;
             }
         }
-
+//System.out.printf("  textSlice:: EOF:: start=%d, end=%d, type=%s, termination=%s",startPosition, ps.position(), textElementType, TextElementTermination.EOF );
         return new TextSlice( startPosition, ps.position(),
                 textElementType, TextElementTermination.EOF );
     }

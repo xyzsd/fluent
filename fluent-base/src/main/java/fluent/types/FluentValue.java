@@ -1,7 +1,6 @@
 /*
  *
- *  Copyright (C) 2021, xyzsd (Zach Del)
- *
+ *  Copyright (C) 2021-2025, xyzsd (Zach Del) 
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -52,7 +51,7 @@ public sealed interface FluentValue<T>
     /// Map (singular) objects to FluentValues.
     ///
     /// It is not guaranteed that the FluentValue type will be the same as the input type,
-    /// however this is generally true. Number types are widened to the value that is
+    /// however this is generally true. Number types are widened to the pattern that is
     /// most appropriate (long, double, or BigDecimal).
     ///
     /// FluentValues passed in will return out without modification (they will
@@ -69,7 +68,7 @@ public sealed interface FluentValue<T>
         return switch(any) {
             case null -> throw new NullPointerException("null values not allowed");
             case FluentValue<?> v -> v; // prevent re-wrapping
-            case String s -> FluentString.of(s);
+            case CharSequence s -> FluentString.of(s);
             case Number n -> FluentNumber.from(n);
             case TemporalAccessor t -> FluentTemporal.of(t);
             case Collection<?> _, Map<?,?> _-> throw invalid(any);  // illegal!
@@ -77,9 +76,9 @@ public sealed interface FluentValue<T>
         };
     }
 
-    /// Nullsafe mapper.
+    /// Null-safe mapper.
     ///
-    /// All null objects will be of the same type (FluentString, with a String value of "null").
+    /// All null objects will be of the same type (FluentString, with a String pattern of "null").
     /// nulls will therefore be handled as FluentStrings. A null input should be considered
     /// an error. Nullsafe mapping, however, allows a higher chance of a message to be constructed
     /// in the event of a program error.
@@ -93,9 +92,12 @@ public sealed interface FluentValue<T>
 
     /// Convert a Collection to a List of FluentValues.
     ///
-    /// Single items can be specified, to create a single-item list. But Collections
-    /// must implement the {@link SequencedCollection} interface, to maintain a well-defined and
+    /// Single items can be specified, and will result in the creation of a single-item list.
+    ///
+    /// Collections must implement the {@link SequencedCollection} interface, to maintain a well-defined and
     /// consistent iteration order.
+    ///
+    /// Collections containing nulls will be handled as with {@link #ofNullable(Object)}.
     ///
     /// @param in input; for single items, this will result in a single-item list.
     /// @return return the Collection as a List of FluentValues.
@@ -121,8 +123,8 @@ public sealed interface FluentValue<T>
     private static IllegalArgumentException invalid(final Object in) throws IllegalArgumentException {
         return new IllegalArgumentException(String.format(
                 """
-                Invalid: '%s' FluentValues cannot contain objects of this type. 
-                Values cannot be Collection types (or Map).
-                """, in.getClass()));
+                Invalid: '%s' FluentValues cannot contain objects of this type. \
+                Values cannot be Collection types (or Map).""",
+                in.getClass()));
     }
 }

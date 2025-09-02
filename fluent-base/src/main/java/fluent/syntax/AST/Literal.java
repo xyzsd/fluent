@@ -1,7 +1,6 @@
 /*
  *
- *  Copyright (C) 2021, xyzsd (Zach Del)
- *
+ *  Copyright (C) 2021-2025, xyzsd (Zach Del) 
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -66,13 +65,11 @@ public sealed interface Literal<T> extends InlineExpression {
 
         ///  Type suitable for a map key.
         @Override
-        default String key() {
+        default String name() {
             return String.valueOf( value() );
         }
 
         record LongLiteral(Long value) implements NumberLiteral<Long> {}
-
-
         record DoubleLiteral(Double value) implements NumberLiteral<Double> {}
     }
 

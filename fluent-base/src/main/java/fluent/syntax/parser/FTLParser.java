@@ -1,7 +1,6 @@
 /*
  *
- *  Copyright (C) 2021, xyzsd (Zach Del)
- *
+ *  Copyright (C) 2021-2025, xyzsd (Zach Del)
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -26,6 +25,7 @@ package fluent.syntax.parser;
 
 import fluent.bundle.FluentResource;
 import fluent.syntax.AST.*;
+import fluent.syntax.parser.ParseException.ErrorCode;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -36,51 +36,43 @@ import java.util.Optional;
 import static fluent.syntax.parser.FTLStream.isASCIIAlphabetic;
 import static fluent.syntax.parser.FTLStream.isASCIIDigit;
 
-/**
- * Parse a FTLStream into a FluentResource, which can then be queried as needed.
- * <p>
- * Comments can be included within the FluentResource AST, or, ignored. If comments are ignored, 'junk' is also
- * ignored. 'Junk' nodes are created during parse errors and can be useful for debugging.
- * </p>
- * <p>
- * Ignoring Comments (and Junk) makes for a smaller, more memory-efficient AST and can improve parsing performance.
- * </p>
- */
+/// Parse an FTLStream into a FluentResource, which can then be queried as needed.
+///
+/// Comments can be included within the FluentResource AST, or, ignored. If comments are ignored, 'junk' is also
+/// ignored. 'Junk' nodes are created during parse errors and can be useful for debugging.
+///
+///
+/// Ignoring Comments (and Junk) makes for a smaller, more memory-efficient AST and can improve parsing performance.
+///
 @NullMarked
 public class FTLParser {
+    ///  default initial size for attribute lists
+    private static final int ATTRIBUTE_LIST_SIZE = 4;
 
+    private FTLParser() {}
 
-    /**
-     * Parse an FTLStream into a FluentResource.
-     * <p>
-     * Ignores comments, and does not create 'Junk' nodes by default.
-     * Parse errors are still reported in the FluentResource as encountered.
-     *
-     * @param stream stream to parse
-     * @return FluentResource
-     */
+    /// Parse an FTLStream into a FluentResource.
+    ///
+    /// Ignores comments, and does not create 'Junk' nodes by default.
+    /// Parse errors are still reported in the FluentResource as encountered.
+    ///
+    /// @param stream stream to parse
+    /// @return FluentResource
     public static FluentResource parse(final FTLStream stream) {
         return parseSimple( stream );
     }
 
-
-    /**
-     * Parse an FTLStream into a FluentResource.
-     * <p>
-     * Optionally ignores comments and does not create 'Junk' nodes depending upon {@code ignoreCommentsAndJunk}.
-     * Parse errors are reported in the FluentResource as encountered.
-     *
-     * @param stream                stream to parse
-     * @param ignoreCommentsAndJunk if true, do not create Comment or Junk AST nodes
-     * @return FluentResource
-     */
+    /// Parse an FTLStream into a FluentResource.
+    ///
+    /// Optionally ignores comments and does not create 'Junk' nodes depending upon `ignoreCommentsAndJunk`.
+    /// Parse errors are reported in the FluentResource as encountered.
+    ///
+    /// @param stream                stream to parse
+    /// @param ignoreCommentsAndJunk if true, do not create Comment or Junk AST nodes
+    /// @return FluentResource
     public static FluentResource parse(final FTLStream stream, final boolean ignoreCommentsAndJunk) {
         return (ignoreCommentsAndJunk ? parseSimple( stream ) : parseComplete( stream ));
     }
-
-
-    private FTLParser() {}
-
 
     private static FluentResource parseSimple(final FTLStream ps) {
         List<Entry> entries = new ArrayList<>();
@@ -119,8 +111,8 @@ public class FTLParser {
 
         while (ps.hasRemaining()) {
             final int entryStart = ps.position();
-
             try {
+
                 Entry entry = getEntry( ps, entryStart, false );
                 assert entry != null;   // always true when ignoreComments is false!
 
@@ -173,10 +165,30 @@ public class FTLParser {
     private static Message getMessage(final FTLStream ps, final int entryStart) {
         final Identifier id = getIdentifier( ps );
         ps.skipBlankInline();
-        ps.expectChar( '=' );
+        ps.expectChar( (byte) '=' );
 
-        // remember, pattern can be empty...
-        final Optional<Pattern> pattern = FTLPatternParser.getPattern( ps );
+        // remember, pattern can be empty (null) ... if an attribute is present.
+        final Pattern pattern = FTLPatternParser.getPattern( ps );
+
+        ps.skipBlankBlock();
+
+        // and attributes can be empty
+        final List<Attribute> attributes = getAttributes( ps );
+
+        // but attributes and pattern cannot BOTH be empty
+        if (pattern == null && attributes.isEmpty()) {
+            throw ParseException.of(
+                    ErrorCode.E0005,
+                    id.name(),
+                    ps.positionToLine( entryStart )
+            );
+        }
+
+        return new Message( id, pattern, attributes, null );
+
+        /*
+        // remember, pattern can be empty (null)...
+        final Optional<Pattern> pattern = FTLPatternParser_2.getPattern( ps );
 
         ps.skipBlankBlock();
 
@@ -188,22 +200,40 @@ public class FTLParser {
             throw ParseException.of(
                     ParseException.ErrorCode.E0005,
                     id.name(),
-                    ps.positionToLine( entryStart )
+                    ps.positionToLineSIMPLE( entryStart )
             );
         }
 
         return new Message( id, pattern.orElse( null ),
                 attributes, null );
+        */
     }
 
     private static Term getTerm(final FTLStream ps, final int entryStart) {
-        ps.expectChar( '-' );
+        ps.expectChar( (byte) '-' );
         final Identifier id = getIdentifier( ps );
+
         ps.skipBlankInline();
-        ps.expectChar( '=' );
+        ps.expectChar( (byte) '=' );
         ps.skipBlankInline();
 
-        final Optional<Pattern> value = FTLPatternParser.getPattern( ps );
+        final Pattern pattern = FTLPatternParser.getPattern( ps );
+        ps.skipBlankBlock();
+
+        final List<Attribute> attributes = getAttributes( ps );
+
+        if (pattern != null) {
+            return new Term( id, pattern, attributes );
+        } else {
+            throw ParseException.of(
+                    ErrorCode.E0006,
+                    id.name(),
+                    ps.positionToLine( entryStart )
+            );
+        }
+
+        /*
+        final Optional<Pattern> value = FTLPatternParser_2.getPattern( ps );
 
         ps.skipBlankBlock();
 
@@ -213,15 +243,17 @@ public class FTLParser {
                 .orElseThrow( () -> ParseException.of(
                         ParseException.ErrorCode.E0006,
                         id.name(),
-                        ps.positionToLine( entryStart )
+                        ps.positionToLineSIMPLE( entryStart )
                 ) );
+
+         */
     }
 
 
     // TODO: this suppresses errors if get_attribute fails; give warning? store error somewhere?
     //       re-evaluate and create a test for this
     private static List<Attribute> getAttributes(final FTLStream ps) {
-        List<Attribute> attributes = new ArrayList<>();
+        List<Attribute> attributes = new ArrayList<>( ATTRIBUTE_LIST_SIZE );
 
         while (ps.hasRemaining()) {
             final int line_start = ps.position();
@@ -232,46 +264,65 @@ public class FTLParser {
                 break;
             }
 
-            if (!ps.isCurrentChar( '.' )) {
+            if (!ps.isCurrentChar( (byte) '.' )) {
                 ps.position( line_start );
                 break;
             }
 
+            final Attribute attr = getAttribute( ps );
+            if (attr == null) {
+                ps.position( line_start );
+                break;
+            } else {
+                attributes.add( attr );
+            }
+            /*
             if (getAttribute( ps ).map( attributes::add ).isEmpty()) {
                 ps.position( line_start );
                 break;
             }
+
+             */
         }
         return attributes;
     }
 
 
-    private static Optional<Attribute> getAttribute(final FTLStream ps) {
-        ps.expectChar( '.' );
+    private static @Nullable Attribute getAttribute(final FTLStream ps) {
+        ps.expectChar( (byte) '.' );
         final Identifier id = getIdentifier( ps );
         ps.skipBlankInline();
-        ps.expectChar( '=' );
-        return FTLPatternParser.getPattern( ps )
-                .map( pattern -> new Attribute( id, pattern ) );
+        ps.expectChar( (byte) '=' );
+        final Pattern pattern = FTLPatternParser.getPattern( ps );
+
+        if (pattern == null) {
+            return null;
+        } else {
+            return new Attribute( id, pattern );
+        }
+        //return FTLPatternParser_2.getPattern( ps )
+        //        .map( pattern -> new Attribute( id, pattern ) );
+        // TODO: check this line E0012
         //.orElseThrow( () -> new ParseException( ParseException.ErrorCode.E0012 ));
     }
 
     // todo : hasRemaining() check on first if() or at peekPos
     private static Identifier getIdentifier(final FTLStream ps) {
+        // check first character
         int peekPos = ps.position();
         if (isASCIIAlphabetic( ps.at( peekPos ) )) {
             peekPos += 1;
         } else {
             throw ParseException.of(
-                    ParseException.ErrorCode.E0004,
+                    ErrorCode.E0004,
                     "a-zA-Z",
                     ps.positionToLine( peekPos ),
-                    FTLStream.toString( ps.at( peekPos ) )
+                    FTLStream.byteToString( ps.at( peekPos ) )
             );
         }
 
         while (ps.hasRemaining()) {
-            final char ch = ps.at( peekPos );
+            final byte ch = ps.at( peekPos );
             if (isASCIIAlphabetic( ch ) || isASCIIDigit( ch ) || ch == '_' || ch == '-') {
                 peekPos += 1;
             } else {
@@ -280,13 +331,14 @@ public class FTLParser {
         }
 
         String name = ps.subString( ps.position(), peekPos );
+
         ps.position( peekPos );
         return new Identifier( name );
     }
 
 
     private static Optional<Identifier> getAttributeAccessor(final FTLStream ps) {
-        if (!ps.takeCharIf( '.' )) {
+        if (!ps.takeCharIf( (byte) '.' )) {
             return Optional.empty();
         } else {
             return Optional.of( getIdentifier( ps ) );
@@ -294,9 +346,9 @@ public class FTLParser {
     }
 
     private static VariantKey getVariantKey(final FTLStream ps) {
-        if (!ps.takeCharIf( '[' )) {
-            throw ParseException.of(
-                    ParseException.ErrorCode.E0003,
+        if (!ps.takeCharIf( (byte) '[' )) {
+            throw parseException(
+                    ErrorCode.E0003,
                     "[",
                     ps
             );
@@ -311,7 +363,7 @@ public class FTLParser {
         }
 
         ps.skipBlank();
-        ps.expectChar( ']' );
+        ps.expectChar( (byte) ']' );
 
         return variantKey;
     }
@@ -320,13 +372,13 @@ public class FTLParser {
         List<Variant> variants = new ArrayList<>( 4 );
         boolean hasDefault = false;
 
-        while (ps.isCurrentChar( '*' ) || ps.isCurrentChar( '[' )) {
-            final boolean isDefault = ps.takeCharIf( '*' );
+        while (ps.isCurrentChar( (byte) '*' ) || ps.isCurrentChar( (byte) '[' )) {
+            final boolean isDefault = ps.takeCharIf( (byte) '*' );
 
             if (isDefault) {
                 if (hasDefault) {
-                    throw ParseException.of(
-                            ParseException.ErrorCode.E0015,
+                    throw parseException(
+                            ErrorCode.E0015,
                             ps
                     );
                 } else {
@@ -335,16 +387,18 @@ public class FTLParser {
             }
 
             final VariantKey key = getVariantKey( ps );
-            final Pattern value = FTLPatternParser.getPattern( ps )
-                    .orElseThrow( () -> ParseException.of( ParseException.ErrorCode.E0012, ps ) );
+            final Pattern value = FTLPatternParser.getPattern( ps );
+            if (value == null) {
+                throw parseException( ErrorCode.E0012, ps );
+            }
 
             variants.add( new Variant( key, value, isDefault ) );
             ps.skipBlank();
         }
 
         if (!hasDefault) {
-            throw ParseException.of(
-                    ParseException.ErrorCode.E0010,
+            throw parseException(
+                    ErrorCode.E0010,
                     ps
             );
         }
@@ -364,17 +418,17 @@ public class FTLParser {
     }
 
 
-    // also used by FTLPatternParser
+    // also used by FTLPatternParser_2
     static Expression getPlaceable(final FTLStream ps) {
-        ps.expectChar( '{' );
+        ps.expectChar( (byte) '{' );
         ps.skipBlank();
 
         final Expression exp = getExpression( ps );
         ps.skipBlankInline();
-        ps.expectChar( '}' );
+        ps.expectChar( (byte) '}' );
         if (exp instanceof InlineExpression.TermReference termReference) {
             if (termReference.attributeID() != null) {
-                throw ParseException.of( ParseException.ErrorCode.E0019, ps );
+                throw parseException( ErrorCode.E0019, ps );
             }
         }
 
@@ -393,10 +447,10 @@ public class FTLParser {
 
         ps.skipBlank();
 
-        if (!ps.isCurrentChar( '-' ) || !ps.isNextChar( '>' )) {
+        if (!ps.isCurrentChar( (byte) '-' ) || !ps.isNextChar( (byte) '>' )) {
             if (exp instanceof InlineExpression.TermReference ref) {
                 if (ref.attributeID() != null) {
-                    throw ParseException.of( ParseException.ErrorCode.E0019, ps );
+                    throw parseException( ErrorCode.E0019, ps );
                 }
             }
             return exp;
@@ -405,42 +459,42 @@ public class FTLParser {
         switch (exp) {
             case InlineExpression.MessageReference ref -> {
                 if (ref.attributeID() == null) {
-                    throw ParseException.of( ParseException.ErrorCode.E0016, ps );
+                    throw parseException( ErrorCode.E0016, ps );
                 } else {
-                    throw ParseException.of( ParseException.ErrorCode.E0018, ps );
+                    throw parseException( ErrorCode.E0018, ps );
                 }
             }
             case InlineExpression.TermReference ref -> {
                 if (ref.attributeID() == null) {
-                    throw ParseException.of( ParseException.ErrorCode.E0017, ps );
+                    throw parseException( ErrorCode.E0017, ps );
                 }
             }
-            case PatternElement.Placeable _ -> throw ParseException.of( ParseException.ErrorCode.E0029, ps );
+            case PatternElement.Placeable _ -> throw parseException( ErrorCode.E0029, ps );
             default -> { /* do nothing */ }
         }
 
         // skip over the '->' in selector (originally this was just a ps.inc(2))
         // caveat: because we check each individually, this could result in a confusing error message
-        ps.expectChar( '-' );
-        ps.expectChar( '>' );
+        ps.expectChar( (byte) '-' );
+        ps.expectChar( (byte) '>' );
 
         ps.skipBlankInline();
         if (!ps.skipEOL()) {
-            throw ParseException.of( ParseException.ErrorCode.E0004, "'\\n' or '\\r\\n'", ps );
+            throw parseException( ErrorCode.E0004, "'\\n' or '\\r\\n'", ps );
         }
         ps.skipBlank();
-        return new SelectExpression( exp, getVariants( ps ) );
+        return SelectExpression.of( exp, getVariants( ps ) );
     }
 
 
     private static InlineExpression getInlineExpression(final FTLStream ps) {
-        final char initialChar = ps.at();
+        final byte initialChar = ps.at();
         if (initialChar == '"') {
             ps.inc();
             int sliceStart = ps.position();
             StringBuilder sb = new StringBuilder( 64 );     // todo: sizing
             while (ps.hasRemaining()) {
-                final char ch = ps.at();
+                final byte ch = ps.at();
                 if (ch == '\\') {
                     if (sliceStart != -1) {
                         sb.append( ps.subString( sliceStart, ps.position() ) );   // append non-escaped text, if any
@@ -461,16 +515,16 @@ public class FTLParser {
                             ps.inc( 2 );
                         }
                         case 'u' -> {
-                            ps.inc( 2 );   // char after 'u'
+                            ps.inc( 2 );   // char after 'u', then Unicode character in the U+0000 to U+FFFF
                             sb.appendCodePoint( ps.getUnicodeEscape( 4 ) );
                         }
                         case 'U' -> {
-                            ps.inc( 2 );   // char after 'U'
+                            ps.inc( 2 );   // char after 'U', then any Unicode character
                             sb.appendCodePoint( ps.getUnicodeEscape( 6 ) );
                         }
-                        default -> throw ParseException.of(
-                                ParseException.ErrorCode.E0025,
-                                "\\" + FTLStream.toString( ps.at( ps.position() + 1 ) ),
+                        default -> throw parseException(
+                                ErrorCode.E0025,
+                                "\\" + FTLStream.byteToString( ps.at( ps.position() + 1 ) ),
                                 ps
                         );
                     }
@@ -480,14 +534,14 @@ public class FTLParser {
                     }
                     break;
                 } else if (ch == '\n') {
-                    throw ParseException.of( ParseException.ErrorCode.E0020, ps );
+                    throw parseException( ErrorCode.E0020, ps );
                 } else {
                     sliceStart = (sliceStart == -1) ? ps.position() : sliceStart;
                     ps.inc();
                 }
             }
 
-            ps.expectChar( '"' );
+            ps.expectChar( (byte) '"' );
             return Literal.StringLiteral.of( sb.toString() );
         } else if (isASCIIDigit( initialChar )) {
             return getNumberLiteral( ps );
@@ -498,13 +552,16 @@ public class FTLParser {
                 final Identifier attribAccessorID = getAttributeAccessor( ps ).orElse( null );
                 final CallArguments callArguments = getCallArguments( ps ).orElse( null );
 
-                //  create exception if there are positionals arguments in TermReferences
+                // exception if there are positionals arguments (which are not allowed) in TermReferences
                 validateTermCallArguments( ps, identifier, callArguments );
+
+                // Get NamedArguments (noting that CallArguments could be null).
+                final List<NamedArgument> namedArgs = (callArguments == null) ? List.of() : callArguments.named();
 
                 return new InlineExpression.TermReference(
                         identifier,
                         attribAccessorID,
-                        callArguments
+                        namedArgs
                 );
             } else {
                 ps.dec();
@@ -526,21 +583,21 @@ public class FTLParser {
         } else if (initialChar == '{') {
             return new PatternElement.Placeable( getPlaceable( ps ) );
         } else {
-            throw ParseException.of( ParseException.ErrorCode.E0028, ps );
+            throw parseException( ErrorCode.E0028, ps );
         }
     }
 
     // terms with CallArguments should not have positionals arguments.
     private static void validateTermCallArguments(final FTLStream ps, final Identifier id, @Nullable final CallArguments in) {
         if (in != null && !in.positionals().isEmpty()) {
-            throw ParseException.of( ParseException.ErrorCode.E0031, id.name(), ps );
+            throw parseException( ErrorCode.E0031, id.name(), ps );
         }
     }
 
     // get call arguments for FTL Functions
     private static Optional<CallArguments> getCallArguments(final FTLStream ps) {
         ps.skipBlank();
-        if (!ps.takeCharIf( '(' )) {
+        if (!ps.takeCharIf( (byte) '(' )) {
             return Optional.empty();
         }
 
@@ -550,7 +607,7 @@ public class FTLParser {
 
         ps.skipBlank();
         while (ps.hasRemaining()) {
-            if (ps.isCurrentChar( ')' )) {
+            if (ps.isCurrentChar( (byte) ')' )) {
                 break;
             }
 
@@ -558,9 +615,9 @@ public class FTLParser {
 
             if (expr instanceof InlineExpression.MessageReference msgRef) {
                 ps.skipBlank();
-                if (ps.isCurrentChar( ':' )) {
+                if (ps.isCurrentChar( (byte) ':' )) {
                     if (argNames.contains( msgRef.name() )) {
-                        throw ParseException.of( ParseException.ErrorCode.E0022, ps );
+                        throw parseException( ErrorCode.E0022, ps );
                     }
                     ps.inc();
                     ps.skipBlank();
@@ -570,36 +627,36 @@ public class FTLParser {
                         argNames.add( msgRef.name() );
                         named.add( new NamedArgument( new Identifier( msgRef.name() ), literal ) );
                     } else {
-                        throw ParseException.of( ParseException.ErrorCode.E0032, ps );
+                        throw parseException( ErrorCode.E0032, ps );
                     }
                 } else {
                     if (!argNames.isEmpty()) {
-                        throw ParseException.of( ParseException.ErrorCode.E0021, ps );
+                        throw parseException( ErrorCode.E0021, ps );
                     }
                     positional.add( expr );
                 }
             } else {
                 if (!argNames.isEmpty()) {
-                    throw ParseException.of( ParseException.ErrorCode.E0021, ps );
+                    throw parseException( ErrorCode.E0021, ps );
                 }
                 positional.add( expr );
             }
 
             ps.skipBlank();
-            ps.takeCharIf( ',' );
+            ps.takeCharIf( (byte) ',' );
             ps.skipBlank();
         }
 
-        ps.expectChar( ')' );
+        ps.expectChar( (byte) ')' );
         return Optional.of( new CallArguments( positional, named ) );
     }
 
 
     private static Literal.NumberLiteral<?> getNumberLiteral(final FTLStream ps) {
         final int start = ps.position();
-        ps.takeCharIf( '-' );
+        ps.takeCharIf( (byte) '-' );
         ps.skipDigits();
-        if (ps.takeCharIf( '.' )) {
+        if (ps.takeCharIf( (byte) '.' )) {
             ps.skipDigits();
         }
 
@@ -607,25 +664,58 @@ public class FTLParser {
         try {
             return Literal.NumberLiteral.from( literalString );
         } catch (NumberFormatException e) {
-            throw ParseException.of( ParseException.ErrorCode.E0030, literalString, ps );
+            throw parseException( ErrorCode.E0030, literalString, ps );
         }
     }
 
 
+    // we found an identifier, but, function names must be all upper case (+specials)
     // throws if not valid function identifier (uppercase+special ('-', '_'). **empty is valid**
     private static void validateFunctionName(final Identifier identifier, final FTLStream ps) {
         final String name = identifier.name();
+        // this works b/c we are working with ascii
         for (int i = 0; i < name.length(); i++) {
-            if (!FTLStream.isValidFnChar( name.charAt( i ) )) {
+            if (!FTLStream.isValidFnChar( (byte) name.charAt( i ) )) {
                 throw ParseException.of(
-                        ParseException.ErrorCode.E0008,
+                        ErrorCode.E0008,
                         name,
-                        ps.positionToLine(),
-                        FTLStream.toString( name.charAt( i ) )
+                        ps.positionToLine( ps.position() ),
+                        FTLStream.byteToString( (byte) name.charAt( i ) )
                 );
             }
         }
     }
 
 
+    /// Create a ParseException from the current position of an [FTLStream].
+    /// The message argument is left unspecified.
+    ///
+    /// @param errorCode the error code describing the parsing failure
+    /// @param stream    the token stream that supplies current location and received byte
+    /// @return a new ParseException instance pointing at the stream's current line
+    static ParseException parseException(final ErrorCode errorCode, final FTLStream stream) {
+        return ParseException.of(
+                errorCode,
+                "[*ARGUMENT UNSPECIFIED*]",
+                stream.positionToLine(),
+                FTLStream.byteToString( stream.at() )
+
+        );
+    }
+
+    /// Create a ParseException from the current position of an [FTLStream]
+    /// with an explicit message argument.
+    ///
+    /// @param errorCode the error code describing the parsing failure
+    /// @param argument  the argument to interpolate into the error message format
+    /// @param stream    the token stream that supplies current location and received byte
+    /// @return a new ParseException instance pointing at the stream's current line
+    static ParseException parseException(final ErrorCode errorCode, final String argument, final FTLStream stream) {
+        return ParseException.of(
+                errorCode,
+                argument,
+                stream.positionToLine(),
+                FTLStream.byteToString( stream.at() )
+        );
+    }
 }

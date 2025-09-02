@@ -2,7 +2,7 @@ package fluent.examples.hello;
 
 import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
-import fluent.functions.icu.ICUFunctionFactory;
+import fluent.function.icu.ICUFunctionFactory;
 import fluent.syntax.parser.FTLParser;
 import fluent.syntax.parser.FTLStream;
 

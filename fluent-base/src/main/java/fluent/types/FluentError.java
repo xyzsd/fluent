@@ -1,7 +1,6 @@
 /*
  *
- *  Copyright (C) 2021, xyzsd (Zach Del)
- *
+ *  Copyright (C) 2021-2025, xyzsd (Zach Del) 
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -27,7 +26,7 @@ import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
 
-/// An error value.
+/// An error pattern.
 /// This is used instead of throwing an Exception in order to preserve more of the message,
 /// if possible.
 @NullMarked

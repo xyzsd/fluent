@@ -1,7 +1,6 @@
 /*
  *
- *  Copyright (C) 2021, xyzsd (Zach Del)
- *
+ *  Copyright (C) 2021-2025, xyzsd (Zach Del) 
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -20,8 +19,5 @@
  *
  *
  */
-
-/**
- * Framework for resolving AST nodes
- */
+/// Package for resolving AST nodes
 package fluent.bundle.resolver;

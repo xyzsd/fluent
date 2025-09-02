@@ -1,7 +1,6 @@
 /*
  *
- *  Copyright (C) 2021, xyzsd (Zach Del)
- *
+ *  Copyright (C) 2021-2025, xyzsd (Zach Del) 
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -26,6 +25,8 @@ package fluent.syntax.AST;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
+import java.util.List;
+
 import static java.util.Objects.requireNonNull;
 
 
@@ -44,6 +45,7 @@ public sealed interface InlineExpression extends Expression
 
 
     /// msgID, attributeID
+    ///
     record MessageReference(Identifier identifier, @Nullable Identifier attributeID) implements InlineExpression, Identifiable {
 
         public MessageReference {
@@ -60,12 +62,12 @@ public sealed interface InlineExpression extends Expression
 
     /// Term reference.
     ///
-    /// NOTE: we use CallArguments for named values, but there are never any positionals.
-    record TermReference(Identifier identifier, @Nullable Identifier attributeID, @Nullable CallArguments arguments)
+    record TermReference(Identifier identifier, @Nullable Identifier attributeID, List<NamedArgument> namedArguments)
             implements InlineExpression, Identifiable {
 
         public TermReference {
             requireNonNull(identifier);
+            namedArguments = List.copyOf(namedArguments);
         }
 
         @Override

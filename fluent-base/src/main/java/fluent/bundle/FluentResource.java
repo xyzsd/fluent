@@ -1,7 +1,6 @@
 /*
  *
- *  Copyright (C) 2021, xyzsd (Zach Del)
- *
+ *  Copyright (C) 2021-2025, xyzsd (Zach Del) 
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -30,15 +29,13 @@ import fluent.syntax.parser.ParseException;
 
 import java.util.List;
 
-/**
- * Immutable class holding the AST from parsing.
- * <p>
- * AST Entries are stored in a List, as are errors and (optionally) Junk.
- * </p>
- * <p>
- *     FluentResources are used to create FluentBundles.
- * </p>
- */
+/// Immutable class holding the AST from parsing.
+///
+/// AST Entries are stored in a List, as are errors and (optionally) `Junk`.
+///
+///
+///     FluentResources are used to create FluentBundles.
+///
 @NullMarked
 public record FluentResource(List<Entry> entries, List<ParseException> errors, List<Junk> junk) {
 
@@ -49,16 +46,12 @@ public record FluentResource(List<Entry> entries, List<ParseException> errors, L
         this.junk = List.copyOf(junk);
     }
 
-    /**
-     * True if there are errors
-     */
+    /// True if there are errors
     public boolean hasErrors() {
         return !errors.isEmpty();
     }
 
-    /**
-     * True if there is 'Junk'
-     */
+    /// True if there is 'Junk'
     public boolean hasJunk() {
         return !junk.isEmpty();
     }

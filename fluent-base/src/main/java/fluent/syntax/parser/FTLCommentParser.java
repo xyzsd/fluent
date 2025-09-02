@@ -1,7 +1,6 @@
 /*
  *
- *  Copyright (C) 2021, xyzsd (Zach Del)
- *
+ *  Copyright (C) 2021-2025, xyzsd (Zach Del) 
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -50,7 +49,7 @@ class FTLCommentParser {
 
             level = lineLevel;
 
-            final char cb = ps.at();    // cb == current byte
+            final byte cb = ps.at();    // cb == current byte
             if (ps.position() == ps.length()) {
                 break;
             } else if (ps.isEOL()) {
@@ -61,7 +60,7 @@ class FTLCommentParser {
                     ps.inc();
                 } else {
                     if (sb.isEmpty()) {
-                        throw ParseException.of( ParseException.ErrorCode.E0003,
+                        throw FTLParser.parseException( ParseException.ErrorCode.E0003,
                                 " ", ps );
                     } else {
                         ps.dec( lineLevel );
@@ -86,7 +85,7 @@ class FTLCommentParser {
 
     private static int getCommentLevel(FTLStream ps) {
         int nChars = 0;
-        while (ps.takeCharIf( '#' )) {
+        while (ps.takeCharIf( (byte) '#' )) {
             nChars += 1;
         }
         return nChars;

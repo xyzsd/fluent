@@ -1,7 +1,6 @@
 /*
  *
- *  Copyright (C) 2021, xyzsd (Zach Del)
- *
+ *  Copyright (C) 2021-2025, xyzsd (Zach Del)
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -24,11 +23,14 @@
 package fluent.syntax.parser;
 
 import org.jspecify.annotations.NullMarked;
-import org.jetbrains.annotations.Range;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 
 import static java.util.Objects.requireNonNull;
@@ -42,143 +44,218 @@ import static java.util.Objects.requireNonNull;
 
 @NullMarked
 public final class FTLStream {
-    /*
-        Design notes:
-            Reading UTF8 into a ByteBuffer was originally tried, with a few variations.
-            However, reading UTF8 into a String and parsing the String UTF16 representation was
-            more performant in all cases. This works, because the essential characters,
-            whitespace, etc. used in Fluent FTL have the same representation in both UTF8 and UTF16.
 
-            This was pre-JDK16 (using 15), so it is possible that as things gel in JDK16/17
-            the result could be different.
+    // not a valid Unicode character. Will never exist in a decoded stream
+    static final byte EOF = (byte) 0xFF;
 
-        Performance with char[] faster than using a CharSequence, with less variance, though
-        only about 5-10%.
+    // magic constants for ascii comparisons.
+    private static final byte MAGIC_CAPS_ALPHA_OFFSET = ((byte) (-65 + Byte.MIN_VALUE)); // 'A' (uppercase A)
+    private static final byte MAGIC_LC_ALPHA_OFFSET = ((byte) (-97 + Byte.MIN_VALUE)); // 'a' (lowercase A)
+    private static final byte MAGIC_ALPHA_RANGE = ((byte) (26 + Byte.MIN_VALUE));  // 26 letters
 
-        methods are optimized; if we check that pos is in bounds, we can use the array
-        directly. If we DO NOT check bounds, use at() instead for safety.
+    private static final byte MAGIC_HEX_LETTER_RANGE = ((byte) (6 + Byte.MIN_VALUE));  // 6 letter range
+    private static final byte MAGIC_DIGIT_RANGE = ((byte) (10 + Byte.MIN_VALUE));    // 10 digit range
+    private static final byte MAGIC_DIGIT_OFFSET = ((byte) (-48 + Byte.MIN_VALUE));    // '0' ascii value
 
-
-     */
-
-
-    // constants:
-    /**
-     * EOF
-     */
-    static final char EOF = 0xFFFF;  // not a valid unicode character. Will never exist in a decoded stream
+    // internal
     private static final int RADIX = 16;
 
     // invariants:
-    private final char[] seq;   // the data
+    private final byte[] seq;   // UTF8 octets. seq.length == (size + SWAR.PAD)
+    private final int size;     // size of actual data in seq[]
 
     // state:
     private int pos;    // current position in stream
 
 
-    /// Create an FTLStream from the given String.
-    ///
-    /// Streams are absolutely not threadsafe.
-    ///
-    /// A performant way to read in a file would be
-    /// {@snippet :
-    ///     Path path = Paths.get("myFile.ftl");
-    ///     FTLStream ftl = FTLStream.of( Files.readString(path));
-    /// }
-    /// @param in Data to parse
-    /// @return The stream, ready for parsing
+    // private constructor
+    private FTLStream(final byte[] array) {
+        this.size = array.length;
+        this.pos = 0;
+
+        seq = new byte[size + SWAR.PAD];
+        for (int i = array.length; i < seq.length; i++) {
+            seq[i] = EOF;
+        }
+        System.arraycopy( array, 0, seq, 0, array.length );
+    }
+
+    // NOT efficient, but useful for very short things/testing
     public static FTLStream of(final String in) {
-        requireNonNull(in);
+        requireNonNull( in );
         if (in.isEmpty()) {
             throw new IllegalArgumentException( "empty input String!" );
         }
-        return new FTLStream( in.toCharArray() );
+        return new FTLStream( in.getBytes( StandardCharsets.UTF_8 ) );
     }
 
-    /**
-     * Create an FTLStream from the given array.
-     * <p>
-     * The character array is treated as a properly-formed UTF16 stream.
-     * <p>
-     * Note that the array is used without a defensive copy being made.
-     * Any modification to the array during parsing will cause undefined behavior!
-     * <p>
-     * Use {@code FTLStream.of(Arrays.copyOf(array, array.length))} if a defensive copy
-     * is needed.
-     *
-     * @param array character array of length > 0
-     * @return The stream, ready for parsing
-     */
-    public static FTLStream of(final char[] array) {
+    // we copy
+    public static FTLStream of(final byte[] array) {
         requireNonNull( array, "null array" );
         if (array.length == 0) {
-            throw new IllegalArgumentException( "zero length array!" );
+            throw new IllegalArgumentException( "Zero length array!" );
         }
-        return new FTLStream( array );  // no defensive copy made
+
+        return new FTLStream( array );
     }
 
+    // TODO: verify endianness/SWAR
+    public static FTLStream of(final ByteBuffer bb) {
+        requireNonNull( bb );
+        if (bb.limit() == 0) {
+            throw new IllegalArgumentException( "ByteBuffer of zero length!" );
+        }
+
+        return new FTLStream( bb.array() );  // no defensive copy made
+    }
 
     /// Read directly from a resource stream.
     ///
     /// @param classLoader such as Thread.currentThread().getContextClassLoader();
-    /// @param resource resource to load
+    /// @param resource    resource to load
     /// @return FTLStream
     /// @throws IOException if resource is missing or an I/O error occurs while reading.
     public static FTLStream from(final ClassLoader classLoader, final String resource)
-    throws IOException {
-        requireNonNull(classLoader);
-        requireNonNull(resource);
+            throws IOException {
+        requireNonNull( classLoader );
+        requireNonNull( resource );
 
         try (InputStream is = classLoader.getResourceAsStream( resource )) {
-            if(is ==  null) {
+            if (is == null) {
                 // todo: exception choice
                 throw new FileNotFoundException( resource );
             }
 
-            final CharBuffer decoded = StandardCharsets.UTF_8.decode(
-                    ByteBuffer.wrap( is.readAllBytes() )
-            );
-
-            return new FTLStream(decoded.array());
+            return new FTLStream( is.readAllBytes() );
         }
     }
 
+    ///  True if ASCII ('}','.','[', or '*').
+    static boolean isLineStart(final byte b) {
+        return (b == '}' || b == '.' || b == '[' || b == '*');
+    }
+
+    ///  True if ASCII ('0-9').
+    static boolean isASCIIDigit(final byte in) {
+        // OLD: return (b >= 48 && b <= 57);  // 0-9
+        // all (one...) casts are required!
+        return ((byte) (in + MAGIC_DIGIT_OFFSET) < MAGIC_DIGIT_RANGE);
+    }
 
 
+    // //////////////////////////////////////////////////////////
+    // simple package-private methods
+    // //////////////////////////////////////////////////////////
 
-    /**
-     * Calculate the line number in a file from the current position.
-     * <p>
-     * This is a shortcut for {@code positionToLine(int)}.
-     * </p>
-     *
-     * @return line number
-     */
+    ///  True if ASCII ('a-z','A-Z').
+    static boolean isASCIIAlphabetic(final byte in) {
+        // simple approach: many comparisons
+        // return ((in >= 97 && in <= 122) || (in >= 65 && in  <= 90)); // a-z || A-Z
+        //
+        // fancy approach:
+        // (1) byte b1 = in | 0x20; // convert uppercase to lowercase ASCII by flipping this bit
+        //      now we only have 1 range to check (lowercase 'a .. z')
+        // (2) byte b2 = (b1 - 97); subtract 0x61 (dec 97), which is lower range (lowercase 'a'), which will be value 0
+        // then we compare (correct range should be 0 .. 25), but bytes are signed, so
+        // we then do an unsigned comparison to 26 (26 letters in the alphabet, letter 'z') like so:
+        // (3) if (b2 + Byte.MIN_VALUE < 26 + Byte.MIN_VALUE) { ... we are alphabetic ... } else { we are not }
+        // so we reduce upto 4 comparisons to 1. much less branchy.
+        // constants can be improved:
+        // left: (b2 + Byte.MIN_VALUE) == (b1 + (byte)(- 97 + Byte.MIN_VALUE)) == (b1 + 31)
+        // right: (25 + Byte.MIN_VALUE) == -103
+        // ...and that is the origin of our 'MAGIC' values
+        //
+        // total: 1 OR, 1 ADD, 1 comparison
+        //
+        // future: could do a SWAR/SIMD approach, particularly for identifiers
+        //
+        // !! NOTE: these (byte) casts are necessary !!
+        return ((byte) ((byte) (in | 0x20) + MAGIC_LC_ALPHA_OFFSET) < MAGIC_ALPHA_RANGE);
+    }
+
+    ///  True if ASCII ('a-f','A-F').
+    private static boolean isASCIIHexLetter(final byte in) {
+        // note: all casts are necessary!
+        return ((byte) ((byte) (in | 0x20) + MAGIC_LC_ALPHA_OFFSET) < MAGIC_HEX_LETTER_RANGE);
+    }
+
+    ///  True if ASCII ('a-f','A-F','0-9').
+    static boolean isASCIIHex(final byte b) {
+        // SIMPLE:
+        // return ((b >= 48 && b <= 57) ||   // 0-9
+        //         (b >= 65 && b <= 70) ||   // A-F
+        //         (b >= 97 && b <= 102)     // a-f
+        // );
+        // IMPROVED:
+        return isASCIIHexLetter( b ) || isASCIIDigit( b );
+    }
+
+    /// determine if byte is valid for a function name
+    /// NOTE: not for first character of a function name
+    /// (uppercase ASCII + digits + underscore + hyphen)
+    static boolean isValidFnChar(final byte in) {
+        // SIMPLE:
+        // return ((b >= 65 && b <= 90) ||   // A-Z    (capitals only!)
+        //         (b >= 48 && b <= 57) ||   // 0-9
+        //         (b == 95 || b == 45)      // '_' or '-' (underscore, hyphen-minus)
+        // );
+        // IMPROVED: (the cast is necessary)
+        return (
+                ((byte) (in + MAGIC_CAPS_ALPHA_OFFSET) < MAGIC_ALPHA_RANGE) ||
+                        isASCIIDigit( in ) ||
+                        (in == 95) ||
+                        (in == 45)
+        );
+    }
+
+    /// Conversion method for error messages, debugging, etc.
+    ///
+    /// Special chars are escaped, and hex codes displayed
+    /// adjacent to certain characters for easier debugging/improved
+    /// clarity for diagnostic messages.
+    ///
+    /// @param in byte in
+    /// @return String
+    static String byteToString(final byte in) {
+        // all critical characters for parsing are < 0x007F (ASCII)
+        return switch (in) {
+            case '\r' -> "<CR>";
+            case '\n' -> "<LF>";
+            case '\t' -> "<TAB>";   // commonly encountered but not whitespace as per fluent spec
+            case ' ' -> "<WS>";     // simple whitespace (0x20)
+            case EOF -> "<EOF>";    // our definition for an out-of-bound position
+            default -> {
+                if (in > 0x20 && in < 0x7F) {
+                    // printable (but not space) (note: guard patterns w/primitives not yet final in JDK)
+                    yield "'" + (char) in + "'";
+                } else {
+                    // nonprintable (and not specially handled above)
+                    // this will yield something like '<0x03>'
+                    yield String.format( "<%#02x>", (int) in );
+                }
+            }
+        };
+    }
+
+    /// Calculate the line number in a file from the current position.
+    ///
     public int positionToLine() {
         return positionToLine( position() );
     }
 
-
-    /**
-     * <p>
-     * For a given stream offset, calculate the line number in the file.
-     * Line numbers are 1-based. However, if the offset is invalid (e.g., EOF)
-     * a result of 0 will be returned.
-     * </p>
-     * <p>
-     * We cannot reliably calculate a column number from the decoded
-     * stream because the byte stream we use has already been decoded
-     * from UTF8 into (Java-native) UTF16.
-     * </p>
-     *
-     * @param position position in decoded stream
-     * @return a line number >= 0 (line '0' is out-of-bounds (typically, EOF))
-     */
+    ///
+    /// For a given stream offset, calculate the line number in the file.
+    /// Line numbers are 1-based. However, if the offset is invalid (e.g., EOF)
+    /// a result of 0 will be returned.
+    ///
+    /// @param position position in decoded stream
+    /// @return a line number >= 0 (line '0' is out-of-bounds (typically, EOF))
     public int positionToLine(final int position) {
-        if (position < 0 || position >= length()) {
+        if (position < 0 || position >= size) {
             return 0;
         }
 
+        // simple line count
         int lfCount = 1;        // linefeed count
         for (int i = 0; i < position; i++) {
             if (seq[i] == '\n') {
@@ -188,21 +265,9 @@ public final class FTLStream {
         return lfCount;
     }
 
-
-    // private constructor
-    private FTLStream(final char[] array) {
-        this.seq = array;
-        this.pos = 0;
-    }
-
-
-
-    ////////////////////////////////////////////////////////////
-    // simple package-private methods
-    ////////////////////////////////////////////////////////////
-
+    // length of actual buffer (not pad)
     int length() {
-        return seq.length;
+        return size;
     }
 
     int position() {
@@ -210,14 +275,19 @@ public final class FTLStream {
     }
 
     boolean hasRemaining() {
-        return (pos < seq.length);
+        return (pos < size);
     }
 
     // set position
     // TODO: consider rename to 'setPosition' for clarity
-    void position(@Range(from = 0, to = Integer.MAX_VALUE) int value) {
+    void position(int value) {
         pos = value;
     }
+
+
+    // //////////////////////////////////////////////////////////
+    // static utility
+    // //////////////////////////////////////////////////////////
 
     void inc() {
         pos += 1;
@@ -237,87 +307,58 @@ public final class FTLStream {
         pos -= decrement;
     }
 
-    /**
-     * Return the char at the current position, or EOF if OOB. Does NOT change position.
-     */
-    char at() {
+    /// Return the byte at the current position, or EOF if OOB. Does NOT change position.
+    /// *NOTE*: this will fail if negative or more than padding.
+    byte at() {
+        return seq[pos];
         // this is much safer and NOT really any slower than just 'return seq[pos]'
         // yay branch prediction
-        return (pos < seq.length) ? seq[pos] : EOF;
+        //return (pos < size) ? seq[pos] : EOF;
     }
 
-    /**
-     * Return the char at the specified position, or EOF if out of bounds.
-     */
-    char at(@Range(from = 0, to = Integer.MAX_VALUE) final int position) {
-        return (position < seq.length) ? seq[position] : EOF;
+    /// Return the byte at the specified position, or EOF if out of bounds.
+    /// Fail (exception) if negative
+    byte at(final int position) {
+        return seq[position];
+        //return (position < size) ? seq[position] : EOF;
     }
+
+
+    // //////////////////////////////////////////////////////////
+    // general methods used by parser (package private)
+    // //////////////////////////////////////////////////////////
 
     String subString(final int startIndex, final int endIndex) {
-        return new String( seq, startIndex, (endIndex - startIndex) );
+        /* alternate approach: keep decoder as a static final class var and then:
+        CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
+        decoder.reset();
+        decoder.decode( ByteBuffer.wrap( seq, startIndex, (endIndex-startIndex) )).toString();
+        */
+        return new String( seq, startIndex, (endIndex - startIndex), StandardCharsets.UTF_8 );
     }
-
-
-
-    ////////////////////////////////////////////////////////////
-    // static utility
-    ////////////////////////////////////////////////////////////
-
-    static boolean isLineStart(final char ch) {
-        return (ch == '}' || ch == '.' || ch == '[' || ch == '*');
-    }
-
-    static boolean isASCIIDigit(final char ch) {
-        return (ch >= 48 && ch <= 57);  // 0-9
-    }
-
-    static boolean isASCIIAlphabetic(final char ch) {
-        return ((ch >= 97 && ch <= 122) || (ch >= 65 && ch <= 90)); // a-z || A-Z
-    }
-
-    static boolean isASCIIHexDigit(final char ch) {
-        return ((ch >= 48 && ch <= 57) ||   // 0-9
-                (ch >= 65 && ch <= 70) ||   // A-F
-                (ch >= 97 && ch <= 102)     // a-f
-        );
-    }
-
-    // determine if codePoint is valid for a function name
-    // (uppercase ASCII + underscore + hyphen)
-    static boolean isValidFnChar(final char ch) {
-        return ((ch >= 65 && ch <= 90) ||   // A-Z
-                (ch >= 48 && ch <= 57) ||   // 0-9
-                (ch == 97 || ch == 45)      // '_' or '-'
-        );
-    }
-
-
-    ////////////////////////////////////////////////////////////
-    // general methods used by parser (package private)
-    ////////////////////////////////////////////////////////////
 
     // this method is not strictly needed
-    boolean isCurrentChar(final char ch) {
-        return (at() == ch);
+    boolean isCurrentChar(final byte b) {
+        return (at() == b);
     }
 
     // peek at next byte (relative to current position); return true if matches
-    boolean isNextChar(final char ch) {
-        return ((pos < (seq.length - 1)) && (seq[pos + 1] == ch));
+    boolean isNextChar(final byte b) {
+        return ((pos < (size - 1)) && (seq[pos + 1] == b));
     }
 
     // throw exception if byte not what expected; otherwise, increment
-    void expectChar(final char ch) {
-        if (at() != ch) {
-            throw ParseException.of( ParseException.ErrorCode.E0003,
-                    FTLStream.toString( ch ), this );
+    void expectChar(final byte b) {
+        if (at() != b) {
+            throw FTLParser.parseException( ParseException.ErrorCode.E0003,
+                    FTLStream.byteToString( b ), this );
         }
         pos++;
     }
 
     // consume iff match
-    boolean takeCharIf(final char ch) {
-        if (at() == ch) {
+    boolean takeCharIf(final byte b) {
+        if (at() == b) {
             pos++;
             return true;
         }
@@ -327,8 +368,7 @@ public final class FTLStream {
     // skip, and return # lines skipped
     int skipBlankBlock() {
         int count = 0;
-
-        while (pos < seq.length) {
+        while (pos < size) {
             final int start = pos;
             skipBlankInline();
             if (!skipEOL()) {
@@ -340,40 +380,54 @@ public final class FTLStream {
         return count;
     }
 
+    ///  Skip over blank space (WS, \n, \r\n) until we hit something.
+    /// The position is advanced to that point.
     void skipBlank() {
-        while (pos < seq.length) {
-            final char ch = seq[pos];
-            if (ch == ' ' || ch == '\n') {
-                pos++;
-            } else if (ch == '\r' && isNextChar( '\n' )) {
-                pos += 2;
-            } else {
-                break;
-            }
-        }
+        // NEW, SWAR version
+        position( SWAR.skipBlank( seq, pos ) );
+
+        // OLD, simple version
+        //
+        // while (pos < size) {
+        //     final byte b = seq[pos];
+        //     if (b == ' ' || b == '\n') {
+        //         pos++;
+        //     } else if (b == '\r' && isNextChar( (byte) '\n' )) {
+        //         pos += 2;
+        //     } else {
+        //         break;
+        //     }
+        // }
     }
 
+    ///  skip whitespace (which is only the ASCII space character (0x20))
+    ///
+    /// We only use the return value when we check indent.
     int skipBlankInline() {
+        final int newPos = SWAR.skipBlankInline( seq, pos );
+        // old version:
+        // final int start = pos;
+        // while ((pos < size) && (seq[pos] == ' ')) {
+        //    pos++;
+        // }
+        // return (pos - start);
+        //
         final int start = pos;
-        while ((pos < seq.length) && (seq[pos] == ' ')) {
-            pos++;
-        }
-        return (pos - start);
+        pos = newPos;
+        return (newPos - start);
     }
-
 
     boolean isEOL() {
-        final char ch = at();
-        return ((ch == '\n') || (ch == '\r' && isNextChar( '\n' )));
+        final byte b = at();
+        return ((b == '\n') || (b == '\r' && isNextChar( (byte) '\n' )));
     }
 
-
     boolean skipEOL() {
-        final char ch = at();
-        if (ch == '\n') {
+        final byte b = at();
+        if (b == '\n') {
             pos++;
             return true;
-        } else if (ch == '\r' && isNextChar( '\n' )) {
+        } else if (b == '\r' && isNextChar( (byte) '\n' )) {
             pos += 2;
             return true;
         }
@@ -381,42 +435,38 @@ public final class FTLStream {
         return false;
     }
 
-
     void skipToNextEntryStart() {
-        char prior = (pos > 0) ? seq[pos-1] : '\n';
-        while (pos < seq.length) {
-            final char ch = seq[pos];
+        byte prior = (pos > 0) ? seq[pos - 1] : (byte) '\n';
+        while (pos < size) {
+            final byte b = seq[pos];
             if (prior == '\n') {
-                if (isASCIIAlphabetic( ch ) || ch == '-' || ch == '#') {
+                if (isASCIIAlphabetic( b ) || b == '-' || b == '#') {
                     break;
                 }
             }
             pos++;
-            prior = ch;
+            prior = b;
         }
     }
 
-    /**
-     * Parses a 4 or 6 byte hex sequence into a valid Unicode code point.
-     * <p>
-     * <b>NOTE:</b> this method returns a Unicode code point
-     * </p>
-     *
-     * @param requiredLength 4 or 6 hex bytes
-     * @return code point as an int (which is equivalent to a Java String of 1 or 2 characters)
-     * @throws ParseException if hex sequence is not of the required length, or is not a valid code point.
-     */
-    int getUnicodeEscape(@Range(from = 4, to = 6) final int requiredLength) {
+    /// Parses a 4 or 6 byte hex sequence into a valid Unicode code point.
+    ///
+    /// *NOTE:* this method returns a Unicode code point (as an int)
+    ///
+    /// @param requiredLength 4 or 6 hex bytes
+    /// @return code point as an int (which is equivalent to a Java String of 1 or 2 characters)
+    /// @throws ParseException if hex sequence is not of the required length, or is not a valid code point.
+    int getUnicodeEscape(final int requiredLength) {
         final int start = position();
         int codePoint = 0;      // calculate in situ
         int count = 0;
         while ((count < requiredLength) && hasRemaining()) {
-            final char ch = at();
-            if (isASCIIHexDigit( ch )) {
+            final byte b = at();
+            if (isASCIIHex( b )) {
                 inc();
                 count++;
                 codePoint *= RADIX;
-                codePoint += Character.digit( ch, RADIX );
+                codePoint += Character.digit( b, RADIX );
             } else {
                 break;
             }
@@ -443,8 +493,8 @@ public final class FTLStream {
     }
 
     boolean isNumberStart() {
-        final char ch = at();
-        return (ch == '-' || isASCIIDigit( ch ));
+        final byte b = at();
+        return (b == '-' || isASCIIDigit( b ));
     }
 
     void skipDigits() {
@@ -454,72 +504,32 @@ public final class FTLStream {
             inc();
         }
         if (start == position()) {
-            throw ParseException.of( ParseException.ErrorCode.E0004,
+            throw FTLParser.parseException( ParseException.ErrorCode.E0004,
                     "0-9",
                     this
             );
         }
     }
 
-    // skip to the end of line (e.g., for skipping comments)
+    /// skip to the end of line (e.g., for skipping comments).
+    /// This will skip to the end of a newline, ignoring a preceding '\r' if present.
     void skipToEOL() {
-        // newer
-        while((pos < seq.length) && (seq[pos] != '\n')) {
-            pos++;
-        }
+        pos = SWAR.nextLF( seq, pos );
+        // original
+        //while((pos < size) && (seq[pos] != '\n')) {
+        //   pos++;
+        //}
     }
 
-
-    /**
-     * Conversion method for error messages, debugging, etc.
-     * <p>
-     * Special chars are escaped, and hex codes displayed
-     * adjacent to certain characters for easier debugging.
-     * </p>
-     *
-     * @param in character
-     * @return String
-     */
-    static String toString(final char in) {
-        // all critical characters for parsing are < 0x007F
-        return switch (in) {
-            case '\r' -> "<CR>";
-            case '\n' -> "<LF>";
-            case '\t' -> "<TAB>";
-            case ' ' -> "<WS>";     // simple whitespace (0x0020)
-            case EOF -> "<EOF>";    // our definition for an out-of-bound position
-            default -> {
-                // for all branches below, we want to print the hex code too, (both bytes) for clarity
-                if ((in > 0x0020 && in < 0x007F) || Character.isAlphabetic( in )) {
-                    // todo: really want all displayable characters to 0x00FF
-                    yield String.format( "'%c' (%#06x)", in, (int) in);
-                } else if (Character.isWhitespace( in )) {
-                    // because unicode whitespace can be deceiving; clearly delineate
-                    yield String.format( "<WS:%#06x>", (int) in );
-                } else {
-                    // miscellaneous nonalphabetic (surrogates, control characters, etc.)
-                    yield String.format( "<%#06x>", (int) in );
-                }
-            }
-        };
-    }
-
-
-    /**
-     * For debugging: return character at given position in the DECODED (may differ from UTF8 input) stream.
-     */
+    /// For debugging: return character at given position
     String dbg(final int position) {
-        return "offset: " + position + ": " + toString( at( position ) );
+        return "offset: " + position + ": " + byteToString( at( position ) );
     }
 
-    /**
-     * For debugging: return character at current position in decoded stream.
-     */
+    /// For debugging: return character at current position in decoded stream.
     String dbg() {
         return dbg( position() );
     }
-
-
 
 
 }

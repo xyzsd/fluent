@@ -28,12 +28,14 @@ import com.github.spotbugs.snom.Effort
 
 plugins {
     id("com.vanniktech.maven.publish") version "0.31.0"
-    id("com.github.spotbugs") version "6.1.11"
+    id("com.github.spotbugs") version "6.2.2"
     id("signing")
     id("java-library")
+    // https://github.com/melix/jmh-gradle-plugin
+    id("me.champeau.jmh") version "0.7.3"
 }
 
-version = "0.9NG-SNAPSHOT"
+version = "1.9NG-SNAPSHOT"
 group = "net.xyzsd.fluent"
 
 repositories {
@@ -47,15 +49,14 @@ tasks.test {
 
 dependencies {
     api("org.jspecify:jspecify:1.0.0")
-    compileOnly("org.jetbrains:annotations:20.1.0")     // Used ONLY for @Contract, @Range
     implementation("com.ibm.icu:icu4j:77.1")
     //
-    testCompileOnly("org.jetbrains:annotations:20.1.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.1")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.1")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
+
 
 java {
     // IMPORTANT!
@@ -69,6 +70,13 @@ java {
         languageVersion = JavaLanguageVersion.of(23)
     }
 
+}
+
+jmh {
+    warmupIterations = 1
+    iterations = 10
+    fork = 2
+    jmhVersion = "1.37"
 }
 
 tasks.compileJava {
@@ -94,7 +102,6 @@ spotbugs {
     effort = Effort.MAX
     reportLevel = Confidence.LOW
     // our format strings are specific, so will will disable "FormatStringChecker".
-    // "FindReturnRef": fails on Scope.java (which is mutable);
     omitVisitors = listOf("FormatStringChecker")
 }
 
@@ -111,6 +118,7 @@ mavenPublishing {
         description.set("A Java implementation of the Mozilla Project Fluent ")
         url.set("https://github.com/xyzsd/fluent")
         inceptionYear.set("2021")
+
 
         licenses {
             license {

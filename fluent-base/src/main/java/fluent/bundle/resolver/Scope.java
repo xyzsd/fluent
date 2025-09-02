@@ -1,7 +1,6 @@
 /*
  *
- *  Copyright (C) 2021, xyzsd (Zach Del)
- *
+ *  Copyright (C) 2021-2025, xyzsd (Zach Del)
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -20,105 +19,63 @@
  *
  *
  */
-
 package fluent.bundle.resolver;
 
 import fluent.bundle.FluentBundle;
-import fluent.functions.FluentFunctionException;
-import fluent.functions.Options;
-import fluent.functions.PluralSelector;
-import fluent.functions.ResolvedParameters;
-import fluent.syntax.AST.CallArguments;
-import fluent.syntax.AST.Expression;
-import fluent.syntax.AST.Identifiable;
-import fluent.syntax.AST.Pattern;
+import fluent.bundle.FluentFunctionCache;
+import fluent.bundle.FluentFunctionRegistry;
+import fluent.bundle.resolver.ResolutionException.CyclicException;
+import fluent.function.*;
+import fluent.syntax.AST.*;
 import fluent.types.FluentValue;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Mutable state used during pattern resolution.
- * <p>
- * The lifetime of a Scope is no longer than a single formatPattern() call
- * from the MessageBundle
- */
+/// State used during pattern resolution.
+///
+/// The lifetime of a Scope is no longer than a single FluentBundle formatPattern() call
 public final class Scope {
 
     // bundle for this scope (immutable)
     private final FluentBundle bundle;
-    // developer-set options valid for entire life of this Scope (immutable)
-    // never null
-    private final Options options;
 
-    // TODO: eliminate; can get plural info via bundle.pluralselector
-    // function resources (immutable)
-    //public final FunctionResources fnResources;
-    // name-variable map (immutable)
-    private final ValueMapper valueMapper;
-    // immutable : from bundle and locale-dependent
-    private final PluralSelector pluralSelector;
-    // immutable : from bundle
-    private final FluentValueFormatter formatter;
+    // name-variable map (effectively immutable)
+    private final Map<String, List<FluentValue<?>>> variableMap;
+
     // mutable: exceptions that have occurred during processing
     private final List<Exception> errors;
+
     // mutable: set of visited nodes, used as a (LIFO) stack
-    // todo: this could be via asLIFO()...
     private final Deque<Pattern> visited;
+
     // mutable: count of placeables... primarily to avoid expansion-based attacks
     private int placeables = 0;
-    // mutable: halt further processing if true
-    private boolean isDirty;
-    // mutable: local arguments
-    private ResolvedParameters localParams = ResolvedParameters.RP_EMPTY;
 
-    /// ////////////////////////
-
-    public Scope(FluentBundle bundle, PluralSelector ps, FluentValueFormatter formatter, Map<String, ?> args,
-                 List<Exception> errors) {
-        this( bundle, ps, formatter, args, errors, Options.EMPTY );
-    }
+    // mutable: named arguments for parameterized terms
+    private Options termParameters = Options.EMPTY;
 
 
-    // with Options
-    public Scope(FluentBundle bundle, PluralSelector ps, FluentValueFormatter formatter, Map<String, ?> args,
-                 List<Exception> errors, Options options) {
+    // TODO: remove errors here; create a list/store exception
+    ///  Scope constructor.
+    public Scope(final FluentBundle bundle, final Map<String, ?> args) {
         this.bundle = bundle;
-        this.pluralSelector = ps;
-        this.formatter = formatter;
-        this.errors = errors;
-        this.valueMapper = ValueMapper.from( remap( args ) );
-        this.visited = new ArrayDeque<>();
-        this.options = options;
+        this.errors = new ArrayList<>(4);
+        this.variableMap =  remap( args );
+        this.visited = new ArrayDeque<>();  // TODO: this could be via asLIFO()...
     }
 
-    // private, for rescoping
-    private Scope(final Scope from, ValueMapper mapper) {
-        this.bundle = from.bundle;
-        this.pluralSelector = from.pluralSelector;
-        this.formatter = from.formatter;
-        this.errors = from.errors;
-        this.options = from.options;
 
-        this.valueMapper = mapper;
-
-        // reset visited...
-        this.visited = new ArrayDeque<>();
-    }
-
-    // NOTE: this is a work in progress and is not currently used
-    // this *may* be used in select clauses for lists, to capture the current item from the list
-    public Scope rescope(ValueMapper vm) {
-        // this also has a new 'visited' stack
-        return new Scope( this, vm );
-    }
-
-    // Convert raw values to FluentValues
-    private Map<String, List<FluentValue<?>>> remap(final Map<String, ?> raw) {
+    // todo: consider converting lazily/as-needed. if an argument ends up not being accessed
+    //       then no conversion necessary. Should values be memoized?
+    /*
+        lookup : would convert
+            could memoize via keeping a Hashmap in scope()
+            using computeIfAbsent. does not need to be threadsafe.
+     */
+    /// Convert raw arguments values to FluentValues
+    private static Map<String, List<FluentValue<?>>> remap(final Map<String, ?> raw) {
         if (raw.isEmpty()) {
             return Map.of();
         }
@@ -132,42 +89,52 @@ public final class Scope {
                 );
     }
 
-    ///  Options
-    public Options options() {
-        return options;
+    ///  Convenience method: Function Factory registry
+    public FluentFunctionRegistry registry() {
+        return bundle.registry();
     }
 
-    ///  PluralSelector
-    public PluralSelector pluralSelector() {return pluralSelector;}
+    ///  Convenience method: Cache
+    public FluentFunctionCache cache() {
+        return bundle.cache();
+    }
 
-    ///  FluentValueFormatter
-    public FluentValueFormatter formatter() {return formatter;}
+    ///  Convenience method: Locale
+    public Locale locale() {
+        return bundle.locale();
+    }
+
+    ///  Convenience method: get default options for the named function
+    public Options options(final String id) {
+        return bundle.options(id);
+    }
+
+    ///  Convenience method: get default options, after merging
+    public Options options(final String id, final Options toMerge) {
+        return bundle.options(id).mergeOverriding( toMerge );
+    }
 
     /// Used by resolution logic to prevent expansion attacks
-    public void incrementAndCheckPlaceables() {
+    ///
+    /// Returns false if MAX_PLACEABLES exceeded.
+    public boolean incrementAndCheckPlaceables()  {
         placeables += 1;
-        if (placeables > Resolver.MAX_PLACEABLES) {
-            isDirty = true;
-            throw new ResolutionException( String.format( "Too many (> %d) placeables!", Resolver.MAX_PLACEABLES ) );
-        }
+        return (placeables > Resolver.MAX_PLACEABLES);
     }
 
-    // an error occured
-    public boolean isDirty() {
-        return isDirty;
-    }
-
-    // add an exception TODO: should rename to 'addException'
-    public void addError(RuntimeException t) {
+    ///  add an exception to the list, to track errors during resolution
+    public void addException(Exception t) {
         errors.add( t );
     }
 
-    // NOTE: this is NOT a copy; should only be used when Scope no longer is needed for resolution
+    /// Errors that occurred during resolution, if any.
     public List<Exception> exceptions() {
-        return errors;
+        return List.copyOf( errors );
     }
 
-    // fast-path: lazily add Pattern to stack, if stack is empty
+    public boolean containsExceptions() { return !errors.isEmpty(); }
+
+    /// fast-path: lazily add Pattern to stack, if stack is empty
     public List<FluentValue<?>> maybeTrack(final Pattern pattern, final Expression exp) {
         if (visited.isEmpty()) {
             visited.addLast( pattern );   // push
@@ -175,54 +142,52 @@ public final class Scope {
 
         List<FluentValue<?>> result;
         try {
-            result = Resolver.resolve( exp, this );
+            result = Resolver.resolveExpression( exp, this );
         } catch (FluentFunctionException e) {
-            return Resolver.error( e.fnName().orElse( "?unknown function?" ) + "()" );
-        }
-
-        if (isDirty) {
-            addError( new ResolutionException( exp.toString() ) );
-            return Resolver.error( "{!dirty: " + exp + "}" );
+            // TODO: investigate if this is truly necessary after resolveExpression()
+            return Resolver.error( e, "????" );
         }
 
         return result;
     }
 
+    /// track patterns to prevent recursion
     public List<FluentValue<?>> track(final Pattern pattern, final Identifiable exp) {
         if (visited.contains( pattern )) {
-            addError( new ResolutionException( "Cyclic" ) );
-            return Resolver.error( "{!cyclic:" + exp.name() + "}" );
+            final CyclicException cyclicException = new CyclicException( exp );
+            addException( cyclicException );
+            return Resolver.error( cyclicException );
         } else {
             visited.addLast( pattern ); // push
-            final List<FluentValue<?>> result = Resolver.resolve( pattern, this );
+            final List<FluentValue<?>> result = Resolver.resolvePattern( pattern, this );
             visited.removeLast(); // pop;
             return result;
         }
     }
 
+    /// Used by Resolver.resolveTermReference for parameterized terms
     public void clearLocalParams() {
-        localParams = ResolvedParameters.RP_EMPTY;
+        termParameters = Options.EMPTY;
     }
 
-    public ResolvedParameters getLocalParams() {
-        return localParams;
+    /// Used by Resolver.resolveTermReference for parameterized terms
+    public void setLocalParams(List<NamedArgument> namedParameters) {
+        termParameters = Options.from( namedParameters );
     }
 
-    public void setLocalParams(@Nullable final CallArguments args) {
-        localParams = resolveParameters( args );
-    }
-
-    // empty list if value not present
+    /// Lookup the given variable name (or parameterized term).
+    /// This will return an empty list if the given name is not present.
     public List<FluentValue<?>> lookup(final String name) {
         // first, lookup in supplied arguments
-        final List<FluentValue<?>> value = valueMapper.lookup( name );
+        final List<FluentValue<?>> value = variableMap.get( name );
         if (value != null) {
             return value;
         }
 
-        // then lookup in named-pair Options, which are never in Lists.
-        // these are also not FluentValues, and must be converted
-        return localParams.options().asRaw( name )
+        // Could be a parameterized term.
+        // We then look up named-pair Options, which are never in Lists.
+        // These are also not FluentValues, and must be converted
+        return termParameters.asRaw( name )
                 .map( FluentValue::of )
                 .<List<FluentValue<?>>>map( List::of )
                 .orElse( List.of() );
@@ -233,37 +198,10 @@ public final class Scope {
         return ResolvedParameters.from( callArgs, this );
     }
 
+
     public FluentBundle bundle() {
         return bundle;
     }
 
-    ///  Call the TerminalReducer (typically 'LIST') implicitly
-    public String reduce(final List<FluentValue<?>> in) {
-        return formatter.reducer().reduce( in, this );
-    }
 
-
-    /**
-     * Map variable names to FluentValues
-     * <p>
-     * NOTE: The (internal) use of this interface is not strictly necessary but this allows
-     * future flexibility and the possibility of more easily re-scoping variable lookups depending
-     * upon the resolution context.
-     * </p>
-     *
-     */
-    public interface ValueMapper {
-        /**
-         * Default ValueMapper for Maps
-         */
-        static ValueMapper from(Map<String, List<FluentValue<?>>> map) {
-            return map::get;
-        }
-
-        /**
-         * Return a FluentValue for a name. If not found, return an empty list.
-         */
-        // todo: verify that we are actually returning empty lists and not null!
-        List<FluentValue<?>> lookup(String name);
-    }
 }

@@ -1,0 +1,94 @@
+/*
+ *
+ *  Copyright (C) 2021-2025, xyzsd (Zach Del) 
+ *  Licensed under either of:
+ *
+ *    Apache License, Version 2.0
+ *       (see LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0)
+ *    MIT license
+ *       (see LICENSE-MIT) or http://opensource.org/licenses/MIT)
+ *
+ *  at your option.
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *
+ *
+ */
+package fluent.function;
+
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
+import java.util.Optional;
+
+import static java.util.Objects.requireNonNull;
+
+/// FluentFunctionExceptions are thrown during function evaluation when an error is encountered.
+///
+/// Any other expected exception--checked or unchecked-- reasonably expected during function evaluation
+/// should be wrapped in a FluentFunctionException.
+@NullMarked
+public class FluentFunctionException extends RuntimeException {
+
+    private final @Nullable String name;
+
+
+    private FluentFunctionException(@Nullable String fnName, String message, Throwable cause) {
+        super( message, cause );
+        this.name = fnName;
+    }
+
+    private FluentFunctionException(String message) {
+        super( message );
+        this.name = null;
+    }
+
+
+    /// The name of the function causing the exception, if set.
+    public Optional<String> name() {
+        return Optional.ofNullable( name );
+    }
+
+
+    @Override
+    public String getMessage() {
+        return (name == null) ? super.getMessage() : (name + "(): " + super.getMessage());
+    }
+
+    /// Add the function name to the Exception, creating a new Exception (but maintaining the stack trace).
+    /// Subsequence calls to getMessage() will prepend the function name to the existing message.
+    public FluentFunctionException withName(String functionName) {
+        requireNonNull(functionName);
+        return new FluentFunctionException( functionName, this.getMessage(), this.getCause() );
+    }
+
+    /// Wrap a Throwable into a FluentFunctionException without altering the message.
+    ///
+    /// @param cause Throwable to wrap
+    /// @return FluentFunctionException
+    public static FluentFunctionException of(Throwable cause) {
+        return new FluentFunctionException( null, cause.getMessage(), cause );
+    }
+
+    /// Wrap a Throwable into a FluentFunctionException, with a custom message.
+    ///
+    /// @param cause Throwable to wrap
+    /// @return FluentFunctionException
+    public static FluentFunctionException of(Throwable cause, String formatString, Object... args) {
+        return new FluentFunctionException( null, String.format( formatString, args ), cause );
+    }
+
+    /// Create a FluentFunctionException with the given message.
+    ///
+    /// @param formatString Message format String, as per String.format()
+    /// @param args         (optional) arguments for the format string
+    /// @return FluentFunctionException
+    public static FluentFunctionException of(String formatString, Object... args) {
+        return new FluentFunctionException( String.format( formatString, args ) );
+    }
+}

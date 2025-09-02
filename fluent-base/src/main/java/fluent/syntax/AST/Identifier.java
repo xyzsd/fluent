@@ -1,7 +1,6 @@
 /*
  *
- *  Copyright (C) 2021, xyzsd (Zach Del)
- *
+ *  Copyright (C) 2021-2025, xyzsd (Zach Del) 
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -25,11 +24,11 @@ package fluent.syntax.AST;
 
 import org.jspecify.annotations.NullMarked;
 
-// TODO: 'name()' should be used. key() should be eliminated (implementation of Keyable)
 @NullMarked
 public record Identifier(String name) implements SyntaxNode, VariantKey {
+
     @Override
-    public String key() {
+    public String name() {
         return name;
     }
 }

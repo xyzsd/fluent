@@ -1,7 +1,6 @@
 /*
  *
- *  Copyright (C) 2021, xyzsd (Zach Del)
- *
+ *  Copyright (C) 2021-2025, xyzsd (Zach Del) 
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -34,9 +33,9 @@ import java.util.Objects;
 ///     has been defined.
 ///
 ///     Note that it is possible to have FluentCustom values that are the same as other FluentValues;
-///     e.g., `FluentCustom<String>` or `FluentCustom<Number>` are legal, however, it is not recommended
-///     to use FluentCustom for value types already created. Custom value types that wrap an already-defined
-///     FluentValue type will not be automatcially created (e.g., FluentValue.of(String) will not create a
+///     e.g., `FluentCustom<String>` or `FluentCustom<Number>` are legal, however, it is *not recommended*
+///     to use FluentCustom for any FluentValue type already defined. Custom pattern types that wrap an already-defined
+///     FluentValue type will not be automatically created (e.g., FluentValue.of(String) will not create a
 ///    `FluentCustom<String>`).
 ///
 @NullMarked
