@@ -7,6 +7,21 @@ The syntax of the Fluent Translation List, `FTL` is designed to be simple, yet i
 enough to represent complex natural-language constructs such as plurals, conjugations,
 and gender. Learn more about Project Fluent at [projectfluent.org][mozProjectFluent].
 
+Status
+------
+*UPDATE (September 2025)*
+
+All the new and interesting changes are on the FluentNG branch, which will become version 2.0 (when ready)
+This includes:
+  - Improved FTLStream operating direclty on UTF8 octets, now using SWAR for performance improvements
+  - Markedly improved overall code structure
+  - Simpler implementation of custom functions
+  - Improved function implementations, some have been renamed
+  - Still supports Lists (but not in Selectors)
+  - Complete set of FTL spec tests (all but 2 pass.. will work on those)
+    
+Code refinements, documentation improvements, and more tests to follow.      
+
 Introductory Example
 --------------------
 Given the following example FTL:
@@ -69,26 +84,6 @@ Map<String, ?> args3 = Map.of(
 System.out.println( bundle.format("shared-photos", args3) ); 
         
 ```
-
-Status
-------
- - [x] currently targeting JDK 17
- - [x] Usable&mdash;though not optimal&mdash;API. 
-   - overall API shape may change. 
-   - the goal is to keep easy things easy, and difficult things possible.
- - [x] Modularization: currently, automatic modules are used.
-   - goal is full modularization support
- - [x] Tests: mosts tests are currently high-level
-      - more tests are needed
-      - better test organization
- - [ ] Documentation
-      - not all classes have the documentation they deserve (... such as FluentBundle)
-- [ ] Examples
-  - Single simple example included currently
-   
-   
-
-
 
 Differences from *fluent-rs* and *fluent.js*
 --------------------------------------------
