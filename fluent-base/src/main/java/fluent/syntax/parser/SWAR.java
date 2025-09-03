@@ -240,6 +240,8 @@ final class SWAR {
             long t = Long.lowestOneBit( bitset );
             int r = Long.numberOfTrailingZeros( bitset );
             // *execute something here*
+            System.out.println(r);
+            //
             bitset ^= t;
         }
     }
@@ -254,6 +256,8 @@ final class SWAR {
             long t = Long.highestOneBit( bitset );
             int r = Long.numberOfLeadingZeros( bitset );
             // *execute something here*
+            System.out.println(r);
+            //
             bitset ^= t;
         }
     }

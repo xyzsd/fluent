@@ -28,6 +28,7 @@ import com.github.spotbugs.snom.Effort
 
 plugins {
     id("com.vanniktech.maven.publish") version "0.31.0"
+    // https://github.com/spotbugs/spotbugs-gradle-plugin
     id("com.github.spotbugs") version "6.2.2"
     id("signing")
     id("java-library")
@@ -101,8 +102,9 @@ spotbugs {
     ignoreFailures = true
     effort = Effort.MAX
     reportLevel = Confidence.LOW
-    // our format strings are specific, so will will disable "FormatStringChecker".
+    // our format strings are specific, so we will disable "FormatStringChecker".
     omitVisitors = listOf("FormatStringChecker")
+    excludeFilter = file("spotbugs_exclude.xml")
 }
 
 mavenPublishing {
