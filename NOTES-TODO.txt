@@ -7,13 +7,7 @@ MASTER TO DO LIST
 
 (2) parser performance
 
-(3) crMultiKeyTest, crMultilineValueTest
-    <CR> :
-        omitting CR at EOF.
-    handle <CR> appropriately
-    seems to be mainly at/near EOF
-    but evaluate potential spacing difference on multikey test
-    junk test fixed after changing to octet-based stream parser, which could potentially fix additional bugs
+(3) DONE - CR/LF/whitespace issues. All FTL tests now pass!
 
 (4) ? AST optimizations ?
     - nested placeables -> collapse (if constant)
@@ -26,12 +20,15 @@ MASTER TO DO LIST
 (6) function tests
     this is a very large test surface, so we may only test essentials
 
-(7) make sure fluentBundle has a formatPattern(Pattern)
+(7) make sure fluentBundle has a formatPattern(Pattern) public
     useful for term formatting/usage/etc.
 
 (8) simple diagnostics
     FluentBundle::toString(): should print bundle name, # of terms, messages, locale (simple diagnostic info)
+
 (9) FluentBundle / API streamlining. Error handling has been markedly improved.
+    FluentBundle :: use BundleException for errors
+    fix 'experimental' parts
 
 (10) look at all code 'TODOs'
 
@@ -51,6 +48,8 @@ MASTER TO DO LIST
 
 (15) performance testing, w/and w/o cache. cache improvements.
      Message rendering performance (more important than parser improvements, really)
+     Also evaluate cache design, locks, etc. Goal is a simple but useful cache, and
+     ability to change to a 'real' cache as needed.
 
 (16) Locale fallback
     need a simple/easy approach; currently we have no fallback process
