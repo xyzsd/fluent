@@ -11,14 +11,15 @@ Status
 ------
 *UPDATE (September 2025)*
 
-All the new and interesting changes are on the FluentNG branch, which will become version 2.0 (when ready)
+All the new and interesting changes are on the **FluentNG** branch, which will become version 2.0 (when ready)
 This includes:
   - Improved FTLStream operating direclty on UTF8 octets, now using SWAR for performance improvements
   - Markedly improved overall code structure
+  - API improvements
   - Simpler implementation of custom functions
   - Improved function implementations, some have been renamed
   - Still supports Lists (but not in Selectors)
-  - Complete set of FTL spec tests (all but 2 pass.. will work on those)
+  - Complete set of FTL specification tests. The FluentNG-branch parser now passes *all* FTL specification tests.
     
 Code refinements, documentation improvements, and more tests to follow.      
 
