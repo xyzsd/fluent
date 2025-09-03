@@ -123,6 +123,7 @@ public final class LRUFunctionCache implements FluentFunctionCache {
     ///  A very simple concurrent LRU cache
     private static class LRUCache<K, V> {
         private final int size;
+        // todo: re-evaluate ... if we are explicitly controlling the locks, we may not need ConcurrentXXX classes
         private final ConcurrentHashMap<K, V> cache;
         private final ConcurrentLinkedDeque<K> ordering;
         private final ReentrantLock lock;

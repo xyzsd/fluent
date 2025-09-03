@@ -27,10 +27,7 @@ import org.jspecify.annotations.NullMarked;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 
 import static java.util.Objects.requireNonNull;
@@ -226,7 +223,7 @@ public final class FTLStream {
             case EOF -> "<EOF>";    // our definition for an out-of-bound position
             default -> {
                 if (in > 0x20 && in < 0x7F) {
-                    // printable (but not space) (note: guard patterns w/primitives not yet final in JDK)
+                    // printable ASCII (but not space) (note: guard patterns w/primitives not yet final in JDK)
                     yield "'" + (char) in + "'";
                 } else {
                     // nonprintable (and not specially handled above)
@@ -337,17 +334,20 @@ public final class FTLStream {
         return new String( seq, startIndex, (endIndex - startIndex), StandardCharsets.UTF_8 );
     }
 
-    // this method is not strictly needed
+    /// this method is not strictly needed
     boolean isCurrentChar(final byte b) {
         return (at() == b);
     }
 
-    // peek at next byte (relative to current position); return true if matches
+
+    // TODO: isNextChar() : eliminate size check ? we are padded
+    /// peek at next byte (relative to current position); return true if matches
+    /// DOES NOT increment position
     boolean isNextChar(final byte b) {
         return ((pos < (size - 1)) && (seq[pos + 1] == b));
     }
 
-    // throw exception if byte not what expected; otherwise, increment
+    /// throw exception if byte not what expected; otherwise, increment position
     void expectChar(final byte b) {
         if (at() != b) {
             throw FTLParser.parseException( ParseException.ErrorCode.E0003,

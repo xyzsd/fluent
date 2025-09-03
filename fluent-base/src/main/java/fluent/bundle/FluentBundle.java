@@ -34,7 +34,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static fluent.bundle.resolver.ResolutionException.ReferenceException.ReferenceException;
+import static fluent.bundle.resolver.ResolutionException.ReferenceException;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
@@ -449,6 +449,7 @@ public class FluentBundle {
             }
 
             if (!clashes.isEmpty()) {
+                // TODO: perhaps custom exception rather than Runtime
                 throw new RuntimeException( "Duplicate Messages or Terms: " +
                         String.join( ", ", clashes ) );
             }
@@ -646,17 +647,17 @@ public class FluentBundle {
 
         public String format() {
             if (attrID == null) {
-                return FluentBundle.this.format( msgID, attrID, args );
-            } else {
                 return FluentBundle.this.format( msgID, args );
+            } else {
+                return FluentBundle.this.format( msgID, attrID, args );
             }
         }
 
 
         private @Nullable String tryFormat() {
             final Pattern pattern = (attrID == null)
-                    ? getAttributePattern( msgID, attrID )
-                    : getMessagePattern( msgID );
+                    ? getMessagePattern( msgID )
+                    : getAttributePattern( msgID, attrID  );
 
             if (pattern == null) {
                 //getAttributePattern / getMessagePattern logs an error if pattern not found
