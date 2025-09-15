@@ -4,40 +4,24 @@ MASTER TO DO LIST
 =================
 
 (1) parser fixes/improvements
-
-(2) parser performance
-
-(3) DONE - CR/LF/whitespace issues. All FTL tests now pass!
-
-(4) ? AST optimizations ?
-    - nested placeables -> collapse (if constant)
-    - merge adjacent TextElements/constant placeables into a single TextElement
-    - need to look at actual ASTs in more detail, to see if this is useful
-
-(5) ? feature (low priority)
-    easier ways to extract comments from a resource bundle (if we parse them)
+    Option.of() check, needed?
 
 (6) function tests
     this is a very large test surface, so we may only test essentials
+    expected functions (NUMBER, DATETIME), and LIST should be tested thoroughly
+
+    ** make sure FluentFunctionException.of() is being properly used!!
 
 (7) make sure fluentBundle has a formatPattern(Pattern) public
     useful for term formatting/usage/etc.
 
-(8) simple diagnostics
-    FluentBundle::toString(): should print bundle name, # of terms, messages, locale (simple diagnostic info)
-
 (9) FluentBundle / API streamlining. Error handling has been markedly improved.
     FluentBundle :: use BundleException for errors
-    fix 'experimental' parts
+    fix 'experimental' parts (FmtBuilder)
 
 (10) look at all code 'TODOs'
 
-(11) smoketest bugs
-    literal doubles / formatting
-    EN_US_POSIX uses 6 digits, otherwise 3 (!)
-    need to investigate ICU number format
-
-(12) spotbugs / errorprone
+(12) spotbugs
 
 (13) DOCUMENTATION (particularly functions, etc.) and FluentBundle/etc.
         * also why Fluent vs. ICU::MF2
@@ -51,7 +35,27 @@ MASTER TO DO LIST
      Also evaluate cache design, locks, etc. Goal is a simple but useful cache, and
      ability to change to a 'real' cache as needed.
 
+
+
 (16) Locale fallback
+     perhaps just use ICU:LocaleMatcher
+        ICU:LocaleMatcher.Builder
+     this would be provided by (user-supplied)
+        * direclty specified in code
+        * look at some sort of configuration file with supported locales
+        * or, by scanning file system/classpath
+     LocaleMatcher.getBestLocale()
+     then get bundle.
+
+     NOTE: this is all handled by ICU; we should give an example BUT not much to code here.
+
+     using localemather, get tags, and file would be
+
+     myFtlFile_en-GB.ftl
+     {basename}_{languagetag}.{extension}
+
+
+
     need a simple/easy approach; currently we have no fallback process
     - language matching
       - how to search/match classpath for resource fork/language matching

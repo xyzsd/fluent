@@ -34,10 +34,10 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Map;
 
-import static fluent.syntax.parser.ParseException.ErrorCode.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
+
+///  This is a basic test of essential Number options
 public class NumberFnTest {
 
 
@@ -49,6 +49,8 @@ public class NumberFnTest {
     public static void parseFile() throws IOException {
         resource = FTLTestUtils.parseFile( RESOURCE );
         bundle = FTLTestUtils.basicBundleSetup( resource, false );
+
+        resource.errors().forEach( error -> System.out.println(error.getMessage()) );
     }
 
 
@@ -284,32 +286,134 @@ public class NumberFnTest {
     }
 
 
-    @Test
-    public void precisionCombined() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-
-    @Test
+     @Test
     public void skeletons() {
+         assertEquals(
+                 "|{NUMBER(): Syntax error in skeleton string: Unknown stem: [scary] skeleton }|",
+                 fmt(  "skeleton_invalid_skeleton", 123)
+         );
+
+         assertEquals(
+                 "|{NUMBER(): Too many options; option 'skeleton' can only be used alone, or with 'kind'.}|",
+                 fmt(  "skeleton_too_many_options", 123)
+         );
+
+
+         assertEquals(
+                 "|5 thousand|",
+                 fmt(  "skeleton_one", 5000)
+         );
+
+
+         assertEquals(
+                 "|5 thousand|",
+                 fmt(  "skeleton_one_concise", 5000)
+         );
+    }
+
+
+    @Test
+    public void kindIgnoredIfNotInSelector() {
+        // converts number to a CLDR plural category (https://www.unicode.org/cldr/charts/latest/supplemental/language_plural_rules.html)
+        // this is typically used for selectors (and is the default)
+        // however 'kind' is ignored if NOT in a selector.
+
+        assertEquals(
+                "|200|",
+                fmt(  "cardinal_simple", 200)
+        );
 
     }
 
 
     @Test
-    public void selectCardinal() {
+    public void selectCardinalImplicit() {
+        assertEquals(
+                "You have 0 unread messages.",
+                fmt(  "unreadEmails_implicit", 0L)
+        );
 
+        assertEquals(
+                "You have one unread message.",
+                fmt(  "unreadEmails_implicit", 1)
+        );
+
+        assertEquals(
+                "You have 23 unread messages.",
+                fmt(  "unreadEmails_implicit", 23)
+        );
+
+        assertEquals(
+                "You have 1.23 unread messages.",
+                fmt(  "unreadEmails_implicit", 1.23d)
+        );
     }
 
 
     @Test
     public void selectOrdinal() {
+        assertEquals(
+                "Take the 1st right.",
+                fmt(  "turnRightMessage", 1)
+        );
 
+        assertEquals(
+                "Take the 2nd right.",
+                fmt(  "turnRightMessage", 2)
+        );
+
+        assertEquals(
+                "Take the 3rd right.",
+                fmt(  "turnRightMessage", 3)
+        );
+
+        assertEquals(
+                "Take the 4th right.",
+                fmt(  "turnRightMessage", 4)
+        );
+
+        assertEquals(
+                "Take the 21st right.",
+                fmt(  "turnRightMessage", 21)
+        );
+
+
+        assertEquals(
+                "Take the 42nd right.",
+                fmt(  "turnRightMessage", 42)
+        );
+
+        assertEquals(
+                "Take the 53rd right.",
+                fmt(  "turnRightMessage", 53)
+        );
+
+        assertEquals(
+                "Take the 99th right.",
+                fmt(  "turnRightMessage", 99)
+        );
     }
 
     @Test
     public void selectExact() {
+        assertEquals(
+                "Zero.",
+                fmt( "exactMessageExample", 0 )
+        );
 
+        assertEquals(
+                "Two point five.",
+                fmt( "exactMessageExample", 2.5d )
+        );
+
+        assertEquals(
+                "Three.",
+                fmt( "exactMessageExample", 3 )
+        );
+
+        assertEquals(
+                "The value is 1.1.",
+                fmt( "exactMessageExample", 1.1 )
+        );
     }
-
 }

@@ -63,7 +63,8 @@ public enum NumberFn implements FluentFunctionFactory<FluentFunction.Formatter<N
 
     ///  Complicated because Precision has absent chaining for many options, and we are trying to adhere
     ///  to the JS spec for NUMBER
-    private static @Nullable Precision precision(final Options options) throws IllegalArgumentException {
+    private static @Nullable Precision precision(final Options options)
+            throws IllegalArgumentException, FluentFunctionException {
         // min/max fraction digits must be checked FIRST
         final FractionPrecision fp;
         if (options.has( "minimumFractionDigits" ) && options.has( "maximumFractionDigits" )) {
@@ -73,7 +74,7 @@ public enum NumberFn implements FluentFunctionFactory<FluentFunction.Formatter<N
             final int max = options.asInt( "maximumFractionDigits" ).orElseThrow();
 
             if (max < min) {
-                throw new IllegalArgumentException("minimumFractionDigits must be <= maximumFractionDigits");
+                throw FluentFunctionException.of("minimumFractionDigits must be <= maximumFractionDigits");
             }
 
             fp = Precision.minMaxFraction(min, max);
@@ -134,11 +135,11 @@ public enum NumberFn implements FluentFunctionFactory<FluentFunction.Formatter<N
                             .locale( locale );
                     return NumberFnImpl.of( formatter, locale, kind );
                 } catch (SkeletonSyntaxException e) {
-                    throw FluentFunctionException.of( NUMBER.name(), "Invalid skeleton.", e );
+                    throw FluentFunctionException.of( e );
                 }
             } else {
                 // error path: too many options specified.
-                throw FluentFunctionException.of( NUMBER.name(), "Too many options; option 'skeleton' can only be used alone, or with 'kind'." );
+                throw FluentFunctionException.of( "Too many options; option 'skeleton' can only be used alone, or with 'kind'." );
             }
         }
 
