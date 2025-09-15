@@ -42,7 +42,8 @@ import static java.util.Objects.requireNonNull;
 @NullMarked
 public final class FTLStream {
 
-    // not a valid Unicode character. Will never exist in a decoded stream
+    // EOF (0xFF) is not a valid Unicode character, and should
+    // not be present in a stream unless malformed.
     static final byte EOF = (byte) 0xFF;
 
     // magic constants for ascii comparisons.
@@ -157,9 +158,9 @@ public final class FTLStream {
         // we then do an unsigned comparison to 26 (26 letters in the alphabet, letter 'z') like so:
         // (3) if (b2 + Byte.MIN_VALUE < 26 + Byte.MIN_VALUE) { ... we are alphabetic ... } else { we are not }
         // so we reduce upto 4 comparisons to 1. much less branchy.
-        // constants can be improved:
-        // left: (b2 + Byte.MIN_VALUE) == (b1 + (byte)(- 97 + Byte.MIN_VALUE)) == (b1 + 31)
-        // right: (25 + Byte.MIN_VALUE) == -103
+        // constants can be simplified:
+        //      left: (b2 + Byte.MIN_VALUE) == (b1 + (byte)(- 97 + Byte.MIN_VALUE)) == (b1 + 31)
+        //      right: (25 + Byte.MIN_VALUE) == -103
         // ...and that is the origin of our 'MAGIC' values
         //
         // total: 1 OR, 1 ADD, 1 comparison

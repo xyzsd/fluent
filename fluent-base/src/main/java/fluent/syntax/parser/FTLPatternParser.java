@@ -145,15 +145,19 @@ class FTLPatternParser {
                         if (lastNonBlank == count) {
                             // Fluent whitespace is: ASCII space (0x20), LF (0x0a) and CR-LF paired. (CR == 0x0d)
                             // CRs that are NOT paired are not considered whitespace!
-                            // We must only remove CR then, if (going from the end->start) an LF preceeds.
+                            // We must only remove CR then, if (going from the end->start) an LF precedes.
                             // NOTE: this could be improved with SIMD/SWAR, potentially
-                            int endIndex = end - 1;       // 'end' is exclusive, endIndex is not
-                            byte prior = (byte) 0xFF;    // something out of ASCII range
+                            // NOTE: we use a boolean flag to reduce potential for malicious/invalid Unicode
+                            int endIndex = end - 1;       // 'end' is exclusive, 'endIndex' is inclusive
+                            boolean priorIsNewline = false;
                             while (start < endIndex) {
                                 final byte b = ps.at( endIndex );
-                                if (b == ' ' || b == '\n' || (prior == '\n' && b == '\r')) {
+                                if (b == ' ' || (priorIsNewline && b == '\r')) {
                                     endIndex--;
-                                    prior = b;
+                                    priorIsNewline = false;
+                                } else if (b == '\n') {
+                                    endIndex--;
+                                    priorIsNewline = true;
                                 } else {
                                     break;
                                 }

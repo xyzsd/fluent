@@ -221,6 +221,11 @@ public final class FluentFunctionRegistry {
     ///  If an error occurs, an error message will be output and scope updated with
     ///  error information as appropriate.
     public String reduce(final List<FluentValue<?>> in, final Scope scope) {
+        // short-circuit common case for performance (implicit list, size 1)
+        if (in.size() == 1 && in.getFirst() instanceof FluentString(String value)) {
+            return value;
+        }
+
         try {
             return scope.cache().getFunction( reducerFmtFactory, scope.locale(), scope.options( reducerFmtFactory.name() ) )
                     .reduce( in, scope );

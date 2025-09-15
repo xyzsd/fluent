@@ -126,7 +126,7 @@ final class SWAR {
 
     // Not currently used
 
-    ///  find any of the given 4 next delims
+    ///  find any of the given 4 next delimiters
     private static int nextAnyOf4(final byte delim0, final byte delim1, final byte delim2, final byte delim3,
                                   final byte[] buf, final int startIndex) {
         final long dBroad0 = broadcast( delim0 );
@@ -138,7 +138,7 @@ final class SWAR {
 
     // Not currently used
 
-    ///  find any of the given 3 next delims but use pre-broadcast longs
+    ///  find any of the given 3 next delimiters but use pre-broadcasted longs
     private static int nextAnyOf3(final long dBroad0, final long dBroad1, final long dBroad2,
                                   final byte[] buf, final int startIndex) {
 
@@ -171,7 +171,7 @@ final class SWAR {
 
     // Not currently used
 
-    ///  find any of the given 4 next delims but use pre-broadcast longs
+    ///  find any of the given 4 next delimiters but use pre-broadcasted longs
     private static int nextAnyOf4(final long dBroad0, final long dBroad1, final long dBroad2, final long dBroad3,
                                   final byte[] buf, final int startIndex) {
 

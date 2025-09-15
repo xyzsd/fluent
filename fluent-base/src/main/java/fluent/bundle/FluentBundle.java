@@ -93,8 +93,8 @@ public class FluentBundle {
         return "FluentBundle{" +
                 "locale=" + locale +
                 ", useIsolation=" + useIsolation +
-                ", terms (count)= " + terms.size() +
-                ", messages (count) = " + messages.size() +
+                ", # of terms= " + terms.size() +
+                ", # of messages = " + messages.size() +
                 ", cache=" + cache +
                 ", registry=" + registry +
                 '}';
@@ -202,7 +202,6 @@ public class FluentBundle {
             return unknownMessage( messageID );
         } else if (message.pattern() == null) {
             consumeError( messageID, null, () -> ReferenceException.noValue( messageID ) );
-
             return unknownPattern( messageID );
         } else {
             return patternFormat( message.pattern(), args, messageID, null );

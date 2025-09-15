@@ -185,28 +185,6 @@ public class FTLParser {
         }
 
         return new Message( id, pattern, attributes, null );
-
-        /*
-        // remember, pattern can be empty (null)...
-        final Optional<Pattern> pattern = FTLPatternParser_2.getPattern( ps );
-
-        ps.skipBlankBlock();
-
-        // and attributes can be empty
-        final List<Attribute> attributes = getAttributes( ps );
-
-        // but attributes and pattern cannot BOTH be empty
-        if (pattern.isEmpty() && attributes.isEmpty()) {
-            throw ParseException.of(
-                    ParseException.ErrorCode.E0005,
-                    id.name(),
-                    ps.positionToLineSIMPLE( entryStart )
-            );
-        }
-
-        return new Message( id, pattern.orElse( null ),
-                attributes, null );
-        */
     }
 
     private static Term getTerm(final FTLStream ps, final int entryStart) {
@@ -231,22 +209,6 @@ public class FTLParser {
                     ps.positionToLine( entryStart )
             );
         }
-
-        /*
-        final Optional<Pattern> value = FTLPatternParser_2.getPattern( ps );
-
-        ps.skipBlankBlock();
-
-        final List<Attribute> attributes = getAttributes( ps );
-
-        return value.map( v -> new Term( id, v, attributes ) )
-                .orElseThrow( () -> ParseException.of(
-                        ParseException.ErrorCode.E0006,
-                        id.name(),
-                        ps.positionToLineSIMPLE( entryStart )
-                ) );
-
-         */
     }
 
 
@@ -276,13 +238,6 @@ public class FTLParser {
             } else {
                 attributes.add( attr );
             }
-            /*
-            if (getAttribute( ps ).map( attributes::add ).isEmpty()) {
-                ps.position( line_start );
-                break;
-            }
-
-             */
         }
         return attributes;
     }

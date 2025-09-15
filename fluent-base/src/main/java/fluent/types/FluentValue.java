@@ -127,4 +127,5 @@ public sealed interface FluentValue<T>
                 Values cannot be Collection types (or Map).""",
                 in.getClass()));
     }
+
 }

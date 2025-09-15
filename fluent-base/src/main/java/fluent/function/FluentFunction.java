@@ -197,7 +197,7 @@ public sealed interface FluentFunction {
     }
 
     ///
-    /// Reduce a pattern (or multiple values) to a single pattern.
+    /// Reduce a value (or multiple values) to a single (String) value.
     /// This is (by default) the LIST formatter, which is a terminal operation.
     ///
     /// Only one `TerminalReducer` implementation is allowed per FluentBundle.

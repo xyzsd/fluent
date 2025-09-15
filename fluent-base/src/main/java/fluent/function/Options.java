@@ -144,12 +144,12 @@ public final class Options {
         }
 
         // helpful error message
-        throw FluentFunctionException.of( "Named option %s: unrecognized. Allowed values: %s",
+        throw FluentFunctionException.of( "Named option '%s': unrecognized. Allowed values: %s",
                 nameToMatch,  Arrays.toString( enm.getEnumConstants() ) );
     }
 
     private static FluentFunctionException typeError(String optionName, String expectedType, Object actual) {
-        return FluentFunctionException.of( "Option %s: expected type %s (actual: '%s')",
+        return FluentFunctionException.of( "Named option '%s': expected type %s (actual: '%s')",
                 optionName, expectedType, String.valueOf( actual ) );
     }
 
@@ -237,7 +237,7 @@ public final class Options {
     /// @param optionName option name (case-sensitive)
     /// @return option pattern (as above)
     public <E extends Enum<E>> Optional<E> asEnum(final Class<E> enumClass, final String optionName) {
-        return asType( optionName, String.class, "Enumerated" )
+        return asType( optionName, String.class, "Enumerated String" )
                 .map( value -> matchEnum( enumClass, value ) );
     }
 
