@@ -22,16 +22,18 @@
  *
  */
 
-package ftl;import fluent.bundle.FluentBundle;
+package ftl;
+
+import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
 import fluent.syntax.AST.Commentary;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import shared.FTLTestUtils;
 
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class eofCommentTest {
 
@@ -42,10 +44,8 @@ public class eofCommentTest {
     @BeforeAll
     public static void parseFile() throws IOException {
         resource = FTLTestUtils.parseFile( RESOURCE );
-        bundle = FTLTestUtils.basicBundleSetup(resource, false);
-        System.out.println(resource);
+        bundle = FTLTestUtils.basicBundleSetup( resource, false );
     }
-
 
 
     @Test
@@ -80,9 +80,9 @@ public class eofCommentTest {
         resource.entries().stream()
                 .filter( Commentary.Comment.class::isInstance )
                 .map( Commentary.Comment.class::cast )
-                .map( Commentary.Comment::text)
+                .map( Commentary.Comment::text )
                 .filter( EXPECTED::equals )
                 .findFirst()
-                .orElseThrow( () -> new AssertionError("Mismatch") );
+                .orElseThrow( () -> new AssertionError( "Mismatch" ) );
     }
 }

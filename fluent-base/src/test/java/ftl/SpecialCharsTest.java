@@ -26,6 +26,7 @@ package ftl;import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import shared.FTLTestUtils;
 
 import java.io.IOException;
 
@@ -43,10 +44,6 @@ public class SpecialCharsTest {
     public static void parseFile() throws IOException {
         resource = FTLTestUtils.parseFile( RESOURCE );
         bundle = FTLTestUtils.basicBundleSetup( resource, false );
-
-
-        resource.entries().forEach( entry -> {System.out.println(entry);});
-        resource.errors().forEach( entry -> {System.out.println(entry);});
     }
 
 

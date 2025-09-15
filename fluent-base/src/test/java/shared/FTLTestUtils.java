@@ -22,7 +22,9 @@
  *
  */
 
-package ftl;import fluent.bundle.FluentBundle;
+package shared;
+
+import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentFunctionRegistry;
 import fluent.bundle.FluentResource;
 import fluent.bundle.LRUFunctionCache;
@@ -32,7 +34,9 @@ import fluent.function.FluentFunctionFactory;
 import fluent.function.Options;
 import fluent.function.ResolvedParameters;
 import fluent.syntax.AST.*;
-import fluent.syntax.parser.*;
+import fluent.syntax.parser.FTLParser;
+import fluent.syntax.parser.FTLStream;
+import fluent.syntax.parser.ParseException;
 import fluent.types.FluentString;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -63,7 +67,7 @@ public class FTLTestUtils {
         requireNonNull( fileName );
         System.out.println( "Input FTL: " + fileName );
 
-        return FTLParser.parse( FTLStream.from(Thread.currentThread().getContextClassLoader(), fileName),
+        return FTLParser.parse( FTLStream.from( Thread.currentThread().getContextClassLoader(), fileName ),
                 false );    // don't ignore comments!
 
     }
@@ -169,27 +173,25 @@ public class FTLTestUtils {
         assertNotNull( msgID );
 
         final Message message = bndl.message( msgID ).orElseThrow( () -> new IllegalArgumentException( "message(" + msgID + ") not found." ) );
-        if(message.pattern() == null) {
-            throw new  IllegalArgumentException( "message(" + msgID + "): no pattern." );
+        if (message.pattern() == null) {
+            throw new IllegalArgumentException( "message(" + msgID + "): no pattern." );
         }
 
         SelectExpression selectExpression = null;
-        for( PatternElement element : message.pattern().elements()) {
-                if(element instanceof PatternElement.Placeable(Expression expression)
-                        && expression instanceof SelectExpression se) {
-                    selectExpression = se;
-                    break;
+        for (PatternElement element : message.pattern().elements()) {
+            if (element instanceof PatternElement.Placeable(Expression expression)
+                    && expression instanceof SelectExpression se) {
+                selectExpression = se;
+                break;
             }
         }
 
-        if( selectExpression == null ) {
-            throw new  IllegalArgumentException( "message(" + msgID + "): no (non-nested) select expression found." );
+        if (selectExpression == null) {
+            throw new IllegalArgumentException( "message(" + msgID + "): no (non-nested) select expression found." );
         }
 
         return selectExpression;
     }
-
-
 
 
     /// A function, for testing ONLY, that allows us to evaluate

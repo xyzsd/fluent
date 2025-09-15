@@ -27,6 +27,7 @@ package ftl;
 import fluent.bundle.*;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import shared.FTLTestUtils;
 
 import java.io.IOException;
 import java.util.Locale;

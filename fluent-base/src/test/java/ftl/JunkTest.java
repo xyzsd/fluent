@@ -29,6 +29,7 @@ import fluent.bundle.FluentResource;
 import fluent.syntax.AST.Junk;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import shared.FTLTestUtils;
 
 import java.io.IOException;
 

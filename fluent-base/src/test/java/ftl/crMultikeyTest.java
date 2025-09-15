@@ -27,10 +27,9 @@ package ftl;
 import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
 import fluent.syntax.AST.Entry;
-import fluent.syntax.AST.Message;
-import fluent.syntax.AST.PatternElement;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import shared.FTLTestUtils;
 
 import java.io.IOException;
 

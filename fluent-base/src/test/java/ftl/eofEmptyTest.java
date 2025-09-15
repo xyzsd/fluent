@@ -22,15 +22,17 @@
  *
  */
 
-package ftl;import fluent.bundle.FluentBundle;
+package ftl;
+
+import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import shared.FTLTestUtils;
 
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class eofEmptyTest {
 
@@ -41,11 +43,8 @@ public class eofEmptyTest {
     @BeforeAll
     public static void parseFile() throws IOException {
         resource = FTLTestUtils.parseFile( RESOURCE );
-        bundle = FTLTestUtils.basicBundleSetup(resource, false);
-        System.out.println(resource);
+        bundle = FTLTestUtils.basicBundleSetup( resource, false );
     }
-
-
 
 
     @Test
@@ -63,7 +62,6 @@ public class eofEmptyTest {
     public void verifyNoJunk() {
         assertEquals( 0, resource.junk().size() );
     }
-
 
 
 }

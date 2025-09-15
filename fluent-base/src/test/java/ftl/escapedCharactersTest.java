@@ -22,10 +22,13 @@
  *
  */
 
-package ftl;import fluent.bundle.FluentBundle;
+package ftl;
+
+import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import shared.FTLTestUtils;
 
 import java.io.IOException;
 
@@ -42,7 +45,7 @@ public class escapedCharactersTest {
     @BeforeAll
     public static void parseFile() throws IOException {
         resource = FTLTestUtils.parseFile( RESOURCE );
-        bundle = FTLTestUtils.basicBundleSetup(resource, false);
+        bundle = FTLTestUtils.basicBundleSetup( resource, false );
     }
 
 
@@ -60,8 +63,8 @@ public class escapedCharactersTest {
     @Test
     public void literalText() {
         assertEquals(
-            "Value with \\ a backslash",
-            FTLTestUtils.fmt( bundle, "text-backslash-one" )
+                "Value with \\ a backslash",
+                FTLTestUtils.fmt( bundle, "text-backslash-one" )
         );
 
         assertEquals(
@@ -145,8 +148,6 @@ public class escapedCharactersTest {
                 FTLTestUtils.fmt( bundle, "brace-close" )
         );
     }
-
-
 
 
 }

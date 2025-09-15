@@ -29,6 +29,7 @@ import fluent.bundle.LRUFunctionCache;
 import fluent.syntax.AST.Commentary;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import shared.FTLTestUtils;
 
 import java.io.IOException;
 import java.util.Locale;
