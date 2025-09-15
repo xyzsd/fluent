@@ -44,8 +44,7 @@ public sealed interface InlineExpression extends Expression
     }
 
 
-    /// msgID, attributeID
-    ///
+    /// msgID, with optional attributeID
     record MessageReference(Identifier identifier, @Nullable Identifier attributeID) implements InlineExpression, Identifiable {
 
         public MessageReference {
@@ -61,7 +60,6 @@ public sealed interface InlineExpression extends Expression
 
 
     /// Term reference.
-    ///
     record TermReference(Identifier identifier, @Nullable Identifier attributeID, List<NamedArgument> namedArguments)
             implements InlineExpression, Identifiable {
 
