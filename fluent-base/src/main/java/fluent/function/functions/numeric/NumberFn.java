@@ -45,6 +45,10 @@ import java.util.Locale;
 @NullMarked
 public enum NumberFn implements FluentFunctionFactory<FluentFunction.Formatter<Number>> {
 
+
+
+
+
     NUMBER;
 
     // constant for percent scaling
@@ -56,16 +60,23 @@ public enum NumberFn implements FluentFunctionFactory<FluentFunction.Formatter<N
     // and because it is both threadsafe and immutable.
     // It also supports semantic skeletons, which is a powerful formatting method.
 
+
     ///  Complicated because Precision has absent chaining for many options, and we are trying to adhere
     ///  to the JS spec for NUMBER
-    private static @Nullable Precision precision(final Options options) {
+    private static @Nullable Precision precision(final Options options) throws IllegalArgumentException {
         // min/max fraction digits must be checked FIRST
         final FractionPrecision fp;
         if (options.has( "minimumFractionDigits" ) && options.has( "maximumFractionDigits" )) {
-            fp = Precision.minMaxFraction(
-                    options.asInt( "minimumFractionDigits" ).orElseThrow(),
-                    options.asInt( "maximumFractionDigits" ).orElseThrow()
-            );
+            // clarify the error message (otherwise, the error message is "Fraction length must be between 0 and 999..."
+            // from Precision.minMaxFraction()
+            final int min = options.asInt( "minimumFractionDigits" ).orElseThrow();
+            final int max = options.asInt( "maximumFractionDigits" ).orElseThrow();
+
+            if (max < min) {
+                throw new IllegalArgumentException("minimumFractionDigits must be <= maximumFractionDigits");
+            }
+
+            fp = Precision.minMaxFraction(min, max);
         } else if (options.has( "minimumFractionDigits" )) {
             fp = Precision.minFraction( options.asInt( "minimumFractionDigits" ).orElseThrow() );
         } else if (options.has( "maximumFractionDigits" )) {
@@ -174,7 +185,7 @@ public enum NumberFn implements FluentFunctionFactory<FluentFunction.Formatter<N
 
             return NumberFnImpl.of( formatter, locale, kind );
         } catch (IllegalArgumentException e) {
-            throw FluentFunctionException.of( NUMBER.name(), "Invalid argument.", e );
+            throw FluentFunctionException.of( e );
         }
     }
 
@@ -200,6 +211,7 @@ public enum NumberFn implements FluentFunctionFactory<FluentFunction.Formatter<N
         AUTO( NumberFormatter.GroupingStrategy.AUTO ),
         MIN2( NumberFormatter.GroupingStrategy.MIN2 ),
         FALSE( NumberFormatter.GroupingStrategy.OFF );
+        // ... should there also be a 'NEVER' ? (== FALSE) for symmetry?
 
         private final NumberFormatter.GroupingStrategy strategy;
 
