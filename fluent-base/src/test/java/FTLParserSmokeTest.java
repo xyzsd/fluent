@@ -235,9 +235,9 @@ class FTLParserSmokeTest {
                 msg( s1, "literal-number-test1" )
         );
 
-        // default number formatting is 3 decimal places
+        // default number formatting is up to 6 (!) decimal places.
         assertEquals(
-                "-3.142",
+                "-3.141593",
                 msg( s1, "literal-number-test2" )
         );
     }
@@ -660,6 +660,55 @@ class FTLParserSmokeTest {
                 msg( "hello = Hello, {COUNT($names, $age)}!\n", "hello",
                         Map.of( "names", List.of( "Alfonso", "Betty", "Charlie" ),
                                 "age", FluentNumber.of( 99 ) ) )
+        );
+    }
+
+    @Test
+    void simpleLISTTest() {
+        // one item
+        assertEquals(
+                "Hello, world!",
+                msg( "hello = Hello, {$names}!\n", "hello", Map.of( "names", "world" ) )
+        );
+
+        assertEquals(
+                "Hello, world!",
+                msg( "hello = Hello, {$names}!\n", "hello", Map.of( "names", new FluentString( "world" ) ) )
+        );
+
+        // implicit
+        assertEquals(
+                "Hello, Alfonso, Betty!",
+                msg( "hello = Hello, {$names}!\n", "hello",
+                        Map.of( "names", List.of("Alfonso", "Betty" ) ))
+        );
+
+        // explicit
+        assertEquals(
+                "Hello, Alfonso and Betty!",
+                msg( "hello = Hello, {LIST($names, type:\"and\", width:\"wide\")}!\n", "hello",
+                        Map.of( "names", List.of("Alfonso", "Betty" ) ))
+        );
+
+        // implicit 3 default
+        assertEquals(
+                "Hello, Alfonso, Betty, Charlie!",
+                msg( "hello = Hello, {$names}!\n", "hello",
+                        Map.of( "names", List.of( "Alfonso", "Betty", "Charlie" )))
+        );
+
+        // explicit 3 default
+        assertEquals(
+                "Hello, Alfonso, Betty, Charlie!",
+                msg( "hello = Hello, {LIST($names)}!\n", "hello",
+                        Map.of( "names", List.of( "Alfonso", "Betty", "Charlie" )))
+        );
+
+        // explicit 3 using 'or'
+        assertEquals(
+                "Hello, Alfonso, Betty, or Charlie!",
+                msg( "hello = Hello, {LIST($names, type:\"or\", width:\"wide\")}!\n", "hello",
+                        Map.of( "names", List.of( "Alfonso", "Betty", "Charlie" )))
         );
     }
 
