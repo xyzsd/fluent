@@ -28,4 +28,14 @@
         <Class name="fluent.syntax.parser.SWAR" />
         <Bug code="UPM"/>
     </Match>
+    <!-- exclude test sources  -->
+    <Match>
+        <Package name="test.ftl" />
+    </Match>
+    <Match>
+        <Package name="test.shared" />
+    </Match>
+    <Match>
+        <Package name="test.functions" />
+    </Match>
 </FindBugsFilter>
