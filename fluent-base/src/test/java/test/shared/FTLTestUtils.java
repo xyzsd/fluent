@@ -22,7 +22,7 @@
  *
  */
 
-package shared;
+package test.shared;
 
 import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentFunctionRegistry;
