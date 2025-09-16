@@ -166,7 +166,6 @@ public sealed interface FluentFunction {
         FluentValue<String> format(FluentValue<? extends T> in, Scope scope);
     }
 
-    // TODO: eliminate?
 
     /// Selector: implements selection functionality.
     ///

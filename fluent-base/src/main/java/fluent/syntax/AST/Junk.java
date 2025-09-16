@@ -24,6 +24,7 @@ package fluent.syntax.AST;
 
 import org.jspecify.annotations.NullMarked;
 
+///  Junk: sections that cannot be parsed.
 @NullMarked
 public record Junk(String content) implements SyntaxNode {
 }

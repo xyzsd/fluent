@@ -43,7 +43,7 @@ import java.util.Locale;
 ///            - `pattern:` String pattern per DateTimeFormatter (e.g., "hh:mm").
 ///
 ///     Optional parameters:
-///            - `zone:` (optional) time zone (java.time.ZoneId.getID())
+///            - `zone:` (optional) time zone.
 ///               This option will override dateStyle and/or timeStyle if present.
 ///
 ///      CAVEATS:

@@ -31,6 +31,20 @@ import java.time.format.FormatStyle;
 import java.time.temporal.TemporalAccessor;
 import java.util.Locale;
 
+/// TIME() – time-only formatter for temporal values.
+///
+/// Formats TemporalAccessor inputs as times using the given Locale.
+///
+/// Options:
+///
+///     - `style`: java.time.format.FormatStyle (default: MEDIUM)
+///     - `zone`: time zone ID used for formatting (e.g., "UTC", "America/New_York")
+///
+/// Examples:
+/// {@snippet :
+///     TIME($localDateTime)    // -> e.g., "12:00"
+///     TIME($instant, style:"SHORT", zone:"UTC") -> renders time in UTC
+/// }
 // time-only format; one option : 'style', and zone override 'zone'
 @NullMarked
 public enum TimeFn implements FluentFunctionFactory<FluentFunction.Formatter<TemporalAccessor>> {

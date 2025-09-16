@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
 
-/// LIST() : the reducer and formatter of lists. An implicit function.
+/// LIST(): the reducer and formatter of lists. An implicit function.
 ///
 /// LIST() reduces (by concatenation) all positional arguments to a single string, after applying the appropriate
 /// formatting to each item. Heterogeneous lists are supported.

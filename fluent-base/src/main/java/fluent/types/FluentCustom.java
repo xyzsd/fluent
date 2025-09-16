@@ -36,7 +36,7 @@ import java.util.Objects;
 ///     e.g., `FluentCustom<String>` or `FluentCustom<Number>` are legal, however, it is *not recommended*
 ///     to use FluentCustom for any FluentValue type already defined. Custom pattern types that wrap an already-defined
 ///     FluentValue type will not be automatically created (e.g., FluentValue.of(String) will not create a
-///    `FluentCustom<String>`).
+///    `FluentCustom<String>`), since custom types have a lower creation precedence than built-in types.
 ///
 @NullMarked
 public record FluentCustom<T>(T value) implements FluentValue<T> {

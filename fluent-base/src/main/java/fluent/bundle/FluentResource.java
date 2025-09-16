@@ -31,10 +31,12 @@ import java.util.List;
 
 /// Immutable class holding the AST from parsing.
 ///
-/// AST Entries are stored in a List, as are errors and (optionally) `Junk`.
+/// This consists of 3 lists:
+///     - A List of AST entries
+///     - A List of errors encountered during parsing
+///     - (optionally) 'Junk' (unparseable sections)
 ///
-///
-///     FluentResources are used to create FluentBundles.
+/// FluentResources are used to create FluentBundles.
 ///
 @NullMarked
 public record FluentResource(List<Entry> entries, List<ParseException> errors, List<Junk> junk) {

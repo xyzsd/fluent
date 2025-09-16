@@ -36,7 +36,6 @@ import java.util.function.Function;
 import static java.util.Objects.requireNonNull;
 
 
-///
 /// A simple, concurrent, threadsafe simple LRU function cache.
 ///
 /// This cache *should not* be shared between bundles, as the Locale is not part of the cache key.

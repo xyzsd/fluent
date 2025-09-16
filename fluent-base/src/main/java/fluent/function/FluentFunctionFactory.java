@@ -41,7 +41,7 @@ import static java.util.Objects.requireNonNull;
 public interface FluentFunctionFactory<T extends FluentFunction> {
 
 
-    /// Create a {@link FluentFunction}.
+    /// Create the {@link FluentFunction}.
     ///
     /// @param locale   Locale
     /// @param options  Fixed options (if any)
@@ -49,11 +49,12 @@ public interface FluentFunctionFactory<T extends FluentFunction> {
     T create(Locale locale, Options options);
 
 
-    ///  Indicate if the function can be cached by a FluentBundle.
+    ///  Indicates if the function can be cached by a FluentBundle.
     boolean canCache();
 
 
-    ///  The name of the function
+    ///  The name of the function.
+    ///
     ///  Note: specialized functions have the same name, but the implementation can differ.
     String name();
 
@@ -66,13 +67,20 @@ public interface FluentFunctionFactory<T extends FluentFunction> {
         requireNonNull(in);
         if (name.isEmpty()) { throw new IllegalArgumentException("name cannot be empty"); }
 
-        // todo: verify name?
-        /*
-                return ((ch >= 65 && ch <= 90) ||   // A-Z
-                (ch >= 48 && ch <= 57) ||   // 0-9
-                (ch == 97 || ch == 45)      // '_' or '-'
-        );
-         */
+        // verify name is conformant.
+        final int length = name.length();
+        int codePoint = name.codePointAt(0);
+        if (!isFunctionNameStart(codePoint)) {
+            throw new IllegalArgumentException("Invalid function name (initial code point)'" + name + "'");
+        }
+
+        for (int index = Character.charCount(codePoint); index < length; ) {
+            codePoint = name.codePointAt(index);
+            if (!isFunctionNamePart(codePoint)) {
+                throw new IllegalArgumentException("Invalid function name '" + name + "'");
+            }
+            index += Character.charCount(codePoint);
+        }
 
         return new FluentFunctionFactory<>() {
             @Override
@@ -91,6 +99,21 @@ public interface FluentFunctionFactory<T extends FluentFunction> {
             }
         };
     }
+
+    ///  ensure codepoint is valid for a Fluent function name.
+    private static boolean isFunctionNamePart(final int codePoint) {
+                return (isFunctionNameStart(codePoint) ||   // A-Z
+                (codePoint >= 48 && codePoint <= 57) ||   // 0-9
+                (codePoint == 97 || codePoint == 45)      // '_' or '-'
+        );
+    }
+
+    ///  ensure codepoint is valid for a Fluent function name.
+    private static boolean isFunctionNameStart(final int codePoint) {
+        return (codePoint >= 65 && codePoint <= 90);   // A-Z
+    }
+
+
 
 
 }

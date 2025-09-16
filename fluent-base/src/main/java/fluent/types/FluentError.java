@@ -26,7 +26,8 @@ import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
 
-/// An error pattern.
+/// The Error type.
+///
 /// This is used instead of throwing an Exception in order to preserve more of the message,
 /// if possible.
 @NullMarked

@@ -33,19 +33,19 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
-///  NUMSORT()
-///
-///  Sort a list of numbers.
+///  NUMSORT() - locale-aware Number sorting
 ///
 ///  NUMSORT() sorts numbers, first by converting them to BigDecimals and then sorting.
 ///  Specific formatting rules--if desired--can be applied after NUMSORT().
 ///
-///      For example, `NUMBER( NUMSORT($numList), minimumSignificantDigits:6)`
+///  For example, `NUMBER( NUMSORT($numList), minimumSignificantDigits:6)`
+///  Note that the inverse `NUMSORT(NUMBER(...))` will not work, because NUMBER is a formatter that converts
+///  numeric values to their textual (String) representation.
 ///
 ///  Options:
 ///    - `order`: may be `"ascending"` (the default) or `"descending"`
 ///
-///      NUMSORT() will error on non-numeric input. e.g., `NUMSORT(3, 2, 1, "barf")` will result in an error.
+///  NUMSORT() will error on non-numeric input; for example, `NUMSORT(3, 2, 1, "barf")` will result in an error.
 @NullMarked
 public enum NumSortFn implements FluentFunctionFactory<FluentFunction.Transform> {
 

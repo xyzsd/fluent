@@ -25,9 +25,7 @@ package fluent.syntax.parser;
 import fluent.syntax.AST.Commentary;
 import org.jspecify.annotations.NullMarked;
 
-/**
- * This breaks out Comment parsing from the main parser, to improve code clarity
- */
+/// This breaks out Comment parsing from the main parser, to improve code clarity
 @NullMarked
 class FTLCommentParser {
 

@@ -39,12 +39,25 @@ import org.jspecify.annotations.NullMarked;
 import java.util.HashSet;
 import java.util.Set;
 
+/// Groups of built-in FluentFunctionFactory implementations available to the Fluent runtime.
+///
+/// The IMPLICITS group contains the essential default factories that are expected to be present
+/// (list handling, numbers, and date/time).
+///
+/// The other groups provide optional, categorized factories
+/// for numeric, string, list, temporal, and miscellaneous operations. These groupings are intended
+/// to make it easy to register a sensible set of functions in a bundle or to selectively enable
+/// specific domains.
+///
+/// The factories within each group are stored as an immutable set and exposed via `factories()`.
+/// Use `allNonImplicits()` to obtain a modifiable set containing all factories except the
+/// implicit defaults.
 @NullMarked
 public enum DefaultFunctionFactories {
 
 
     ///  The essential default (implicit) functions. Alternatives may be provided, but
-    ///  a function factory for List types, FluentNumber, and FluentTemporal must
+    ///  a function factory for Lists, FluentNumber, and FluentTemporal must always
     ///  be present.
     IMPLICITS( Set.of( ListFn.LIST, NumberFn.NUMBER, DateTimeFn.DATETIME ) ),
 

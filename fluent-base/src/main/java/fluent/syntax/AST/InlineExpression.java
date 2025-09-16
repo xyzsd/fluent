@@ -30,7 +30,8 @@ import java.util.List;
 import static java.util.Objects.requireNonNull;
 
 
-/// literal, placeable, messagereference, termreference, variablereference, functionreference
+/// An InlineExpression can be a Literal, Placeable, MessageReference,
+/// TermReference, VariableReference, or FunctionReference
 @NullMarked
 public sealed interface InlineExpression extends Expression
         permits InlineExpression.FunctionReference, InlineExpression.MessageReference,

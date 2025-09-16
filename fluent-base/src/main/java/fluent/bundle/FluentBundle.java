@@ -38,29 +38,37 @@ import static fluent.bundle.resolver.ResolutionException.ReferenceException;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
-/// FluentBundle: This the primary class used for localization.
-// TODO: document well!, convert any non-markdown comments to markdown
-/* OLD example: need to update
- *      {@code
- *
- *          String in = Files.readString( Path.of( "mydir/myfile.ftl" ) );
- *
- *          FluentResource parse = FTLParser.parse( FTLStream.of( in ) );
- *
- *          FluentBundle bundle = FluentBundle.builder( Locale.US, CLDRFunctionFactory.INSTANCE )
- *                                            .addResource( resource )
- *                                            .build();
- *
- *          // assumes the following "myfile.ftl" contains the message:
- *          //      helloMessage = "Hello there, {name}!"
- *
- *          String myName = "Billy";
- *          String output = bundle.format("helloMessage",Map.of("name", myName));
- *
- *          System.out.println(output);     // "Hello there, Billy!"
- *
- *      }
- */
+
+/// FluentBundle is the primary API for formatting localized messages defined in Fluent (FTL) resources.
+///
+/// A bundle encapsulates a set of parsed messages/terms, a target Locale, and a registry of formatting
+/// functions. Use the Builder to construct a bundle by adding one or more FluentResource instances and
+/// then call one of the `format(...)` methods to render a message or one of its attributes.
+///
+///
+/// Typical usage:
+/// {@snippet :
+///    // Build a bundle
+///    FluentFunctionRegistry registry = FluentFunctionRegistry.withDefaults();
+///    FluentFunctionCache cache = FluentFunctionCache.defaultCache();
+///    FluentResource res = Fluent.parse("hello = Hello, { $name }!\n");
+///
+///    FluentBundle bundle = FluentBundle
+///        .builder(Locale.US, registry, cache)
+///        .addResource(res)
+///        .build();
+///
+///    // Format a message
+///    String hello = bundle.format("hello", Map.of("name", "World"));
+///    // -> "Hello, World!"
+///  }
+///
+/// Notes:
+///     - Formatting never throws for expected runtime issues. When a message/attribute is missing or
+///     a resolution error occurs, a fallback string is returned and the error can be observed through
+///     an optional error logger configured on the Builder.
+///     - FluentBundle instances are immutable and thread-safe once built; the Builder is not.
+///
 @NullMarked
 public class FluentBundle {
 

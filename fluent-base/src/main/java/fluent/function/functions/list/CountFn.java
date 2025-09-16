@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2021-2025, xyzsd (Zach Del) 
+ *  Copyright (C) 2021-2025, xyzsd (Zach Del)
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -33,21 +33,21 @@ import org.jspecify.annotations.NullMarked;
 import java.util.List;
 import java.util.Locale;
 
-///  COUNT() : Counts the supplied arguments.
+/// COUNT(): Counts the supplied arguments.
 ///
-///      If supplied arguments are Lists, items in the lists are also counted.
+/// If supplied arguments are Lists, items in the lists are also counted.
+/// Count is not Locale sensitive and has no options.
 ///
-///      Examples:
+/// Examples:
+///    - `COUNT()` => 0
+///    - `COUNT("hello")` => 1
+///    - `COUNT(7)` => 1
+///    - `COUNT("hello", 7)` => 2
+///    - `COUNT($myvar)` where `$myvar = List.of("item","another","yet another")` => 3
+///    - `COUNT($myvar, "hello")` where `$myvar = List.of("item","another","yet another")` => 4
 ///
-///    - COUNT() => 0
-///    - COUNT("hello") => 1
-///    - COUNT(7) => 1
-///    - COUNT("hello", 7) => 2
-///    - COUNT($myvar) where $myvar=List.of("item","another","yet another") => 3
-///     - COUNT($myvar, "hello") where $myvar=List.of("item","another","yet another") => 4
-///
-///  This is a reducing function. Count returns a single number as its output.
-///  If any arguments are errors, this will fail.
+///  This is a reducing function. Count returns a single number (FluentLong) as its output.
+///  If any arguments are errors, an error message will be output.
 @NullMarked
 public enum CountFn implements FluentFunctionFactory<FluentFunction.Transform>, FluentFunction.Transform {
 

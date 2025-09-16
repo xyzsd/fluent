@@ -34,7 +34,7 @@ import java.util.Locale;
 ///
 /// The [#uncached()] method here can be used if no caching is desirable, or for performance baseline testing.
 ///
-/// A simple LRU cache implementation is provided via [LRUFunctionCache], which is not designed to be shared between
+/// A simple LRU cache implementation is provided via [LRUFunctionCache], which is *not* designed to be shared between
 /// [FluentBundle]s of different locales.
 ///
 /// A cache can be shared between multiple [FluentBundle]s of different locales, if the cache is keyed appropriately.

@@ -153,9 +153,9 @@ public final class FluentFunctionRegistry {
     ///
     /// Implicit selection occurs when no function is called as a selector, *or*
     /// the called function does not implement select. If a called function does NOT
-    /// implement select, the output of that function becomes the input to [#implicitSelect(FluentValue, SelectExpression, Scope)]
+    /// implement select, the output of that function becomes the input to [#implicitSelect]
     ///
-    /// *NOTE:* unlike [#implicitFormat(FluentValue, Scope)], this method CAN throw `FluentFunctionException`s
+    /// *NOTE:* unlike [#implicitFormat(FluentValue, Scope)], this method CAN throw [FluentFunctionException]s.
     ///
     /// @param values Input on which we select
     /// @param exp    SelectExpression

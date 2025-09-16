@@ -32,13 +32,9 @@ import java.nio.charset.StandardCharsets;
 
 import static java.util.Objects.requireNonNull;
 
-/**
- * Read-only input stream used by the parser.
- * <p>
- * Contains building blocks for parser implementation.
- */
-// for files: Files.readString()
-
+/// Read-only input stream used by the parser.
+///
+/// Contains building blocks for parser implementation.
 @NullMarked
 public final class FTLStream {
 
