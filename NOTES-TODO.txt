@@ -3,73 +3,70 @@
 MASTER TO DO LIST
 =================
 
-(1) parser fixes/improvements
-    Option.of() check, needed?
+(1) Parser:
+    Option.if() check, Optional usage
 
-(6) function tests
+(2) function tests
     this is a very large test surface, so we may only test essentials
     expected functions (NUMBER, DATETIME), and LIST should be tested thoroughly
 
-    ** make sure FluentFunctionException.of() is being properly used!!
+    tests should be both functional and to illustrate examples
 
-(7) make sure fluentBundle has a formatPattern(Pattern) public
-    useful for term formatting/usage/etc.
+    also show combination of functions (likely in a separate test)
 
-(9) FluentBundle / API streamlining. Error handling has been markedly improved.
-    FluentBundle :: use BundleException for errors
-    fix 'experimental' parts (FmtBuilder)
+(3) FluentBundle
+    * formatPattern : make public, document, finalize method/params
+    * finalize FmtBuilder
+    * BundleException for exceptions as needed
+    * documentation improvements
 
-(10) look at all code 'TODOs'
+(4) SpotBugs
+    * disable for test classes
+    * seems to be wonky/not always executing in gradle; investigate
 
-(12) spotbugs
+(5) Look at all TODOs
 
-(13) DOCUMENTATION (particularly functions, etc.) and FluentBundle/etc.
-        * also why Fluent vs. ICU::MF2
+(6) Documentation updates/revisions
+    initial documentation completed
+    top level documentation should be clear and helpful
+    make sure important methods are also well documented
 
-(14) EXAMPLES in documentation
+(...)
+
+(10) EXAMPLES in documentation on github OR in (need to create?) wiki
+        * why Fluent vs. ICU::MF or MF2
+        * list support & why that's important
         * how to read in FTL
         * how to replace DATETIME with TEMPORAL
+        * locale fallback (see below)
+        * setting default options for a formatter
+        * etc.
 
-(15) performance testing, w/and w/o cache. cache improvements.
-     Message rendering performance (more important than parser improvements, really)
-     Also evaluate cache design, locks, etc. Goal is a simple but useful cache, and
-     ability to change to a 'real' cache as needed.
+(15) Performance
+    * JMH tests for parser
+    * JMH tests for message rendering
+        * effects of caching/cache performance
+        * focus on common methods
+            String, Numbers, Lists, DateTime/Temporal
+        * should also measure effects of caching
+    * (lower priority) investigate potential AST optimizations
 
-
-
-(16) Locale fallback
-     perhaps just use ICU:LocaleMatcher
+(20) Locale fallback
+     just use ICU:LocaleMatcher
         ICU:LocaleMatcher.Builder
-     this would be provided by (user-supplied)
-        * direclty specified in code
-        * look at some sort of configuration file with supported locales
+     this would be provided by (end-user-supplied!)
+        * directly specified in code
+        * or, supplied by a configuration file with supported locales
         * or, by scanning file system/classpath
-     LocaleMatcher.getBestLocale()
-     then get bundle.
+     LocaleMatcher.getBestLocale() to get closest-matching Locale
 
      NOTE: this is all handled by ICU; we should give an example BUT not much to code here.
 
-     using localemather, get tags, and file would be
+     using LocaleMatcher, get tags, and file/resource would be:
+         *  recommend a naming format: (tentative):
+             myFtlFile_en-GB.ftl
+             {basename}_{languagetag}.{extension}
 
-     myFtlFile_en-GB.ftl
-     {basename}_{languagetag}.{extension}
 
-
-
-    need a simple/easy approach; currently we have no fallback process
-    - language matching
-      - how to search/match classpath for resource fork/language matching
-          - or a group of files/urls/etc.
-          - a couple of ways:
-            - provide known languages ahead of time
-              - string paths, 'paths', URIs, depends. associate with locale
-              - then use localematcher
-            - OR
-            - probe (e.g., en_gb -> en -> root) (root or fallback)
-            - via constructing an array of names:
-                  'en_gb_xx' -> en_gb_xx, en_gb, en, FALLBACK (if defined) or ""
-                  but really what if there was en_gb, en_us, and fr
-                 how would en_xx fall back to en_gb/en_us ? unless we knew about it
-                 how would en_xx fall back to en_gb/en_us ? unless we knew about it
 
 
