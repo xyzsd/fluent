@@ -22,11 +22,11 @@
  *
  */
 
-package ftl;import fluent.bundle.FluentBundle;
+package test.ftl;import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import shared.FTLTestUtils;
+import test.shared.FTLTestUtils;
 
 import java.io.IOException;
 

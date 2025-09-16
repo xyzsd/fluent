@@ -22,34 +22,38 @@
  *
  */
 
+package test;
+
 import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentFunctionRegistry;
 import fluent.bundle.FluentResource;
 import fluent.bundle.LRUFunctionCache;
 import fluent.function.functions.list.CountFn;
-import fluent.syntax.parser.*;
+import fluent.syntax.parser.FTLParser;
+import fluent.syntax.parser.FTLStream;
+import fluent.syntax.parser.ParseException;
 import fluent.types.FluentNumber;
 import fluent.types.FluentString;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.function.Consumer;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-/**
- * High-level tests of functionality
- * <p>
- * NOTE:
- * Watch leading alignment in multi-line text blocks!
- */
+/// High-level tests of functionality
+///
+/// NOTE: Watch leading alignment in multi-line text blocks!
 class FTLParserSmokeTest {
 
     static final boolean SHOW_TEST_RESULTS = true;
 
     static final Consumer<FluentBundle.ErrorContext> ERROR_LOGGER = (ec) -> {
-        System.err.printf("ERROR encountered during formatting of message '%s' (%s), locale %s; [%d errors]:\n",
-            ec.messageID(), ec.attributeID(), ec.locale(), ec.exceptions().size() );
+        System.err.printf( "ERROR encountered during formatting of message '%s' (%s), locale %s; [%d errors]:\n",
+                ec.messageID(), ec.attributeID(), ec.locale(), ec.exceptions().size() );
         ec.exceptions().forEach( e -> System.err.println( "  " + e ) );
     };
 
@@ -680,35 +684,35 @@ class FTLParserSmokeTest {
         assertEquals(
                 "Hello, Alfonso, Betty!",
                 msg( "hello = Hello, {$names}!\n", "hello",
-                        Map.of( "names", List.of("Alfonso", "Betty" ) ))
+                        Map.of( "names", List.of( "Alfonso", "Betty" ) ) )
         );
 
         // explicit
         assertEquals(
                 "Hello, Alfonso and Betty!",
                 msg( "hello = Hello, {LIST($names, type:\"and\", width:\"wide\")}!\n", "hello",
-                        Map.of( "names", List.of("Alfonso", "Betty" ) ))
+                        Map.of( "names", List.of( "Alfonso", "Betty" ) ) )
         );
 
         // implicit 3 default
         assertEquals(
                 "Hello, Alfonso, Betty, Charlie!",
                 msg( "hello = Hello, {$names}!\n", "hello",
-                        Map.of( "names", List.of( "Alfonso", "Betty", "Charlie" )))
+                        Map.of( "names", List.of( "Alfonso", "Betty", "Charlie" ) ) )
         );
 
         // explicit 3 default
         assertEquals(
                 "Hello, Alfonso, Betty, Charlie!",
                 msg( "hello = Hello, {LIST($names)}!\n", "hello",
-                        Map.of( "names", List.of( "Alfonso", "Betty", "Charlie" )))
+                        Map.of( "names", List.of( "Alfonso", "Betty", "Charlie" ) ) )
         );
 
         // explicit 3 using 'or'
         assertEquals(
                 "Hello, Alfonso, Betty, or Charlie!",
                 msg( "hello = Hello, {LIST($names, type:\"or\", width:\"wide\")}!\n", "hello",
-                        Map.of( "names", List.of( "Alfonso", "Betty", "Charlie" )))
+                        Map.of( "names", List.of( "Alfonso", "Betty", "Charlie" ) ) )
         );
     }
 
