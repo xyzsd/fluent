@@ -35,7 +35,7 @@ import java.util.stream.Stream;
 
 /// LIST(): the reducer and formatter of lists. An implicit function.
 ///
-/// LIST() reduces (by concatenation) all positional arguments to a single string, after applying the appropriate
+/// LIST() reduces (by concatenation) all positional arguments to a single String, after applying the appropriate
 /// formatting to each item. Heterogeneous lists are supported.
 ///
 /// Note that selection will not work on lists.
