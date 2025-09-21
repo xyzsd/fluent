@@ -33,6 +33,7 @@ import fluent.function.FluentFunction;
 import fluent.function.FluentFunctionFactory;
 import fluent.function.Options;
 import fluent.function.ResolvedParameters;
+import fluent.function.functions.DefaultFunctionFactories;
 import fluent.syntax.AST.*;
 import fluent.syntax.parser.FTLParser;
 import fluent.syntax.parser.FTLStream;
@@ -96,6 +97,24 @@ public class FTLTestUtils {
         final FluentFunctionRegistry registry = FluentFunctionRegistry.builder()
                 .build();
 
+
+        var builder = FluentBundle.builder( Locale.US, registry, LRUFunctionCache.of() )
+                .addResource( resource );
+
+        if (withErrorLogger) {
+            builder = builder.withLogger( TEST_ERROR_LOGGER );
+        }
+
+        return builder.build();
+    }
+
+    ///  extended bundle setup -- all functions
+    public static FluentBundle extendedBundleSetup(final FluentResource resource, boolean withErrorLogger) {
+        requireNonNull( resource, "FluentResource cannot be null" );
+
+        final FluentFunctionRegistry.Builder regBuilder = FluentFunctionRegistry.builder();
+        DefaultFunctionFactories.allNonImplicits().forEach( regBuilder::addFactory );
+        final FluentFunctionRegistry registry = regBuilder.build();
 
         var builder = FluentBundle.builder( Locale.US, registry, LRUFunctionCache.of() )
                 .addResource( resource );
