@@ -72,7 +72,7 @@ public enum DefaultFunctionFactories {
 
     /// Function factories that operate on units of time or durations,
     /// *excluding* the default (implicit) function factory [DateTimeFn#DATETIME]
-    TEMPORAL( Set.of( DateFn.DATE, TimeFn.TIME, TemporalFn.TEMPORAL, ExtractTemporalFn.XTEMPORAL ) ),
+    TEMPORAL( Set.of( TemporalFn.TEMPORAL, ExtractTemporalFn.XTEMPORAL ) ),
 
     /// Miscellaneous function factories
     MISC( Set.of( BooleanFn.BOOLEAN ));
@@ -88,7 +88,7 @@ public enum DefaultFunctionFactories {
     ///
     /// The returned set is modifiable.
     public static Set<FluentFunctionFactory<?>> allNonImplicits() {
-        HashSet<FluentFunctionFactory<?>> set = new HashSet<>(12);
+        HashSet<FluentFunctionFactory<?>> set = new HashSet<>(10);
         set.addAll( NUMERIC.factories() );
         set.addAll( STRING.factories() );
         set.addAll( LIST.factories() );

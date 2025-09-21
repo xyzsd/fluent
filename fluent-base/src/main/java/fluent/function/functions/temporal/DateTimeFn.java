@@ -30,48 +30,38 @@ import fluent.types.FluentTemporal;
 import fluent.types.FluentValue;
 import org.jspecify.annotations.NullMarked;
 
-import java.time.DateTimeException;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
-import java.time.temporal.TemporalAccessor;
-import java.time.temporal.TemporalQueries;
+import java.time.temporal.*;
 import java.util.List;
 import java.util.Locale;
 
-/*
-https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat
-const DATETIME_ALLOWED = [
-  "dateStyle",  full,long,medium,short
-  "timeStyle",  full,long,medium,short
-
-
-  "fractionalSecondDigits", can be '1', '2', or '3'
-  "dayPeriod",  narrow,short,long
-  "hour12",     true,false (true = 23/24 hour time)
-  "weekday",    long, short, narrow
-  "era",    long, short, narrow
-  "year",   numeric, 2-digit
-  "month",  numeric, 2-digit, long, short, narrow
-  "day",    numeric, 2-digit
-  "hour",   numeric, 2-digit
-  "minute", numeric, 2-digit
-  "second", numeric, 2-digit
-  "timeZoneName",   long,short,shortOffset,longOffset,shortGeneric,longGeneric
-];
-
-https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat
-
-*** IMPORTANT:
-Note: dateStyle and timeStyle can be used with each other, but not with other date-time component options (e.g., weekday, hour, month, etc.).
-
- */
-///      CAVEATS:
-///         - Some format options will require a timezone.
-///         - this function cannot be used to localize or display `TemporalAmount`s such as `Duration` or `Period`.
-///         - `Instants` can be formatted; these are special-cased with `ZoneOffset.UTC`
+/// DATETIME(): basic date and time formatting
+///
+/// This does not replace or attempt to implement all the functions of JavaScript Intl.DateFormat
+///
+/// Only two options are supported:
+/// - `dateStyle` : full,long,medium,short
+/// - `timeStyle` : full,long,medium,short
+///
+/// For more powerful formatting of dates and times, use the TEMPORAL function.
+///
+/// Alternatively, the DATETIME implicit can be replaced with TEMPORAL if desired.
+/// {@snippet :
+///    // TODO: illustrate how to replace DATETIME with TEMPORAL
+///
+/// }
+///
+/// IMPORTANT NOTES:
+/// - Some format options (e.g., timeStyle:FULL or LONG) will require a timezone.
+/// - LocalDateTime, LocalTime do NOT have time zones defined
+/// - this function cannot be used to localize or display [TemporalAmount][java.time.temporal.TemporalAmount]s
+///             such as `Duration` or `Period`.
+/// - Special handling for [Instant][java.time.Instant]: Instants are converted to ZonedDateTime (zone: UTC),
+///             so that they can be formatted (because Instants are created with the UTC time zone)
+///
 @NullMarked
 public enum DateTimeFn implements FluentFunctionFactory<FluentFunction.Formatter<TemporalAccessor>> {
 
@@ -126,10 +116,12 @@ public enum DateTimeFn implements FluentFunctionFactory<FluentFunction.Formatter
         }
 
 
-        private String formatToString(TemporalAccessor temporalAccessor) {
-            // special case for Instants, which fail the localDate and localTime queries
-            if (temporalAccessor instanceof Instant instant) {
-                temporalAccessor = LocalDateTime.ofInstant( instant, ZoneOffset.UTC );
+        private String formatToString(final TemporalAccessor in) {
+            final TemporalAccessor temporalAccessor;
+            if(in instanceof Instant instant) {
+                temporalAccessor = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
+            } else {
+                temporalAccessor = in;
             }
 
             final boolean hasDate = (temporalAccessor.query( TemporalQueries.localDate() ) != null);
@@ -144,7 +136,7 @@ public enum DateTimeFn implements FluentFunctionFactory<FluentFunction.Formatter
                 selectedFormatter = tf;
             } else {
                 throw FluentFunctionException.of(
-                        "No local date OR time for temporal: '%s'",
+                        "No date or time for temporal: '%s'",
                         temporalAccessor
                 );
             }

@@ -34,22 +34,22 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
+import java.util.function.Supplier;
 
-///  TEMPORAL(): Pattern-based formatter of time values
+/// TEMPORAL(): Pattern-based formatter of time values
 ///
-///     At least one pattern is required. Non-temporal values are passed through unchanged.
+/// At least one pattern is required. Non-temporal values are passed through unchanged.
 ///
-///     Required named parameters:
-///            - `pattern:` String pattern per DateTimeFormatter (e.g., "hh:mm").
+/// Required parameter (either one but *not* both):
+/// - `pattern:` String pattern ('skeleton') per DateTimeFormatter (e.g., "hh:mm").
+/// - `as:` One of the constants in [DateTimeFormatter][java.time.format.DateTimeFormatter]
+///     such as ISO_DATE or ISO_DATE_TIME
 ///
-///     Optional parameters:
-///            - `zone:` (optional) time zone.
-///               This option will override dateStyle and/or timeStyle if present.
-///
-///      CAVEATS:
-///        - Some format options will require a timezone.
-///        - this function cannot be used to localize or display `TemporalAmount`s such as `Duration` or `Period`.
-///
+/// CAVEATS:
+/// - Some format options will require a timezone.
+/// - this function cannot be used to localize or display [TemporalAmount][java.time.temporal.TemporalAmount]s
+///             such as `Duration` or `Period`.
 ///
 @NullMarked
 public enum TemporalFn implements FluentFunctionFactory<FluentFunction.Formatter<TemporalAccessor>> {
@@ -57,33 +57,29 @@ public enum TemporalFn implements FluentFunctionFactory<FluentFunction.Formatter
     TEMPORAL;
 
 
-    ///  if a 'zone' option is present, add that zone to the given DateTimeFormatter.
-    ///  throw an exception if the zone is invalid
-    static DateTimeFormatter parseZone(final DateTimeFormatter formatter, final Options options) {
-        try {
-            ZoneId zone = options.into( "zone", ZoneId::of ).orElse( null );
-            return (zone == null) ? formatter : formatter.withZone( zone );
-        } catch (DateTimeException e) {
-            // invalid / missing zone
-            throw FluentFunctionException.of( e );
-        }
-    }
-
     @Override
     public FluentFunction.Formatter<TemporalAccessor> create(final Locale locale, final Options options) {
-        // required
-        final String pattern = options.asString( "pattern" ).orElseThrow(
-                () -> FluentFunctionException.of( "Missing required option: 'pattern'" ) );
+        final DateTimeFormatter formatter;
 
-        DateTimeFormatter formatter;
-        try {
-            formatter = DateTimeFormatter.ofPattern( pattern ).withLocale( locale );
-        } catch (IllegalArgumentException e) {
-            // invalid pattern
-            throw FluentFunctionException.of( e );
+        if (options.has("pattern") &&  options.has("as") ) {
+            throw FluentFunctionException.of( "Must have either 'pattern' or 'as'; not both.");
+        } else if(!options.has("pattern") &&  !options.has("as") ) {
+            throw FluentFunctionException.of( "Missing required option 'pattern' or 'as'.");
+        } else if(options.has("pattern") ) {
+            final String pattern = options.asString( "pattern" )
+                    .orElseThrow(); // should not happen
+            try {
+                formatter = DateTimeFormatter.ofPattern( pattern ).withLocale( locale );
+            } catch (IllegalArgumentException e) {
+                // invalid pattern
+                throw FluentFunctionException.of( e );
+            }
+        } else {
+            // 'as'
+            formatter = options.asEnum( PredefinedDTF.class, "as" )
+                    .map( PredefinedDTF::dtf)
+                    .orElseThrow(); // should not happen
         }
-
-        formatter = parseZone( formatter, options );
 
         return new DTF( formatter );
     }
@@ -145,5 +141,35 @@ public enum TemporalFn implements FluentFunctionFactory<FluentFunction.Formatter
         }
     }
 
+    private enum PredefinedDTF {
 
+        BASIC_ISO_DATE(() -> DateTimeFormatter.BASIC_ISO_DATE),
+        ISO_DATE(() -> DateTimeFormatter.ISO_DATE),
+        ISO_DATE_TIME(() -> DateTimeFormatter.ISO_DATE_TIME),
+        ISO_INSTANT(() -> DateTimeFormatter.ISO_INSTANT),
+        ISO_LOCAL_DATE(() -> DateTimeFormatter.ISO_LOCAL_DATE),
+        ISO_LOCAL_DATE_TIME(() -> DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+        ISO_LOCAL_TIME(() -> DateTimeFormatter.ISO_LOCAL_TIME),
+        ISO_OFFSET_DATE(() -> DateTimeFormatter.ISO_OFFSET_DATE),
+        ISO_OFFSET_DATE_TIME(() -> DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+        ISO_OFFSET_TIME(() -> DateTimeFormatter.ISO_OFFSET_TIME),
+        ISO_ORDINAL_DATE(() -> DateTimeFormatter.ISO_ORDINAL_DATE),
+        ISO_TIME(() -> DateTimeFormatter.ISO_TIME),
+        ISO_WEEK_DATE(() -> DateTimeFormatter.ISO_WEEK_DATE),
+        ISO_ZONED_DATE_TIME(() -> DateTimeFormatter.ISO_ZONED_DATE_TIME),
+        RFC_1123_DATE_TIME(() -> DateTimeFormatter.RFC_1123_DATE_TIME);
+
+        private final Supplier<DateTimeFormatter> dtfSupplier;
+
+        PredefinedDTF(Supplier<DateTimeFormatter> supplier) {
+            this.dtfSupplier = supplier;
+        }
+
+        DateTimeFormatter dtf() {
+            return dtfSupplier.get();
+        }
+
+    }
 }
+
+
