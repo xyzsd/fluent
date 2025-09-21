@@ -38,17 +38,121 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
 
-
-// 'UNIT' in unitDisplay is nOT supported
-// however this does support semantic skeletons
-
+/// ## NUMBER()
+/// Locale-aware number formatting and selection.
+///
+/// Formatter function that formats [Number] inputs to locale-appropriate strings using
+/// ICU4J's [com.ibm.icu.number.NumberFormatter]. Non-number inputs are passed through
+/// unchanged. Errors are passed through unchanged.
+///
+/// ## Behavior
+/// 
+/// - Formats inputs that are assignable to [Number]. Other inputs are left unchanged
+///     (passthrough).
+/// - Returns a [fluent.types.FluentString] for formatted numbers. Other values remain
+///     their original type.
+/// - Selection: by default selects into CLDR plural categories (cardinal). You can switch to
+///     ordinal categories or to exact-match selection via the **kind** option (see below).
+///     Selection operates on a single value.
+/// - Thread-safe and cacheable: the formatter configuration is immutable and
+///     [#canCache()] returns true.
+/// 
+/// ## Options
+/// 
+/// Unless otherwise noted, options follow the intent and naming of JavaScript's
+/// Intl.NumberFormat. Internally this function uses ICU4J. Some options map directly,
+/// others are approximations.
+/// 
+/// - **kind** (optional): Controls selection behavior.
+///     - `CARDINAL` (default): Selects into CLDR cardinal categories using locale rules.
+///     - `ORDINAL`: Selects into CLDR ordinal categories using locale rules.
+///     - `EXACT`: Disables CLDR selection; selection uses the final formatted string
+///     for exact key matching.
+///     
+///   
+/// - **skeleton** (optional): An ICU "semantic skeleton".
+///     No other options may be specified other than **kind**. Skeletons provide rich, compact,
+///     and locale-aware formatting.
+///
+/// - **style** (optional):
+///     - `DECIMAL`: (Default) Standard decimal formatting.
+///     - `CURRENCY`: Formats using the locale's default currency.
+///     - `PERCENT`: Scales by 100 and appends a percent unit.
+///     
+///   
+/// - **unitDisplay** (optional): Controls unit widths for non-currency units when produced by
+///     the formatter (e.g., percent). Values: `SHORT`, `NARROW`, `LONG`.
+///
+/// - **currencyDisplay** (optional): Controls currency width for currency style. Values:
+///     `CODE`, `SYMBOL`, `NARROWSYMBOL`, `NAME`. Overrides unitDisplay if both
+///     are supplied.
+///
+/// - **minimumIntegerDigits** (optional): Pads with leading zeros up to the specified width.
+/// - **minimumFractionDigits** (optional)
+/// - **maximumFractionDigits** (optional)
+/// - **minimumSignificantDigits** (optional)
+/// - **maximumSignificantDigits** (optional)
+///     
+/// - If both _minimumFractionDigits_ and _maximumFractionDigits_ are supplied, then
+///     `minimumFractionDigits <= maximumFractionDigits` must hold or an error is thrown.
+///
+/// - Significant-digit options can be combined with fraction-digit options; when both are
+///     present, the formatter uses ICU's relaxed rounding priority.
+///     
+///   
+/// - **useGrouping** (optional): Controls grouping separators. Values: `ALWAYS`,
+///     `TRUE` (same as ALWAYS), `AUTO`, `MIN2`, `FALSE`.
+/// 
+/// ## Errors
+/// 
+///     - Invalid skeletons or option combinations raise a [FluentFunctionException].
+///     - Supplying inconsistent digit constraints (e.g., minimumFractionDigits greater than
+///     maximumFractionDigits) raises a [FluentFunctionException].
+/// 
+/// ## Examples
+/// {@snippet :
+///   // example output is en-US
+///   # FTL basics
+///   { NUMBER(1234.56) }                           # -> "1,234.56" (en-US)
+///   { NUMBER(0.42, style: PERCENT) }              # -> "42%"
+///   { NUMBER(1234.56, useGrouping: FALSE) }       # -> "1234.56"
+///   { NUMBER(12.3, minimumIntegerDigits: 3) }     # -> "012.3"
+///
+///   # Fraction and significant digits
+///   { NUMBER(1.2, minimumFractionDigits: 3) }     # -> "1.200"
+///   { NUMBER(1234.56, maximumFractionDigits: 1) } # -> "1,234.6"
+///   { NUMBER(0.012345, minimumSignificantDigits: 3, maximumSignificantDigits: 4) }
+///                                                # -> locale-dependent rounding
+///
+///   # Currency
+///   { NUMBER(12.34, style:"CURRENCY") }                         # -> "$12.34" (en-US)
+///
+///   # Selection
+///   { $n ->
+///       [one] There is one item.
+///      *[other] There are { $n } items.
+///   }
+///   # For ordinals
+///   { $n ->
+///     [one] { NUMBER($n, kind:"ORDINAL") } place
+///     [two] { NUMBER($n, kind:"ORDINAL") } place
+///    *[other] { NUMBER($n, kind:"ORDINAL") } place
+///   }
+///
+///   # Skeletons (only allowed with 'kind')
+///   { NUMBER(1234.5, skeleton:"group-min2 .00") }  # -> locale-aware formatting per ICU skeleton
+/// }
+///
+///
+/// ## See also
+/// - ICU4J NumberFormatter documentation.
+/// - JavaScript Intl.NumberFormat for conceptual parity.
+///
 @NullMarked
 public enum NumberFn implements FluentFunctionFactory<FluentFunction.Formatter<Number>> {
 
 
-
-
-
+    /// Single enum constant representing the function name in FTL.
     NUMBER;
 
     // constant for percent scaling
@@ -118,6 +222,7 @@ public enum NumberFn implements FluentFunctionFactory<FluentFunction.Formatter<N
         return fp;
     }
 
+    /// {@inheritDoc}
     @Override
     public FluentFunction.Formatter<Number> create(final Locale locale, final Options options) {
         // 'kind' : used for selectors, but is ignored otherwise.
@@ -190,10 +295,12 @@ public enum NumberFn implements FluentFunctionFactory<FluentFunction.Formatter<N
         }
     }
 
+    /// The transform is cacheable because it is immutable and stateless once constructed.
     @Override
     public boolean canCache() {
         return true;
     }
+
 
     private enum SelectKind {
         // CLDR categories:
