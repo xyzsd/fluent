@@ -37,7 +37,7 @@ import java.util.List;
 
 /// This breaks out Pattern parsing from the main parser, to improve code clarity
 @NullMarked
-class FTLPatternParser {
+final class FTLPatternParser {
 
     private FTLPatternParser() {}
 

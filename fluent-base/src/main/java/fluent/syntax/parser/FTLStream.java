@@ -185,7 +185,7 @@ public final class FTLStream {
     }
 
     /// determine if byte is valid for a function name
-    /// NOTE: not for first character of a function name
+    /// NOTE: not for first character of a function name (only A-Z allowed for first byte)
     /// (uppercase ASCII + digits + underscore + hyphen)
     static boolean isValidFnChar(final byte in) {
         // SIMPLE:
@@ -377,6 +377,7 @@ public final class FTLStream {
         return count;
     }
 
+
     ///  Skip over blank space (WS, \n, \r\n) until we hit something.
     /// The position is advanced to that point.
     void skipBlank() {
@@ -432,6 +433,7 @@ public final class FTLStream {
         return false;
     }
 
+    ///  only used in catch() blocks during parsing, to allow parsing to continue.
     void skipToNextEntryStart() {
         byte prior = (pos > 0) ? seq[pos - 1] : (byte) '\n';
         while (pos < size) {

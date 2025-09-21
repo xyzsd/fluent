@@ -211,7 +211,7 @@ public final class FluentFunctionRegistry {
             };
         } catch (FluentFunctionException e) {
             scope.addException( e );
-            return "{[implicitFormat] FluentFunctionException}";
+            return "{[implicitFormat] "+e.getMessage()+"}";
         }
     }
 

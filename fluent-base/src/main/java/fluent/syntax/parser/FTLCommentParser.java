@@ -27,7 +27,7 @@ import org.jspecify.annotations.NullMarked;
 
 /// This breaks out Comment parsing from the main parser, to improve code clarity
 @NullMarked
-class FTLCommentParser {
+final class FTLCommentParser {
 
     static Commentary getComment(FTLStream ps) {
         int level = -1;
