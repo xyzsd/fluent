@@ -60,6 +60,8 @@ final class SWAR {
     private static final long SPC_MASK = 0x2020202020202020L;
     ///  Mask off final byte (ignore 8th byte)
     private static final long MASK_LAST_BYTE = 0xFFFFFFFFFFFFFF00L;
+    ///  All bits set
+    private static final long ALL_BITS = 0xFFFFFFFFFFFFFFFFL;
 
     ///  View a byte array as a long. Easier and more performant way to fill a Long with 8 bytes.
     ///  NOTE: Be wary of endianness depending upon the byte buffer used
@@ -68,7 +70,6 @@ final class SWAR {
 
 
     private SWAR() {}
-
 
 
     ///  Find position of next LF in buffer, or last position in buf. ASSUMES BUFFER IS PADDED
@@ -88,6 +89,25 @@ final class SWAR {
             }
         }
         return maxIndex;    // not found; we are at EOF
+    }
+
+    ///  True if contains a space, otherwise false.
+    ///  startIndex is inclusive, endIndex is exclusive
+    ///  endIndex must be <= buf.length
+    static boolean containsSpace(final byte[] buf, final int startIndex, final int endIndex) {
+        for (int i = startIndex; i < endIndex; i += 8) {
+            final long unmaskedInput = (long) LONGVIEW.get( buf, i );
+            // NOTE: we may read beyond endIndex, but we do NOT want to evaluate at or beyond endIndex.
+            // We need to mask off those bytes.
+            final long mask = ALL_BITS << (64 - 8*(endIndex - startIndex));
+            final long input =  unmaskedInput & mask;
+            // single-line version of same logic in nextLF()
+            final long eqSpaceAndIsAscii = (((input ^ SPC_MASK) - LO_BITS) & (HI_BITS & (~input)));
+            if (eqSpaceAndIsAscii != 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
 
@@ -240,7 +260,7 @@ final class SWAR {
             long t = Long.lowestOneBit( bitset );
             int r = Long.numberOfTrailingZeros( bitset );
             // *execute something here*
-            System.out.println(r);
+            System.out.println( r );
             //
             bitset ^= t;
         }
@@ -256,7 +276,7 @@ final class SWAR {
             long t = Long.highestOneBit( bitset );
             int r = Long.numberOfLeadingZeros( bitset );
             // *execute something here*
-            System.out.println(r);
+            System.out.println( r );
             //
             bitset ^= t;
         }
@@ -397,4 +417,6 @@ final class SWAR {
         result = result & MASK_LAST_BYTE;  // mask off last byte
         return result;
     }
+
+
 }
