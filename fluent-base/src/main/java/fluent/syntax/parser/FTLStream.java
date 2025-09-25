@@ -251,6 +251,7 @@ public final class FTLStream {
     /// Determine if byte is valid for a function name part (after first byte)
     /// NOTE: not for first character of a function name (only A-Z allowed for first byte)
     /// (uppercase ASCII + digits + underscore + hyphen)
+    @SuppressWarnings( "unused" )
     static boolean isValidFnPart(final byte in) {
         // SIMPLE:
         // return ((b >= 65 && b <= 90) ||   // A-Z    (capitals only!)
@@ -379,11 +380,6 @@ public final class FTLStream {
     // //////////////////////////////////////////////////////////
     // static utility
     // //////////////////////////////////////////////////////////
-
-    // set position to end
-    void positionToEnd() {
-        pos = size - 1;
-    }
 
     void inc() {
         //assert pos < size;
@@ -660,11 +656,13 @@ public final class FTLStream {
     }
 
     /// For debugging: return character at current position
+    @SuppressWarnings( "unused" )
     String dbg() {
         return dbg( position() );
     }
 
     ///  For debugging: display the bytes from start (inclusive) to end (exclusive)
+    @SuppressWarnings( "unused" )
     String dbg(int start, int end) {
         StringBuilder sb = new StringBuilder( end - start );
         for (int i = start; i < end; i++) {

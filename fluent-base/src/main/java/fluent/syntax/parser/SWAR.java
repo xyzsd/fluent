@@ -28,7 +28,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 
-///  [SWAR][https://en.wikipedia.org/wiki/SWAR] Methods and utilities
+///  [SWAR](https://en.wikipedia.org/wiki/SWAR) Methods and utilities
 ///
 ///  All SWAR operations here will use a long, with 8-bit lanes. (8 lanes (bytes) per long)
 ///
@@ -36,8 +36,8 @@ import java.nio.ByteOrder;
 /// but as yet currently unused.
 ///
 ///  Methods in this class are implementations of (or inspired by) ideas from the following:
-///     - [Daniel Lemire (blog)][https://lemire.me/blog/?s=swar]
-///     - [Wojciech Muła][http://0x80.pl/notesen-swar.html]
+///     - [Daniel Lemire (blog)](https://lemire.me/blog/?s=swar)
+///     - [Wojciech Muła](http://0x80.pl/notesen-swar.html)
 final class SWAR {
 
     ///  amount the buffer is padded (8 bytes typical)
@@ -59,9 +59,9 @@ final class SWAR {
     ///  Space (ASCII space)
     private static final long SPC_MASK = 0x2020202020202020L;
     ///  Mask off final byte (ignore 8th byte)
-    private static final long MASK_LAST_BYTE = 0xFFFFFFFFFFFFFF00L;
+    private static final long MASK_LAST_BYTE = 0xFF_FF_FF_FF_FF_FF_FF_00L;
     ///  All bits set
-    private static final long ALL_BITS = 0xFFFFFFFFFFFFFFFFL;
+    private static final long ALL_BITS = 0xFF_FF_FF_FF_FF_FF_FF_FFL;
 
     ///  View a byte array as a long. Easier and more performant way to fill a Long with 8 bytes.
     ///  NOTE: Be wary of endianness depending upon the byte buffer used
@@ -138,6 +138,7 @@ final class SWAR {
 
 
     // not used. different implementation
+    @SuppressWarnings( "unused" )
     private static int nextLF_V2(final byte[] buf, final int index) {
         final int maxIndex = buf.length - PAD;
         for (int i = index; i < maxIndex; i += 8) {
@@ -155,11 +156,13 @@ final class SWAR {
 
 
     ///  create a mask (long) from a byte
+    @SuppressWarnings( "unused" )
     private static long broadcast(final byte b) {
         return 0x101010101010101L * b;
     }
 
     /// As used in jdk.incubator.vector documentation; 'round down'
+    @SuppressWarnings( "unused" )
     private static int loopBound(final int arrayLength) {
         // more general form:
         // SPECIES_LENGTH = 8 (for a long, 8 bytes). For SIMD vectors, this would be longer
@@ -172,6 +175,7 @@ final class SWAR {
     }
 
     /// Sort of the opposite of loopBound. Terrible name.
+    @SuppressWarnings( "unused" )
     private static int roundUpBy8B(final int size) {
         // More general form:
         // SPECIES_LENGTH = 8;
@@ -182,6 +186,7 @@ final class SWAR {
 
 
     ///  for debugging
+    @SuppressWarnings( "unused" )
     private static String bin(byte in) {
         String s = Integer.toBinaryString( in );
         if (s.length() <= 8) {
@@ -192,6 +197,7 @@ final class SWAR {
 
 
     ///  For debugging
+    @SuppressWarnings( "unused" )
     private static String toHex(long l) {
         String s = Long.toUnsignedString( l, 16 );
         int pad = 16 - s.length();
@@ -260,6 +266,7 @@ final class SWAR {
     ///  a 0x00 if we match a blank, or 0x80 if there is a nonblank (as defined here)
     ///
     ///  *initial prototype* single iteration
+    @SuppressWarnings( "unused" )
     private static long skipBlankLong(long in) {
         //System.out.println( "SWAR::skipBlank(long)");
         //System.out.println( "    INPUT:" + (toHex( in )) );
@@ -288,12 +295,4 @@ final class SWAR {
         result = result & MASK_LAST_BYTE;  // mask off last byte
         return result;
     }
-
-
-    ///  scalar implementation currently
-    static long nextTSChar(final byte[] buf, final int startIndex) {
-        throw new UnsupportedOperationException();
-    }
-
-
 }

@@ -112,7 +112,6 @@ import java.util.Locale;
 ///
 /// ## Examples
 /// {@snippet :
-///   #
 ///   # FTL basics
 ///   { NUMBER(1234.56) }                           # -> "1,234.56" (en-US)
 ///   { NUMBER(0.42, style: PERCENT) }              # -> "42%"
