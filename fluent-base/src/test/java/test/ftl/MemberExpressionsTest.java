@@ -22,7 +22,9 @@
  *
  */
 
-package test.ftl;import fluent.bundle.FluentBundle;
+package test.ftl;
+
+import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -30,7 +32,8 @@ import test.shared.FTLTestUtils;
 
 import java.io.IOException;
 
-import static fluent.syntax.parser.ParseException.ErrorCode.*;
+import static fluent.syntax.parser.ParseException.ErrorCode.E0018;
+import static fluent.syntax.parser.ParseException.ErrorCode.E0019;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -43,9 +46,8 @@ public class MemberExpressionsTest {
     @BeforeAll
     public static void parseFile() throws IOException {
         resource = FTLTestUtils.parseFile( RESOURCE );
-        bundle = FTLTestUtils.basicBundleSetup(resource, false);
+        bundle = FTLTestUtils.basicBundleSetup( resource, false );
     }
-
 
 
     @Test

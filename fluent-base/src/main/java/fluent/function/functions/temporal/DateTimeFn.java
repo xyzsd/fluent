@@ -30,7 +30,6 @@ import fluent.types.FluentTemporal;
 import fluent.types.FluentValue;
 import org.jspecify.annotations.NullMarked;
 
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;

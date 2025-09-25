@@ -46,6 +46,7 @@ repositories {
 
 tasks.test {
     useJUnitPlatform()
+    jvmArgs("--add-modules", "jdk.incubator.vector")
 }
 
 dependencies {
@@ -71,7 +72,16 @@ java {
         languageVersion = JavaLanguageVersion.of(23)
     }
 
+
 }
+
+tasks.withType<JavaCompile> {
+    options.compilerArgs.addAll(listOf("--enable-preview"))
+    options.compilerArgs.add("--add-modules")
+    options.compilerArgs.add("jdk.incubator.vector")
+}
+
+
 
 jmh {
     warmupIterations = 1

@@ -202,7 +202,7 @@ class FTLParserSmokeTest {
     void blankUnicodeTest() {
         // These tests use string concatenation because triple-quotes strip trailing whitespace
         String thinSpace = String.valueOf( Character.toChars( 0x2009 ) );
-
+        System.out.println("  thinSpace = "+Character.toChars( 0x2009 ).length);
         assertEquals(
                 thinSpace,
                 msg( "quote =" + thinSpace, "quote" )

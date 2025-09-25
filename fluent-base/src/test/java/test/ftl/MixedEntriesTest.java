@@ -22,7 +22,9 @@
  *
  */
 
-package test.ftl;import fluent.bundle.FluentBundle;
+package test.ftl;
+
+import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -31,7 +33,7 @@ import test.shared.FTLTestUtils;
 import java.io.IOException;
 import java.util.Map;
 
-import static fluent.syntax.parser.ParseException.ErrorCode.*;
+import static fluent.syntax.parser.ParseException.ErrorCode.E0004;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -44,9 +46,8 @@ public class MixedEntriesTest {
     @BeforeAll
     public static void parseFile() throws IOException {
         resource = FTLTestUtils.parseFile( RESOURCE );
-        bundle = FTLTestUtils.basicBundleSetup(resource, false);
+        bundle = FTLTestUtils.basicBundleSetup( resource, false );
     }
-
 
 
     @Test
@@ -73,10 +74,9 @@ public class MixedEntriesTest {
 
         assertEquals(
                 "Attribute",
-                FTLTestUtils.attr( bundle, "key01", "attr")
+                FTLTestUtils.attr( bundle, "key01", "attr" )
         );
     }
-
 
 
     @Test

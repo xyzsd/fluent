@@ -44,10 +44,6 @@ public class TabTest {
     public static void parseFile() throws IOException {
         resource = FTLTestUtils.parseFile( RESOURCE );
         bundle = FTLTestUtils.basicBundleSetup( resource, false );
-
-
-        resource.entries().forEach( entry -> {System.out.println(entry);});
-        resource.errors().forEach( entry -> {System.out.println(entry);});
     }
 
 

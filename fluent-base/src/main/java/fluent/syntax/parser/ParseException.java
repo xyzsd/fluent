@@ -46,7 +46,22 @@ public class ParseException extends RuntimeException {
         this.line = line;
         this.ch = ch;
     }
-    
+
+    private ParseException(Throwable cause) {
+        super(ErrorCode.E0001.message, cause);
+        this.errorCode = ErrorCode.E0001;
+        this.arg = cause.getMessage();
+        this.line = 0;  // hmmm
+        this.ch = null;
+    }
+
+    ///  Create a 'generic' ParseException that wraps another exception.
+    ///
+    /// This should be used very sparingly.
+    ///
+    public static ParseException of(Throwable cause) {
+        return new ParseException( cause );
+    }
     /// Create a ParseException with an explicit message argument and line number.
     ///
     /// @param errorCode the error code describing the parsing failure
@@ -128,36 +143,67 @@ public class ParseException extends RuntimeException {
     /// `%s` placeholder for optional argument interpolation.
     @NullMarked
     public enum ErrorCode {
-        E0001( "Generic error" ),
+        /// Generic catch‑all parsing error with contextual message.
+        E0001( "Generic error: %s" ),
+        /// Expected the beginning of an FTL entry (message, term, or comment).
         E0002( "Expected an entry start" ),
+        /// A specific token was required at this position but was not found.
         E0003( "Expected token: %s" ),
+        /// Expected a character within the indicated range (e.g., 0–9 or a–z).
         E0004( "Expected a character from range: '%s'" ),
+        /// A message declaration is missing its pattern and/or attributes.
         E0005( "Expected message '%s' to have a pattern and/or attributes" ),
+        /// A term declaration is missing its required pattern.
         E0006( "Expected term '-%s' to have a pattern" ),
+        /// Keywords must not end with whitespace.
         E0007( "Keyword cannot end with a whitespace" ),
+        /// A function callee must be an upper‑case identifier or a term reference.
         E0008( "The callee ('%s') must be an upper-case identifier or a term" ),
+        /// Argument names must be simple identifiers.
         E0009( "The argument name has to be a simple identifier" ),
+        /// One of the variants in a select expression must be marked as the default (*).
         E0010( "Expected one of the variants to be marked as default (*)" ),
+        /// A select expression must define at least one variant after '->'.
         E0011( "Expected at least one variant after '->'" ),
+        /// A pattern was expected here but not found.
         E0012( "Expected pattern" ),
+        /// A variant key was expected here but not found.
         E0013( "Expected variant key" ),
+        /// A literal value (String or Number) was expected here.
         E0014( "Expected literal" ),
+        /// Only one variant may be marked as the default (*).
         E0015( "Only one variant can be marked as default (*)" ),
+        /// Message references cannot be used as select expression selectors.
         E0016( "Message references cannot be used as selectors" ),
+        /// Terms cannot be used as select expression selectors.
         E0017( "Terms cannot be used as selectors" ),
+        /// Message attributes cannot be used as select expression selectors.
         E0018( "Attributes of messages cannot be used as selectors" ),
+        /// Term attributes cannot be used as placeables.
         E0019( "Attributes of terms cannot be used as placeables" ),
+        /// A string expression was opened but not properly terminated.
         E0020( "Unterminated string expression" ),
+        /// Positional arguments may not follow named arguments.
         E0021( "Positional arguments must not follow named arguments" ),
+        /// Named arguments must be unique within a call.
         E0022( "Named arguments must be unique" ),
+        /// Variants of a message are not directly accessible.
         E0024( "Cannot access variants of a message." ),
+        /// Encountered an unknown escape sequence in a string.
         E0025( "Unknown escape sequence: '%s'" ),
+        /// The Unicode escape sequence is malformed or out of range.
         E0026( "Invalid Unicode escape sequence: '%s'" ),
+        /// Found a '}' without a matching opening '{' in text.
         E0027( "Unbalanced closing brace in TextElement" ),
+        /// An inline expression was expected here.
         E0028( "Expected an inline expression" ),
+        /// The selector of a select expression must be a simple expression.
         E0029( "Expected simple expression as selector" ),
+        /// A numeric literal is outside the supported range.
         E0030( "NumberLiteral out of range: '%s'" ),
+        /// Positional arguments are not allowed in term references.
         E0031( "Positional arguments in term '-%s'"),
+        /// A named argument or option must use a String or Number literal as its pattern.
         E0032( "The pattern of a named argument or option must be a String or Number literal");
 
         private final String message;

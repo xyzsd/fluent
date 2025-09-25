@@ -31,6 +31,9 @@ import fluent.syntax.parser.PEPlaceholder.TextElementHolder;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +41,23 @@ import java.util.List;
 /// This breaks out Pattern parsing from the main parser, to improve code clarity
 @NullMarked
 final class FTLPatternParser {
+
+    // method handle for getTextSlice(), so we don't have to put it in Accel or FTLStream.
+    private static final MethodHandle MH_GTS;
+
+    static {
+        MethodHandles.Lookup lookup = MethodHandles.lookup();
+        MethodType typeOfTarget = MethodType.methodType( TextSlice.class, FTLStream.class );
+        try {
+            if (FTLStream.isSIMD()) {
+                MH_GTS = lookup.findStatic( FTLPatternParser.class, "getTextSliceSIMD", typeOfTarget );
+            } else {
+                MH_GTS = lookup.findStatic( FTLPatternParser.class, "getTextSliceScalar", typeOfTarget );
+            }
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new RuntimeException( e );
+        }
+    }
 
     private FTLPatternParser() {}
 
@@ -50,8 +70,10 @@ final class FTLPatternParser {
         ps.skipBlankInline();
 
         TextElementPosition textElementRole;
-        if (ps.skipEOL()) {
-            ps.skipBlankBlock();
+        if (!ps.hasRemaining()) {
+            return null;    // EOF
+        } else if (ps.skipEOL()) {
+            ps.skipBlankBlockNLC();
             textElementRole = TextElementPosition.LineStart;
         } else {
             textElementRole = TextElementPosition.InitialLineStart;
@@ -117,6 +139,7 @@ final class FTLPatternParser {
                 textElementRole = switch (textSlice.terminationReason()) {
                     case LineFeed, CRLF -> TextElementPosition.LineStart;
                     case PlaceableStart, EOF -> TextElementPosition.Continuation;
+                    case ERROR -> throw new IllegalStateException();
                 };
             }
         }
@@ -181,6 +204,18 @@ final class FTLPatternParser {
     }
 
     private static TextSlice getTextSlice(FTLStream ps) {
+        // The goal here is to use a MethodHandle to encourage inlining by the JVM
+        try {
+            return (TextSlice) MH_GTS.invokeExact( ps );
+        } catch (ParseException p) {
+            throw p;
+        } catch (Throwable t) {
+            throw ParseException.of( t );
+        }
+    }
+
+    // a not-insignificant amount of time is spent in this method based on profiling
+    private static TextSlice getTextSliceScalar(FTLStream ps) {
         final int startPosition = ps.position();
         TextElementType textElementType = TextElementType.Blank;
 
@@ -213,16 +248,56 @@ final class FTLPatternParser {
                 textElementType, TextElementTermination.EOF );
     }
 
+    private static TextSlice getTextSliceSIMD(FTLStream ps) {
+        final int startPos = ps.position();
+        final long packed = ps.nextTSChar( startPos );
+        final TextElementTermination termination = TextElementTermination.VALUES[FTLStream.ordinal( packed )];
+        final int endPos = FTLStream.position( packed );
+
+        final TextElementType textElementType = ps.isBlank( startPos, endPos )
+                ? TextElementType.Blank
+                : TextElementType.NonBlank;
+
+        return switch (termination) {
+            case LineFeed -> {
+                ps.position( endPos + 1 );
+                yield new TextSlice( startPos, endPos + 1,
+                        textElementType, termination );
+            }
+            case CRLF -> {
+                ps.position( endPos + 1 );
+                yield new TextSlice( startPos, endPos,
+                        textElementType, termination );
+            }
+            case PlaceableStart, EOF -> {
+                ps.position( endPos );
+                yield new TextSlice( startPos, endPos,
+                        textElementType, termination );
+            }
+            case ERROR -> {
+                // unbalanced closing brace
+                ps.position( endPos );
+                throw FTLParser.parseException( ParseException.ErrorCode.E0027, ps );
+            }
+        };
+    }
+
+
     // This enum tracks the reason for which a text slice ended.
     // It is used by the pattern to set the proper state for the next line.
     //
     // CRLF variant is specific because we want to skip the CR but keep the LF in TextElements
     // For example `a\r\n b` will produce (`a`, `\n` and ` b`) TextElements.
-    private enum TextElementTermination {
-        LineFeed,
-        CRLF,
-        PlaceableStart,
-        EOF,
+    enum TextElementTermination {
+        // NOTE: order is critical
+        EOF,                // index 0
+        LineFeed,           // index 1
+        CRLF,               // index 2
+        PlaceableStart,     // index 3 '{' open brace
+        // ERROR is only used by getTextSlice(). Should not occur anywhere else.
+        ERROR;              // index 4 '}' closed brace;
+
+        static final TextElementTermination[] VALUES = TextElementTermination.values();
     }
 
 
@@ -244,9 +319,10 @@ final class FTLPatternParser {
     }
 
     // A slice of text
-    private record TextSlice(int start,
-                             int end,
-                             TextElementType textElementType,
-                             TextElementTermination terminationReason) {}
+    record TextSlice(int start,
+                     int end,
+                     TextElementType textElementType,
+                     TextElementTermination terminationReason) {
+    }
 
 }

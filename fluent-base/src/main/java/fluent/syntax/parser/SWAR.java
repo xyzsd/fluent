@@ -72,6 +72,26 @@ final class SWAR {
     private SWAR() {}
 
 
+
+    // NOTE assumes startIndex <= maxindex
+    // also, not SWAR ...
+    static int getIdentifierEnd(final byte[] buf, final int startIndex) {
+        final int maxIndex = buf.length - PAD;
+        assert startIndex <  maxIndex;
+
+        if (!FTLStream.isASCIIAlphabetic( buf[startIndex] )) {
+            return startIndex;
+        }
+
+        for (int i = (startIndex+1); i < maxIndex; i++) {
+            if (!FTLStream.isValidIDPart( buf[i] )) {
+                return i;
+            }
+        }
+        return maxIndex;
+    }
+
+
     ///  Find position of next LF in buffer, or last position in buf. ASSUMES BUFFER IS PADDED
     static int nextLF(final byte[] buf, final int startIndex) {
         final int maxIndex = buf.length - PAD;
@@ -91,23 +111,29 @@ final class SWAR {
         return maxIndex;    // not found; we are at EOF
     }
 
-    ///  True if contains a space, otherwise false.
-    ///  startIndex is inclusive, endIndex is exclusive
-    ///  endIndex must be <= buf.length
-    static boolean containsSpace(final byte[] buf, final int startIndex, final int endIndex) {
-        for (int i = startIndex; i < endIndex; i += 8) {
-            final long unmaskedInput = (long) LONGVIEW.get( buf, i );
-            // NOTE: we may read beyond endIndex, but we do NOT want to evaluate at or beyond endIndex.
-            // We need to mask off those bytes.
-            final long mask = ALL_BITS << (64 - 8*(endIndex - startIndex));
-            final long input =  unmaskedInput & mask;
-            // single-line version of same logic in nextLF()
-            final long eqSpaceAndIsAscii = (((input ^ SPC_MASK) - LO_BITS) & (HI_BITS & (~input)));
-            if (eqSpaceAndIsAscii != 0) {
-                return true;
+    ///  Given a block of bytes (from startPos to endPos),
+    ///  are these bytes ONLY whitespace (LF, ' ' (ASCII 0x20), CRLF (paired)) ?
+    ///
+    ///  Currently this is a scalar implementation
+    static boolean isBlank(final byte[] buf, final int startIndex, final int endIndex) {
+        // TODO: SWAR vectorization; similar to skipBlank.
+        //          may be able to use skipBlank() but with an additional bound
+        //          and differnet test (need to make sure we are not past endIndex)
+        //
+        // SCALAR VERSION FOLLOWS:
+        boolean priorIsNewline = false;
+        for(int i=endIndex-1; i>=startIndex; i--) {
+            final byte b = buf[i];
+            if (b == ' ' || (priorIsNewline && b == '\r')) {
+                priorIsNewline = false;
+            } else if (b == '\n') {
+                priorIsNewline = true;
+            } else {
+                // not blank!
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
 
@@ -129,100 +155,9 @@ final class SWAR {
 
 
     ///  create a mask (long) from a byte
-    static long broadcast(final byte b) {
+    private static long broadcast(final byte b) {
         return 0x101010101010101L * b;
     }
-
-    // Not currently used
-
-    ///  Nice multichar detection
-    private static int nextAnyOf3(final byte delim0, final byte delim1, final byte delim2,
-                                  final byte[] buf, final int startIndex) {
-        final long dBroad0 = broadcast( delim0 );
-        final long dBroad1 = broadcast( delim1 );
-        final long dBroad2 = broadcast( delim2 );
-        return nextAnyOf3( dBroad0, dBroad1, dBroad2, buf, startIndex );
-    }
-
-    // Not currently used
-
-    ///  find any of the given 4 next delimiters
-    private static int nextAnyOf4(final byte delim0, final byte delim1, final byte delim2, final byte delim3,
-                                  final byte[] buf, final int startIndex) {
-        final long dBroad0 = broadcast( delim0 );
-        final long dBroad1 = broadcast( delim1 );
-        final long dBroad2 = broadcast( delim2 );
-        final long dBroad3 = broadcast( delim3 );
-        return nextAnyOf4( dBroad0, dBroad1, dBroad2, dBroad3, buf, startIndex );
-    }
-
-    // Not currently used
-
-    ///  find any of the given 3 next delimiters but use pre-broadcasted longs
-    private static int nextAnyOf3(final long dBroad0, final long dBroad1, final long dBroad2,
-                                  final byte[] buf, final int startIndex) {
-
-        final int maxIndex = buf.length - PAD;
-
-        for (int i = startIndex; i < maxIndex; i += 8) {
-            // todo: verify bytecode that intermediates are removed (t0,t1)
-            final long input = (long) LONGVIEW.get( buf, i );
-            final long lo7bits = input & MASK_7F;
-            final long d0 = (lo7bits ^ dBroad0) + MASK_7F;
-            final long d1 = (lo7bits ^ dBroad1) + MASK_7F;
-            final long d2 = (lo7bits ^ dBroad2) + MASK_7F;
-
-            //final long t0 = (d0 & d1 & d2) | input;
-            //final long t1 = t0 & HI_BITS;
-            //final long t2 = t1 ^ HI_BITS;
-
-            final long t = (((d0 & d1 & d2) | input) & HI_BITS) ^ HI_BITS;
-
-            if (t != 0) {
-                // leading/trailing zeros functions are intrinsics
-                // returns 0-63 if found, 64 if not found (all zeros)
-                // right shift by 3 to convert to byte position
-                return (Long.numberOfLeadingZeros( t ) >> 3) + i;
-            }
-        }
-
-        return maxIndex;
-    }
-
-    // Not currently used
-
-    ///  find any of the given 4 next delimiters but use pre-broadcasted longs
-    private static int nextAnyOf4(final long dBroad0, final long dBroad1, final long dBroad2, final long dBroad3,
-                                  final byte[] buf, final int startIndex) {
-
-        final int maxIndex = buf.length - PAD;
-
-        for (int i = startIndex; i < maxIndex; i += 8) {
-            // todo: verify bytecode that intermediates are removed (t0,t1)
-            final long input = (long) LONGVIEW.get( buf, i );
-            final long lo7bits = input & MASK_7F;
-            final long d0 = (lo7bits ^ dBroad0) + MASK_7F;
-            final long d1 = (lo7bits ^ dBroad1) + MASK_7F;
-            final long d2 = (lo7bits ^ dBroad2) + MASK_7F;
-            final long d3 = (lo7bits ^ dBroad3) + MASK_7F;
-
-            final long t0 = (d0 & d1 & d2 & d3) | input;
-            final long t1 = t0 & HI_BITS;
-            final long t2 = t1 ^ HI_BITS;
-
-            if (t2 != 0) {
-                // leading/trailing zeros functions are intrinsics
-                // returns 0-63 if found, 64 if not found (all zeros)
-                // right shift by 3 to convert to byte position
-                return (Long.numberOfLeadingZeros( t2 ) >> 3) + i;
-            }
-        }
-
-        return maxIndex;
-    }
-
-
-    // Not currently used
 
     /// As used in jdk.incubator.vector documentation; 'round down'
     private static int loopBound(final int arrayLength) {
@@ -236,50 +171,13 @@ final class SWAR {
         return (arrayLength & (-8));
     }
 
-    // Not currently used
-    // also has a terrible name
-
-    /// Sort of the opposite of loopBound
+    /// Sort of the opposite of loopBound. Terrible name.
     private static int roundUpBy8B(final int size) {
         // More general form:
         // SPECIES_LENGTH = 8;
         // roundUP = (size + (SPECIES_LENGTH -1)) & ~(SPECIES_LENGTH -1)
         //
         return (size + 7) & (-8);
-    }
-
-    // Not currently used
-
-    ///  find indices of set bits (LSB->MSB)
-    // and if we want the index to be in the bitset or relative to the byte[] buffer
-    // and should we return an int[] array, vs. use a lambda/callback
-    // callback nicer
-    private static void indexOfSetBits(final long bits) {
-        long bitset = bits;
-        while (bitset != 0) {
-            long t = Long.lowestOneBit( bitset );
-            int r = Long.numberOfTrailingZeros( bitset );
-            // *execute something here*
-            System.out.println( r );
-            //
-            bitset ^= t;
-        }
-    }
-
-    // Not currently used
-
-    ///  find indices of set bits
-    ///  reverse-direction index (MSB->LSB)
-    private static void indexOfSetBits2(final long bits) {
-        long bitset = bits;
-        while (bitset != 0) {
-            long t = Long.highestOneBit( bitset );
-            int r = Long.numberOfLeadingZeros( bitset );
-            // *execute something here*
-            System.out.println( r );
-            //
-            bitset ^= t;
-        }
     }
 
 
@@ -292,38 +190,11 @@ final class SWAR {
         return s;
     }
 
-    ///  For debugging
-    private static void printBuf(byte[] buffer) {
-        StringBuilder sb = new StringBuilder( 64 );
-        for (int i = 0; i < buffer.length; i++) {
-            char c = (char) (buffer[i] & 0xFF);
-            switch (c) {
-                case 0x0000 -> sb.append( "<NUL>" );
-                case '\n' -> sb.append( "<LF>" );
-                case '\r' -> sb.append( "<CR>" );
-                default -> sb.append( c );
-            }
-        }
-        System.out.println( sb );
-    }
-
-    ///  For debugging
-    private static String b2char(byte b) {
-        char c = (char) (b & 0xFF);
-        return switch (c) {
-            case 0x0000 -> ("<NUL>");
-            case '\n' -> ("<LF>");
-            case '\r' -> ("<CR>");
-            default -> String.valueOf( c );
-        };
-    }
 
     ///  For debugging
     private static String toHex(long l) {
-        //System.out.println(Long.toBinaryString( l ));
-        final int radix = 16;
-        String s = Long.toUnsignedString( l, radix );
-        int pad = radix - s.length();
+        String s = Long.toUnsignedString( l, 16 );
+        int pad = 16 - s.length();
         return ("0".repeat( pad ) + s);
     }
 
@@ -388,7 +259,7 @@ final class SWAR {
     ///  we read in data 8 bytes but advance 7 bytes each time.
     ///  a 0x00 if we match a blank, or 0x80 if there is a nonblank (as defined here)
     ///
-    ///  *initial prototype*
+    ///  *initial prototype* single iteration
     private static long skipBlankLong(long in) {
         //System.out.println( "SWAR::skipBlank(long)");
         //System.out.println( "    INPUT:" + (toHex( in )) );
@@ -416,6 +287,12 @@ final class SWAR {
         // important!
         result = result & MASK_LAST_BYTE;  // mask off last byte
         return result;
+    }
+
+
+    ///  scalar implementation currently
+    static long nextTSChar(final byte[] buf, final int startIndex) {
+        throw new UnsupportedOperationException();
     }
 
 

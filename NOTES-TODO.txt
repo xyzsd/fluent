@@ -2,17 +2,60 @@
 
 MASTER TO DO LIST
 =================
+(0) BUGS
+    ** removing padding for SIMD causes tests to fail.
+    ** ALMOST working, however we are getting some OOBs
+        reading past end of buffer in
+            getMessage()
+            commentparser
+            somewhere in pattern parser (!)
+
+    ** TODO ** rerun tests with SIMD and SWAR (!!!)
 
 (1) Parser:
-    Option.if() check, Optional usage
+    **
+    now SIMD and SWAR. SIMD will automatically activate if it can.
+    SIMD has more acclerators than SWAR, including improvements in:
+        finding/validating identifiers
+        getting TextSlices (important for general parsing)
+
+    TODO:
+        * add test for Attribute without Pattern (E0012)
+           @Nullable Attribute getAttribute(final FTLStream ps)
+           and change method annotation (no longer nullable)
+        * look carefully at getAttributes()
+           (see TODOs), and assess possible error conditions.
+           create tests.
+        * implement SWAR isblank() for getTextSlice()
+        * implement (a working..) SIMD skipBlankBlockNLC()
 
 (2) function tests
     this is a very large test surface, so we may only test essentials
-    expected functions (NUMBER, DATETIME), and LIST should be tested thoroughly
+    core (implicit) functions (NUMBER, DATETIME), and LIST should be tested thoroughly
 
-    tests should be both functional and to illustrate examples
+    TODO:
+        * continue to implement tests
+            temporal: DONE
+            string: CaseFn
+            numeric:
+                Abs
+                Number  DONE
+                Offset
+                Sign
+            booleanFn
+            list:
+                ListFn  DONE
+                Count
+                NumSort
+                StringSort
 
-    also show combination of functions (likely in a separate test)
+    TODO:
+        * and tests as examples:
+            - function renaming
+            - implicit replacement (e.g., DATETIME with TEMPORAL)
+            - simple implicit functions via lambdas
+            - setting default options for a function
+            - select on a list (we can't) by splitting up into two or more messages
 
 (3) FluentBundle
     * formatPattern : make public, document, finalize method/params
@@ -27,11 +70,8 @@ MASTER TO DO LIST
 (5) Look at all TODOs
 
 (6) Documentation updates/revisions
-    initial documentation completed
-    top level documentation should be clear and helpful
-    make sure important methods are also well documented
-
-(...)
+    ** use new format : see NumberFn/ExtractTemporalFn
+    ** continuing work on documentation
 
 (10) EXAMPLES in documentation on github OR in (need to create?) wiki
         * why Fluent vs. ICU::MF or MF2
@@ -43,13 +83,21 @@ MASTER TO DO LIST
         * etc.
 
 (15) Performance
-    * JMH tests for parser
+    * better JMH tests for parser
     * JMH tests for message rendering
         * effects of caching/cache performance
         * focus on common methods
             String, Numbers, Lists, DateTime/Temporal
         * should also measure effects of caching
     * (lower priority) investigate potential AST optimizations
+        in particular, TextSlices. getTextSlice() can create a lot of zero-length or 1-character slices.
+            make sure we are combining these or eliminating these as needed, if we can.
+
+(16) advanced thoughts/performance
+    * for rendering performance: bytecode generation or (likely easier) use StringConcatFactory (?)
+        https://github.com/mtumilowicz/java9-string-concat?tab=readme-ov-file
+        https://kotlinlang.org/docs/whatsnew1520.html#string-concatenation-via-invokedynamic
+    * careful presizing of stringbuilders ?
 
 (20) Locale fallback
      just use ICU:LocaleMatcher

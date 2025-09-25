@@ -170,7 +170,8 @@ public sealed interface FluentFunction {
     /// Selector: implements selection functionality.
     ///
     /// Selector functionality can be different from transform functionality.
-    /// For example, `NUMBER` selects into [CLDR plural categories](https://cldr.unicode.org/index/cldr-spec/plural-rules).
+    /// For example, by default, the [`NUMBER`][fluent.function.functions.numeric.NumberFn] function selects into
+    /// [CLDR plural categories](https://cldr.unicode.org/index/cldr-spec/plural-rules).
     ///
     /// Most selectors are designed to operate on a single `FluentValue`, and cannot operate on multiple arguments or lists.
     /// [VariantKey]s are typically matched by exact String comparison. However, this method exposes the `VariantKey`s

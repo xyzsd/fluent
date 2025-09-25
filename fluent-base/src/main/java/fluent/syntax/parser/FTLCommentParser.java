@@ -71,7 +71,10 @@ final class FTLCommentParser {
                 }
                 sb.append( s );
             }
-            ps.skipEOL();
+
+            if(ps.hasRemaining()) {
+                ps.skipEOL();
+            }
         }
 
         return switch (level) {

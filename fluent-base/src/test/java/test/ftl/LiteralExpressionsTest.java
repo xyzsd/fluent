@@ -22,7 +22,9 @@
  *
  */
 
-package test.ftl;import fluent.bundle.FluentBundle;
+package test.ftl;
+
+import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -32,7 +34,6 @@ import java.io.IOException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class LiteralExpressionsTest {
 
@@ -65,7 +66,7 @@ public class LiteralExpressionsTest {
 
     @Test
     void stringExpression() {
-        final FluentResource r2 = new FluentResource( List.of(resource.entries().getFirst()), List.of(), List.of() );
+        final FluentResource r2 = new FluentResource( List.of( resource.entries().getFirst() ), List.of(), List.of() );
         final FluentBundle bundle = FTLTestUtils.basicBundleSetup( r2, false );
         assertEquals(
                 "abc",
@@ -75,7 +76,7 @@ public class LiteralExpressionsTest {
 
     @Test
     void numExpression_1() {
-        final FluentResource r2 = new FluentResource( List.of(resource.entries().get(1)), List.of(), List.of() );
+        final FluentResource r2 = new FluentResource( List.of( resource.entries().get( 1 ) ), List.of(), List.of() );
         final FluentBundle bundle = FTLTestUtils.basicBundleSetup( r2, false );
         assertEquals(
                 "123",
@@ -85,15 +86,13 @@ public class LiteralExpressionsTest {
 
     @Test
     void numExpression_2() {
-        final FluentResource r2 = new FluentResource( List.of(resource.entries().getLast()), List.of(), List.of() );
+        final FluentResource r2 = new FluentResource( List.of( resource.entries().getLast() ), List.of(), List.of() );
         final FluentBundle bundle = FTLTestUtils.basicBundleSetup( r2, false );
         assertEquals(
                 "-3.14",
                 FTLTestUtils.fmt( bundle, "number-expression" )
         );
     }
-
-
 
 
 }

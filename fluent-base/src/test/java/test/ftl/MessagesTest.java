@@ -22,7 +22,9 @@
  *
  */
 
-package test.ftl;import fluent.bundle.FluentBundle;
+package test.ftl;
+
+import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -43,9 +45,8 @@ public class MessagesTest {
     @BeforeAll
     public static void parseFile() throws IOException {
         resource = FTLTestUtils.parseFile( RESOURCE );
-        bundle = FTLTestUtils.basicBundleSetup(resource, false);
+        bundle = FTLTestUtils.basicBundleSetup( resource, false );
     }
-
 
 
     @Test
@@ -75,7 +76,7 @@ public class MessagesTest {
 
         assertEquals(
                 "Attribute",
-                FTLTestUtils.attr( bundle, "key02a", "attr")
+                FTLTestUtils.attr( bundle, "key02a", "attr" )
         );
     }
 
@@ -88,12 +89,12 @@ public class MessagesTest {
 
         assertEquals(
                 "Attribute 1",
-                FTLTestUtils.attr( bundle, "key02b", "attr1")
+                FTLTestUtils.attr( bundle, "key02b", "attr1" )
         );
 
         assertEquals(
                 "Attribute 2",
-                FTLTestUtils.attr( bundle, "key02b", "attr2")
+                FTLTestUtils.attr( bundle, "key02b", "attr2" )
         );
     }
 
@@ -214,7 +215,6 @@ public class MessagesTest {
                 FTLTestUtils.fmt( bundle, "key_13_" )
         );
     }
-
 
 
 }

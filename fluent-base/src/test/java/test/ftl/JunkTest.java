@@ -47,10 +47,6 @@ public class JunkTest {
     public static void parseFile() throws IOException {
         resource = FTLTestUtils.parseFile( RESOURCE );
         bundle = FTLTestUtils.basicBundleSetup( resource, false );
-
-        System.out.println( "----" );
-        resource.junk().forEach( System.out::println );
-        System.out.println( "----" );
     }
 
     @Test
@@ -120,18 +116,11 @@ public class JunkTest {
 
     @Test
     public void junkSeparateClosingBrace() {
-        // todo: actual is "}\n"+2 consecutive nulls (!)
-
-                String found =         resource.junk().stream()
+        String found = resource.junk().stream()
                 .map( Junk::content )
-                .filter( x -> x.startsWith("}\n") )
+                .filter( x -> x.startsWith( "}\n" ) )
                 .findFirst()
                 .orElseThrow();
-
-        System.out.println( found );
-        for(int i=0; i<found.length(); i++) {
-            System.out.printf("%d : %d '%s'\n",i,found.codePointAt( i ),found.charAt(i));
-        }
 
         final String EXPECTED = "}\n";
         resource.junk().stream()

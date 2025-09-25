@@ -39,7 +39,7 @@ import org.jspecify.annotations.NullMarked;
 import java.util.HashSet;
 import java.util.Set;
 
-/// Groups of built-in FluentFunctionFactory implementations available to the Fluent runtime.
+/// Groups of built-in FluentFunctionFactory implementations potentially available to the Fluent runtime.
 ///
 /// The IMPLICITS group contains the essential default factories that are expected to be present
 /// (list handling, numbers, and date/time).

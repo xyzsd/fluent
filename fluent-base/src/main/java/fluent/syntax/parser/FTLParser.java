@@ -33,43 +33,51 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static fluent.syntax.parser.FTLStream.isASCIIAlphabetic;
-import static fluent.syntax.parser.FTLStream.isASCIIDigit;
+import static fluent.syntax.parser.FTLStream.*;
 
-/// Parse an FTLStream into a FluentResource, which can then be queried as needed.
+/// Parse Fluent Translation List (FTL) source into a FluentResource AST.
 ///
-/// Comments can be included within the FluentResource AST, or, ignored. If comments are ignored, 'junk' is also
-/// ignored. 'Junk' nodes are created during parse errors and can be useful for debugging.
+/// This parser consumes an FTLStream and produces a FluentResource that can be queried
+/// for messages, terms, and metadata. Parse exceptions are also accumulated within the FluentResource.
 ///
+/// There are two parsing modes:
+/// - Simple: comments and junk nodes are ignored for a smaller, faster AST. Best for general use.
+/// - Complete: comments are preserved and junk nodes are recorded when errors occur. Best for implementing
+///   translation or localization tools.
 ///
-/// Ignoring Comments (and Junk) makes for a smaller, more memory-efficient AST and can improve parsing performance.
-///
+/// Notes
+/// - “Junk” nodes are ranges of source captured when a parse error is encountered. They are useful for diagnostics.
+/// - Ignoring comments and junk yields a more memory‑efficient AST and can improve performance.
 @NullMarked
 public class FTLParser {
     ///  default initial size for attribute lists
     private static final int ATTRIBUTE_LIST_SIZE = 4;
 
+
     private FTLParser() {}
 
-    /// Parse an FTLStream into a FluentResource.
+    /// Parse an FTLStream into a FluentResource using the simple mode.
     ///
-    /// Ignores comments, and does not create 'Junk' nodes by default.
-    /// Parse errors are still reported in the FluentResource as encountered.
+    /// In simple mode:
+    /// - Comments are ignored.
+    /// - Junk nodes are not created, but parse errors are still collected on the resource.
     ///
-    /// @param stream stream to parse
-    /// @return FluentResource
+    /// @param stream the input stream to parse
+    /// @return the parsed FluentResource
     public static FluentResource parse(final FTLStream stream) {
         return parseSimple( stream );
     }
 
-    /// Parse an FTLStream into a FluentResource.
+    /// Parse an FTLStream into a FluentResource with control over comment and junk handling.
     ///
-    /// Optionally ignores comments and does not create 'Junk' nodes depending upon `ignoreCommentsAndJunk`.
-    /// Parse errors are reported in the FluentResource as encountered.
+    /// When `ignoreCommentsAndJunk` is true:
+    /// - Comments are not included in the AST.
+    /// - Junk nodes are not created, though parse errors are still collected.
+    /// When false, comments are preserved and junk nodes are created on parse errors.
     ///
-    /// @param stream                stream to parse
-    /// @param ignoreCommentsAndJunk if true, do not create Comment or Junk AST nodes
-    /// @return FluentResource
+    /// @param stream the input stream to parse
+    /// @param ignoreCommentsAndJunk if true, omit Comment and Junk nodes from the AST
+    /// @return the parsed FluentResource
     public static FluentResource parse(final FTLStream stream, final boolean ignoreCommentsAndJunk) {
         return (ignoreCommentsAndJunk ? parseSimple( stream ) : parseComplete( stream ));
     }
@@ -78,7 +86,7 @@ public class FTLParser {
         List<Entry> entries = new ArrayList<>();
         List<ParseException> errors = new ArrayList<>();
 
-        ps.skipBlankBlock();
+        ps.skipBlankBlockNLC();
 
         while (ps.hasRemaining()) {
             final int entryStart = ps.position();
@@ -93,7 +101,7 @@ public class FTLParser {
                 errors.add( ex );
                 // 'Junk' is ignored
             }
-            ps.skipBlankBlock();
+            ps.skipBlankBlockNLC();
         }
 
         return new FluentResource( entries, errors, List.of() );
@@ -104,7 +112,7 @@ public class FTLParser {
         List<Entry> entries = new ArrayList<>();
         List<Junk> junk = new ArrayList<>();
         List<ParseException> errors = new ArrayList<>();
-        ps.skipBlankBlock();
+        ps.skipBlankBlockNLC();
 
         Commentary.Comment lastComment = null;
         int lastBlankCount = 0;
@@ -164,13 +172,14 @@ public class FTLParser {
 
     private static Message getMessage(final FTLStream ps, final int entryStart) {
         final Identifier id = getIdentifier( ps );
+
         ps.skipBlankInline();
         ps.expectChar( (byte) '=' );
 
         // remember, pattern can be empty (null) ... if an attribute is present.
         final Pattern pattern = FTLPatternParser.getPattern( ps );
 
-        ps.skipBlankBlock();
+        ps.skipBlankBlockNLC();
 
         // and attributes can be empty
         final List<Attribute> attributes = getAttributes( ps );
@@ -196,7 +205,7 @@ public class FTLParser {
         ps.skipBlankInline();
 
         final Pattern pattern = FTLPatternParser.getPattern( ps );
-        ps.skipBlankBlock();
+        ps.skipBlankBlockNLC();
 
         final List<Attribute> attributes = getAttributes( ps );
 
@@ -251,44 +260,32 @@ public class FTLParser {
         final Pattern pattern = FTLPatternParser.getPattern( ps );
 
         if (pattern == null) {
-            return null;
+            // Attributes must have a Pattern.
+            // If we want to be lenient, we could return null here, and the attribute will be ignored.
+            throw parseException( ErrorCode.E0012, ps );
         } else {
             return new Attribute( id, pattern );
         }
-        //return FTLPatternParser_2.getPattern( ps )
-        //        .map( pattern -> new Attribute( id, pattern ) );
-        // TODO: check this line E0012
-        //.orElseThrow( () -> new ParseException( ParseException.ErrorCode.E0012 ));
     }
 
-    // todo : hasRemaining() check on first if() or at peekPos
     private static Identifier getIdentifier(final FTLStream ps) {
-        // check first character
-        int peekPos = ps.position();
-        if (isASCIIAlphabetic( ps.at( peekPos ) )) {
-            peekPos += 1;
-        } else {
+        // new version
+        final int idStart = ps.position();
+        final int idEnd = ps.getIdentifierEnd(idStart);
+
+        // initial character of identifier invalid
+        if (idStart == idEnd) {
             throw ParseException.of(
                     ErrorCode.E0004,
                     "a-zA-Z",
-                    ps.positionToLine( peekPos ),
-                    FTLStream.byteToString( ps.at( peekPos ) )
+                    ps.positionToLine( idStart ),
+                    FTLStream.byteToString( ps.at( idStart ) )
             );
         }
 
-        while (ps.hasRemaining()) {
-            final byte ch = ps.at( peekPos );
-            if (isASCIIAlphabetic( ch ) || isASCIIDigit( ch ) || ch == '_' || ch == '-') {
-                peekPos += 1;
-            } else {
-                break;
-            }
-        }
-
-        String name = ps.subString( ps.position(), peekPos );
-
-        ps.position( peekPos );
-        return new Identifier( name );
+        final String idName = ps.subString( idStart, idEnd );
+        ps.position( idEnd );
+        return new Identifier( idName );
     }
 
 
@@ -526,7 +523,11 @@ public class FTLParser {
             ps.inc();
             return new InlineExpression.VariableReference( getIdentifier( ps ) );
         } else if (isASCIIAlphabetic( initialChar )) {
+            // identifier could be a MessageReference or a FunctionReference. So the identifier
+            // structure has to be refined.
             final Identifier id = getIdentifier( ps );
+
+            //final Identifier id = getIdentifier( ps );
             return getCallArguments( ps )
                     .<InlineExpression>map( callArgs -> {
                         validateFunctionName( id, ps );
@@ -624,18 +625,22 @@ public class FTLParser {
     }
 
 
-    // we found an identifier, but, function names must be all upper case (+specials)
+    // We found an identifier, but, function names are not allowed to have lower-cased letters.
     // throws if not valid function identifier (uppercase+special ('-', '_'). **empty is valid**
     private static void validateFunctionName(final Identifier identifier, final FTLStream ps) {
         final String name = identifier.name();
-        // this works b/c we are working with ascii
+        // this works b/c we are working with ASCII (all identifiers characters are ASCII)
+        // we only want to see if there are lowercase letters present; if so, flag it.
+        // CONSIDER: this could be vectorized but may not be worth it. profile results.
+
         for (int i = 0; i < name.length(); i++) {
-            if (!FTLStream.isValidFnChar( (byte) name.charAt( i ) )) {
+            final byte b = (byte) name.charAt(i);
+            if (FTLStream.isASCIILowerCase(b )) {
                 throw ParseException.of(
                         ErrorCode.E0008,
                         name,
                         ps.positionToLine( ps.position() ),
-                        FTLStream.byteToString( (byte) name.charAt( i ) )
+                        FTLStream.byteToString( b )
                 );
             }
         }
@@ -666,11 +671,15 @@ public class FTLParser {
     /// @param stream    the token stream that supplies current location and received byte
     /// @return a new ParseException instance pointing at the stream's current line
     static ParseException parseException(final ErrorCode errorCode, final String argument, final FTLStream stream) {
+        // if we are EOF, stream.at() will throw an exception (if there is no padding)
+        final int line = stream.positionToLine( stream.position() );
+        final String received = (line != 0) ? byteToString( stream.at() ) : byteToString( EOF );
+
         return ParseException.of(
                 errorCode,
                 argument,
-                stream.positionToLine(),
-                FTLStream.byteToString( stream.at() )
+                line,
+                received
         );
     }
 }

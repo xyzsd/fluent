@@ -49,14 +49,14 @@ import java.util.Locale;
 /// 
 /// - Formats inputs that are assignable to [Number]. Other inputs are left unchanged
 ///     (passthrough).
-/// - Returns a [fluent.types.FluentString] for formatted numbers. Other values remain
-///     their original type.
-/// - Selection: by default selects into CLDR plural categories (cardinal). You can switch to
-///     ordinal categories or to exact-match selection via the **kind** option (see below).
-///     Selection operates on a single value.
+/// - As this is a formatter, this function will always format numbers into a [fluent.types.FluentString].
+/// - Selection: by default, selects into CLDR plural categories (cardinal). This can be changed to
+///     ordinal categories (e.g., 1st/2nd/3rd) or to exact-match selection with the **kind** option (see below).
+///     Selection can only operate on a single value, not lists.
 /// - Thread-safe and cacheable: the formatter configuration is immutable and
 ///     [#canCache()] returns true.
-/// 
+///
+///
 /// ## Options
 /// 
 /// Unless otherwise noted, options follow the intent and naming of JavaScript's
@@ -78,8 +78,7 @@ import java.util.Locale;
 ///     - `DECIMAL`: (Default) Standard decimal formatting.
 ///     - `CURRENCY`: Formats using the locale's default currency.
 ///     - `PERCENT`: Scales by 100 and appends a percent unit.
-///     
-///   
+///
 /// - **unitDisplay** (optional): Controls unit widths for non-currency units when produced by
 ///     the formatter (e.g., percent). Values: `SHORT`, `NARROW`, `LONG`.
 ///
@@ -102,16 +101,18 @@ import java.util.Locale;
 ///   
 /// - **useGrouping** (optional): Controls grouping separators. Values: `ALWAYS`,
 ///     `TRUE` (same as ALWAYS), `AUTO`, `MIN2`, `FALSE`.
-/// 
+///
+///
 /// ## Errors
 /// 
-///     - Invalid skeletons or option combinations raise a [FluentFunctionException].
-///     - Supplying inconsistent digit constraints (e.g., minimumFractionDigits greater than
+/// - Invalid skeletons or option combinations raise a [FluentFunctionException].
+/// - Supplying inconsistent digit constraints (e.g., minimumFractionDigits greater than
 ///     maximumFractionDigits) raises a [FluentFunctionException].
-/// 
+///
+///
 /// ## Examples
 /// {@snippet :
-///   // example output is en-US
+///   #
 ///   # FTL basics
 ///   { NUMBER(1234.56) }                           # -> "1,234.56" (en-US)
 ///   { NUMBER(0.42, style: PERCENT) }              # -> "42%"
@@ -127,20 +128,27 @@ import java.util.Locale;
 ///   # Currency
 ///   { NUMBER(12.34, style:"CURRENCY") }                         # -> "$12.34" (en-US)
 ///
-///   # Selection
+///   # (Default) Cardinal Selection
 ///   { $n ->
 ///       [one] There is one item.
 ///      *[other] There are { $n } items.
 ///   }
-///   # For ordinals
-///   { $n ->
-///     [one] { NUMBER($n, kind:"ORDINAL") } place
-///     [two] { NUMBER($n, kind:"ORDINAL") } place
-///    *[other] { NUMBER($n, kind:"ORDINAL") } place
+///
+///   # Ordinal Selection
+///   # remember, [one] in English will apply to '1' but also '21', '31', etc.
+///   # so if the message was "{$n}st place, Outstanding!" that could result in "1st place, Outstanding"
+///   # but also "21st place, Oustanding!", which is less outstanding.
+///   { NUMBER($n, kind:"ORDINAL") ->
+///     [one] {NUMBER($n)}st place.
+///     [two] {NUMBER($n)}nd place.
+///     [few] {NUMBER($n)}rd place.
+///    *[other] {NUMBER($n)}th place.
 ///   }
 ///
-///   # Skeletons (only allowed with 'kind')
-///   { NUMBER(1234.5, skeleton:"group-min2 .00") }  # -> locale-aware formatting per ICU skeleton
+///   # Skeletons (only allowed alone, or with 'kind')
+///   { NUMBER(1234.5, skeleton:"group-min2 .00") }  # -> "1234.50"
+///   { NUMBER(10.0, skeleton:"currency/CAD") }  # -> "CA$10.00"
+///   { NUMBER(10.0, skeleton:"currency/CAD unit-width-narrow") }  # -> "$10.00"
 /// }
 ///
 ///

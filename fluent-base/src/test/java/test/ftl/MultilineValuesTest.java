@@ -22,7 +22,9 @@
  *
  */
 
-package test.ftl;import fluent.bundle.FluentBundle;
+package test.ftl;
+
+import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -31,7 +33,6 @@ import test.shared.FTLTestUtils;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MultilineValuesTest {
 
@@ -42,9 +43,8 @@ public class MultilineValuesTest {
     @BeforeAll
     public static void parseFile() throws IOException {
         resource = FTLTestUtils.parseFile( RESOURCE );
-        bundle = FTLTestUtils.basicBundleSetup(resource, false);
+        bundle = FTLTestUtils.basicBundleSetup( resource, false );
     }
-
 
 
     @Test
@@ -78,7 +78,7 @@ public class MultilineValuesTest {
 
         assertEquals(
                 "A multiline attribute value\ncontinued on the next line\n\nand also down here.",
-                FTLTestUtils.attr( bundle, "key03", "attr")
+                FTLTestUtils.attr( bundle, "key03", "attr" )
         );
     }
 
@@ -91,7 +91,7 @@ public class MultilineValuesTest {
 
         assertEquals(
                 "A multiline attribute value\nstaring on a new line",
-                FTLTestUtils.attr( bundle, "key04", "attr")
+                FTLTestUtils.attr( bundle, "key04", "attr" )
         );
     }
 
