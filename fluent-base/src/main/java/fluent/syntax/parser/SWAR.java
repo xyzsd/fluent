@@ -32,8 +32,8 @@ import java.nio.ByteOrder;
 ///
 ///  All SWAR operations here will use a long, with 8-bit lanes. (8 lanes (bytes) per long)
 ///
-/// There are a number of methods marked *private* in this class which are potentially useful
-/// but as yet currently unused.
+/// There are some methods marked *private* in this class which are potentially useful
+/// but as yet unused.
 ///
 ///  Methods in this class are implementations of (or inspired by) ideas from the following:
 ///     - [Daniel Lemire (blog)](https://lemire.me/blog/?s=swar)
@@ -72,10 +72,9 @@ final class SWAR {
     private SWAR() {}
 
 
-
-    // NOTE assumes startIndex <= maxindex
-    // also, not SWAR ...
+    ///  Currently this is scalar
     static int getIdentifierEnd(final byte[] buf, final int startIndex) {
+        // SCALAR version:
         final int maxIndex = buf.length - PAD;
         assert startIndex <  maxIndex;
 
