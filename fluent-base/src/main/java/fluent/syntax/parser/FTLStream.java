@@ -455,7 +455,7 @@ public final class FTLStream {
 
     /// consume iff match
     boolean takeCharIf(final byte b) {
-        if (at() == b) {
+        if ((pos < size) && at() == b) {
             pos++;
             return true;
         }

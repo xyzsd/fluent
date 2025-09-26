@@ -75,7 +75,7 @@ public class FTLParser {
     /// - Junk nodes are not created, though parse errors are still collected.
     /// When false, comments are preserved and junk nodes are created on parse errors.
     ///
-    /// @param stream the input stream to parse
+    /// @param stream                the input stream to parse
     /// @param ignoreCommentsAndJunk if true, omit Comment and Junk nodes from the AST
     /// @return the parsed FluentResource
     public static FluentResource parse(final FTLStream stream, final boolean ignoreCommentsAndJunk) {
@@ -184,7 +184,8 @@ public class FTLParser {
         // and attributes can be empty
         final List<Attribute> attributes = getAttributes( ps );
 
-        // but attributes and pattern cannot BOTH be empty
+        // but attributes and pattern cannot BOTH be empty.
+        // use entryStart as position (more helpful)
         if (pattern == null && attributes.isEmpty()) {
             throw ParseException.of(
                     ErrorCode.E0005,
@@ -215,24 +216,21 @@ public class FTLParser {
             throw ParseException.of(
                     ErrorCode.E0006,
                     id.name(),
-                    ps.positionToLine( entryStart )
+                    ps.positionToLine( entryStart ) // safe if entryStart OOB
             );
         }
     }
 
 
-    // TODO: this suppresses errors if get_attribute fails; give warning? store error somewhere?
-    //       re-evaluate and create a test for this
     private static List<Attribute> getAttributes(final FTLStream ps) {
         List<Attribute> attributes = new ArrayList<>( ATTRIBUTE_LIST_SIZE );
 
         while (ps.hasRemaining()) {
             final int line_start = ps.position();
             ps.skipBlankInline();
+
             if (!ps.hasRemaining()) {
-                // TODO: this may be an error condition (early EOF or invalid entry)
-                //       validate and if so generate error
-                break;
+                break;  // early EOF
             }
 
             if (!ps.isCurrentChar( (byte) '.' )) {
@@ -240,19 +238,13 @@ public class FTLParser {
                 break;
             }
 
-            final Attribute attr = getAttribute( ps );
-            if (attr == null) {
-                ps.position( line_start );
-                break;
-            } else {
-                attributes.add( attr );
-            }
+            attributes.add( getAttribute( ps ) );
         }
         return attributes;
     }
 
 
-    private static @Nullable Attribute getAttribute(final FTLStream ps) {
+    private static Attribute getAttribute(final FTLStream ps) {
         ps.expectChar( (byte) '.' );
         final Identifier id = getIdentifier( ps );
         ps.skipBlankInline();
@@ -271,16 +263,11 @@ public class FTLParser {
     private static Identifier getIdentifier(final FTLStream ps) {
         // new version
         final int idStart = ps.position();
-        final int idEnd = ps.getIdentifierEnd(idStart);
+        final int idEnd = ps.getIdentifierEnd( idStart );
 
         // initial character of identifier invalid
         if (idStart == idEnd) {
-            throw ParseException.of(
-                    ErrorCode.E0004,
-                    "a-zA-Z",
-                    ps.positionToLine( idStart ),
-                    FTLStream.byteToString( ps.at( idStart ) )
-            );
+            throw parseException( ErrorCode.E0004, "a-zA-Z", ps );
         }
 
         final String idName = ps.subString( idStart, idEnd );
@@ -299,19 +286,20 @@ public class FTLParser {
 
     private static VariantKey getVariantKey(final FTLStream ps) {
         if (!ps.takeCharIf( (byte) '[' )) {
-            throw parseException(
-                    ErrorCode.E0003,
-                    "[",
-                    ps
-            );
+            throw parseException( ErrorCode.E0003, "[", ps );
         }
         ps.skipBlank();
 
-        VariantKey variantKey;
-        if (ps.isNumberStart()) {
-            variantKey = getNumberLiteral( ps );
+        final VariantKey variantKey;
+        if (ps.hasRemaining()) {
+            if (ps.isNumberStart()) {
+                variantKey = getNumberLiteral( ps );
+            } else {
+                variantKey = getIdentifier( (ps) );
+            }
         } else {
-            variantKey = getIdentifier( (ps) );
+            // a variant key is expected!
+            throw parseException( ErrorCode.E0013, ps );
         }
 
         ps.skipBlank();
@@ -324,7 +312,7 @@ public class FTLParser {
         List<Variant> variants = new ArrayList<>( 4 );
         boolean hasDefault = false;
 
-        while (ps.isCurrentChar( (byte) '*' ) || ps.isCurrentChar( (byte) '[' )) {
+        while (ps.hasRemaining() && (ps.isCurrentChar( (byte) '*' ) || ps.isCurrentChar( (byte) '[' ))) {
             final boolean isDefault = ps.takeCharIf( (byte) '*' );
 
             if (isDefault) {
@@ -348,11 +336,10 @@ public class FTLParser {
             ps.skipBlank();
         }
 
-        if (!hasDefault) {
-            throw parseException(
-                    ErrorCode.E0010,
-                    ps
-            );
+        if (variants.isEmpty()) {
+            throw parseException( ErrorCode.E0011, ps );
+        } else if (!hasDefault) {
+            throw parseException( ErrorCode.E0010, ps );
         }
 
         return variants;
@@ -431,8 +418,8 @@ public class FTLParser {
         ps.expectChar( (byte) '>' );
 
         ps.skipBlankInline();
-        if (!ps.skipEOL()) {
-            throw parseException( ErrorCode.E0004, "'\\n' or '\\r\\n'", ps );
+        if (!ps.hasRemaining() || !ps.skipEOL()) {
+            throw parseException( ErrorCode.E0004, "\\n (LF) or \\r\\n (CRLF)", ps );
         }
         ps.skipBlank();
         return SelectExpression.of( exp, getVariants( ps ) );
@@ -634,8 +621,8 @@ public class FTLParser {
         // CONSIDER: this could be vectorized but may not be worth it. profile results.
 
         for (int i = 0; i < name.length(); i++) {
-            final byte b = (byte) name.charAt(i);
-            if (FTLStream.isASCIILowerCase(b )) {
+            final byte b = (byte) name.charAt( i );
+            if (FTLStream.isASCIILowerCase( b )) {
                 throw ParseException.of(
                         ErrorCode.E0008,
                         name,
@@ -650,21 +637,21 @@ public class FTLParser {
     /// Create a ParseException from the current position of an [FTLStream].
     /// The message argument is left unspecified.
     ///
+    /// These methods should be used instead of ParseException.of(), because these methods are
+    /// tolerant of potential out-of-bound positions.
+    ///
     /// @param errorCode the error code describing the parsing failure
     /// @param stream    the token stream that supplies current location and received byte
     /// @return a new ParseException instance pointing at the stream's current line
     static ParseException parseException(final ErrorCode errorCode, final FTLStream stream) {
-        return ParseException.of(
-                errorCode,
-                "[*ARGUMENT UNSPECIFIED*]",
-                stream.positionToLine(),
-                FTLStream.byteToString( stream.at() )
-
-        );
+        return parseException( errorCode, "[argument unspecified]", stream );
     }
 
     /// Create a ParseException from the current position of an [FTLStream]
     /// with an explicit message argument.
+    ///
+    /// These methods should be used instead of ParseException.of(), because these methods are
+    /// tolerant of potential out-of-bound positions.
     ///
     /// @param errorCode the error code describing the parsing failure
     /// @param argument  the argument to interpolate into the error message format
