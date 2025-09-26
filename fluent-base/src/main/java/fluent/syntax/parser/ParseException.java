@@ -149,8 +149,8 @@ public class ParseException extends RuntimeException {
         E0002( "Expected an entry start" ),
         /// A specific token was required at this position but was not found.
         E0003( "Expected token: %s" ),
-        /// Expected a character within the indicated range (e.g., 0–9 or a–z).
-        E0004( "Expected a character from range: '%s'" ),
+        /// Expected a character within the indicated range or group (e.g., 0–9 or a–z).
+        E0004( "Expected %s" ),
         /// A message declaration is missing its pattern and/or attributes.
         E0005( "Expected message '%s' to have a pattern and/or attributes" ),
         /// A term declaration is missing its required pattern.

@@ -267,7 +267,7 @@ public class FTLParser {
 
         // initial character of identifier invalid
         if (idStart == idEnd) {
-            throw parseException( ErrorCode.E0004, "a-zA-Z", ps );
+            throw parseException( ErrorCode.E0004, "character from range [a-zA-Z] for the start of an identifier", ps );
         }
 
         final String idName = ps.subString( idStart, idEnd );
@@ -419,7 +419,7 @@ public class FTLParser {
 
         ps.skipBlankInline();
         if (!ps.hasRemaining() || !ps.skipEOL()) {
-            throw parseException( ErrorCode.E0004, "\\n (LF) or \\r\\n (CRLF)", ps );
+            throw parseException( ErrorCode.E0004, "either '\\n' (LF) or '\\r\\n' (CRLF)", ps );
         }
         ps.skipBlank();
         return SelectExpression.of( exp, getVariants( ps ) );
