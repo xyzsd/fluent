@@ -3,14 +3,7 @@
 MASTER TO DO LIST
 =================
 (0) BUGS
-    ** removing padding for SIMD causes tests to fail.
-    ** ALMOST working, however we are getting some OOBs
-        reading past end of buffer in
-            getMessage()
-            commentparser
-            somewhere in pattern parser (!)
-
-    ** TODO ** rerun tests with SIMD and SWAR (!!!)
+    all tests passed
 
 (1) Parser:
     now SIMD and SWAR. SIMD will automatically activate if it can.
