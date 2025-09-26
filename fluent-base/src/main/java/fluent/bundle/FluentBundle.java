@@ -80,7 +80,7 @@ public class FluentBundle {
     private final FluentFunctionRegistry registry;   // accessed only via Scope
     private final FluentFunctionCache cache;
     private final Map<String, Options> defaultOptions;
-    private final @Nullable Consumer<ErrorContext> errorConsumer;
+    @Nullable private final Consumer<ErrorContext> errorConsumer;
 
 
     private FluentBundle(Builder b) {
@@ -605,7 +605,7 @@ public class FluentBundle {
     /// Format Builder: **NOTE: this class is experimental**
     public final class FmtBldr {
         private final String msgID;
-        private @Nullable String attrID = null;
+        @Nullable private String attrID = null;
         private Map<String, Object> args = Map.of();
 
         private FmtBldr(final String msgID) {

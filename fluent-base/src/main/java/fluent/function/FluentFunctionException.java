@@ -35,7 +35,7 @@ import static java.util.Objects.requireNonNull;
 @NullMarked
 public class FluentFunctionException extends RuntimeException {
 
-    private final @Nullable String name;
+    @Nullable private final String name;
 
 
     private FluentFunctionException(@Nullable String fnName, String message, Throwable cause) {
