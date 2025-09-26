@@ -13,19 +13,12 @@ MASTER TO DO LIST
     ** TODO ** rerun tests with SIMD and SWAR (!!!)
 
 (1) Parser:
-    **
     now SIMD and SWAR. SIMD will automatically activate if it can.
     SIMD has more acclerators than SWAR, including improvements in:
         finding/validating identifiers
         getting TextSlices (important for general parsing)
 
     TODO:
-        * add test for Attribute without Pattern (E0012)
-           @Nullable Attribute getAttribute(final FTLStream ps)
-           and change method annotation (no longer nullable)
-        * look carefully at getAttributes()
-           (see TODOs), and assess possible error conditions.
-           create tests.
         * implement SWAR isblank() for getTextSlice()
         * implement (a working..) SIMD skipBlankBlockNLC()
 
