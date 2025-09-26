@@ -47,6 +47,8 @@ final class FTLCommentParser {
 
             level = lineLevel;
 
+            assert ps.hasRemaining();
+
             final byte cb = ps.at();    // cb == current byte
             if (ps.position() == ps.length()) {
                 break;
@@ -58,8 +60,7 @@ final class FTLCommentParser {
                     ps.inc();
                 } else {
                     if (sb.isEmpty()) {
-                        throw FTLParser.parseException( ParseException.ErrorCode.E0003,
-                                " ", ps );
+                        throw FTLParser.parseException( ParseException.ErrorCode.E0003, " ", ps );
                     } else {
                         ps.dec( lineLevel );
                         break;
