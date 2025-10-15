@@ -1,3 +1,4 @@
+# NOTE: all line endings should be LF not CRLF (or tests will not pass, as they only check for LF)
 ## Two adjacent Junks.
 err01 = {1x}
 err02 = {2x}

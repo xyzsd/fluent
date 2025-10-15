@@ -51,53 +51,45 @@ public class JunkTest {
 
     @Test
     public void verifyExceptions() {
-        assertEquals( 7, resource.errors().size() );
-        assertTrue( FTLTestUtils.matchParseException( resource, E0003, 2 ) );
         assertTrue( FTLTestUtils.matchParseException( resource, E0003, 3 ) );
-        assertTrue( FTLTestUtils.matchParseException( resource, E0003, 6 ) );
-        assertTrue( FTLTestUtils.matchParseException( resource, E0004, 10 ) );
-        assertTrue( FTLTestUtils.matchParseException( resource, E0028, 15 ) );
-        assertTrue( FTLTestUtils.matchParseException( resource, E0028, 20 ) );
-        assertTrue( FTLTestUtils.matchParseException( resource, E0004, 21 ) );
+        assertTrue( FTLTestUtils.matchParseException( resource, E0003, 4 ) );
+        assertTrue( FTLTestUtils.matchParseException( resource, E0003, 7 ) );
+        assertTrue( FTLTestUtils.matchParseException( resource, E0004, 11 ) );
+        assertTrue( FTLTestUtils.matchParseException( resource, E0028, 16 ) );
+        assertTrue( FTLTestUtils.matchParseException( resource, E0028, 21 ) );
+        assertTrue( FTLTestUtils.matchParseException( resource, E0004, 22 ) );
+        assertEquals( 7, resource.errors().size() );
     }
 
 
     @Test
     public void junkAdjacent1() {
         final String EXPECTED = "err01 = {1x}\n";
-        resource.junk().stream()
-                .map( Junk::content )
-                .filter( EXPECTED::equals )
-                .findFirst()
-                .orElseThrow();
+        extracted( EXPECTED );
     }
 
     @Test
     public void junkAdjacent2() {
         final String EXPECTED = "err02 = {2x}\n\n";
-        resource.junk().stream()
-                .map( Junk::content )
-                .filter( EXPECTED::equals )
-                .findFirst()
-                .orElseThrow();
+        extracted( EXPECTED );
     }
 
     @Test
     public void junkSingle1() {
         final String EXPECTED = "err03 = {1x\n2\n\n";
-        resource.junk().stream()
-                .map( Junk::content )
-                .filter( EXPECTED::equals )
-                .findFirst()
-                .orElseThrow();
+        extracted( EXPECTED );
     }
 
     @Test
     public void junkSingle2() {
         final String EXPECTED = "ą=Invalid identifier\nć=Another one\n\n";
+        extracted( EXPECTED );
+    }
+
+    private static void extracted(final String expected) {
         resource.junk().stream()
                 .map( Junk::content )
-                .filter( EXPECTED::equals )
+                .filter( expected::equals )
                 .findFirst()
                 .orElseThrow();
     }
@@ -123,10 +115,6 @@ public class JunkTest {
                 .orElseThrow();
 
         final String EXPECTED = "}\n";
-        resource.junk().stream()
-                .map( Junk::content )
-                .filter( EXPECTED::equals )
-                .findFirst()
-                .orElseThrow();
+        extracted( EXPECTED );
     }
 }
