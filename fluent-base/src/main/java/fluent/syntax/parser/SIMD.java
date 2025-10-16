@@ -144,45 +144,6 @@ final class SIMD {
     }
 
 
-    ///  True if blank
-    ///  (zero length, or consists only of space, LF, or CR-LF pair)
-    ///  startIndex is inclusive, endIndex is exclusive
-    ///  endIndex must be <= buf.length
-    ///  this is really nearly the same as SkipBlank but with a delimiter ... we can likely
-    ///  use this method with the delim and skipBlank the endIndex would be maxIndex
-    static boolean isBlank(final byte[] buf, final int startIndex, final int endIndex) {
-        final int increment = SPECIES.length() - 1;
-        for (int i = startIndex; i < endIndex; i += increment) {
-            final VectorMask<Byte> rangeMask = SPECIES.indexInRange( i, endIndex );
-            final ByteVector in = ByteVector.fromArray( SPECIES, buf, i, rangeMask );
-
-            // we match all lanes, BUT the last lane must be ignored -- we will mask it off later.
-            final VectorMask<Byte> eqSpace = in.compare( VectorOperators.EQ, SPACE );
-            final VectorMask<Byte> eqLF = in.compare( VectorOperators.EQ, LF );
-
-            // we only care about CR if it is followed by LF.
-            // so we shift the LF mask left by 1 lane, and & it with the CR mask.
-            // of course we cannot evaluate the rightmost (highest) lane, which we ignore.
-            // This is why we advance through the array by SPECIES.length() - 1 instead of SPECIES.length(),
-            // and mask off the last (highest) lane for eqSpace and eqLF
-            final VectorMask<Byte> eqCRLF = in.compare( VectorOperators.EQ, CR )
-                    .and( leftShift( eqLF, 1 ) );
-
-            // combine
-            final VectorMask<Byte> combined = eqSpace
-                    .or( eqLF )
-                    .or( eqCRLF )
-                    .and( IGNORE_LAST_LANE_MASK );
-
-            int rangeTC = rangeMask.not().trueCount();
-            int comboTC = combined.trueCount();
-
-            if (comboTC + rangeTC != SPECIES.length()) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     ///  Find position of next LF in buffer, or return last position in buf.
     ///  Used for skipping comments
@@ -233,6 +194,19 @@ final class SIMD {
     }
 
 
+    ///  Find first non-blank (by Fluent definition of whitespace) character.
+    static int skipBlank(final byte[] buf, final int startIndex) {
+        return skipBlankRanged( buf, startIndex, buf.length );
+    }
+
+    /// True if the given range within buf[] only consists of blanks
+    ///  (zero length, or consists only of space, LF, or CR-LF pair)
+    static boolean isBlank(final byte[] buf, final int startIndex, final int endIndex) {
+        return (skipBlankRanged( buf, startIndex, endIndex ) == endIndex);
+    }
+
+
+
     /// Skip blanks.
     /// This skips contiguous runs of ASCII Space (0x20), LF (0x0a), and CR-LF pairs (0x0d,0x0a).
     /// Implementation approaches (for CRLF detection)
@@ -242,8 +216,9 @@ final class SIMD {
     ///                 and we must increment by SPECIES.LENGTH-1
     ///     (method 3) use slice to combine with next vector, like a carry-over. More complex I think.
     ///
-    static int skipBlank(final byte[] buf, final int startIndex) {
-        final int maxIndex = buf.length;    // if there is padding at end, must subtract here (e.g., final int maxIndex = buf.length - PAD;)
+    /// This is a ranged check; the endIndex is useful to implement both isBlank() and
+    /// skipBlank()
+    static int skipBlankRanged(final byte[] buf, final int startIndex, final int maxIndex) {
         final int increment = SPECIES.length() - 1;
         for (int i = startIndex; i < maxIndex; i += increment) {
             final VectorMask<Byte> rangeMask = SPECIES.indexInRange( i, maxIndex );
@@ -262,7 +237,9 @@ final class SIMD {
                     .and( leftShift( eqLF, 1 ) );
 
             // combine, and invert mask to get the first that does NOT match a run.
-            final VectorMask<Byte> combined = eqSpace.or( eqLF ).or( eqCRLF )
+            final VectorMask<Byte> combined = eqSpace
+                    .or( eqLF )
+                    .or( eqCRLF )
                     .not()
                     .and( IGNORE_LAST_LANE_MASK );
 
@@ -274,7 +251,7 @@ final class SIMD {
     }
 
 
-    // TODO: complete; This is a WIP
+    // TODO: not quite complete; This is a WIP
     // A bit tricky, but not tricky enough to require shuffles and what not
     //
     // note: 'nonspace' here means a non-space byte but also not a space followed by LF or CRLF

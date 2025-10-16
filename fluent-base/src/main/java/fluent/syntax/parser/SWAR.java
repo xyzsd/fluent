@@ -117,7 +117,7 @@ final class SWAR {
     static boolean isBlank(final byte[] buf, final int startIndex, final int endIndex) {
         // TODO: SWAR vectorization; similar to skipBlank.
         //          may be able to use skipBlank() but with an additional bound
-        //          and differnet test (need to make sure we are not past endIndex)
+        //          and different test (need to make sure we are not past endIndex)
         //
         // SCALAR VERSION FOLLOWS:
         boolean priorIsNewline = false;
