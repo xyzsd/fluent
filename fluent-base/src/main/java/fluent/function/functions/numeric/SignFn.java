@@ -76,8 +76,8 @@ public enum SignFn implements FluentFunctionFactory<FluentFunction.Transform>, F
         } else if (value == Double.NEGATIVE_INFINITY) {
             return "negativeInfinity";
         } else {
-            // important: JLS 15.20.1 for <, <=, >, >= negative and positive 0 compare equally.
-            // not true for Double.compare() though.
+            // Important: JLS 15.20.1:  for "<, <=, >, >=", negative and positive 0 compare equally.
+            // Not true for Double.compare() though.
             if (value > 0.0d) {
                 return "positive";
             } else if (value < 0.0d) {
