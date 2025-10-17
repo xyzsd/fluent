@@ -60,11 +60,11 @@ public enum OffsetFn implements FluentFunctionFactory<FluentFunction.Transform> 
     @Override
     public FluentFunction.Transform create(final Locale locale, final Options options) {
         if (options.size() != 1 || (!options.has( INCREMENT ) && !options.has( DECREMENT ))) {
-            throw FluentFunctionException.of( "Expected exactly 1 option, either '%s' or '%s'", INCREMENT, DECREMENT );
+            throw FluentFunctionException.of( "Expected exactly one option, either '%s' or '%s'", INCREMENT, DECREMENT );
         }
 
-        long offset = options.asLong( INCREMENT ).orElse( 0 );
-        offset = -options.asLong( DECREMENT ).orElse( offset );
+        final long offset = options.asLong( INCREMENT )
+                .orElseGet( () -> -options.asLong( DECREMENT ).orElseThrow() );
 
         return new Offset( offset );
     }
@@ -86,7 +86,10 @@ public enum OffsetFn implements FluentFunctionFactory<FluentFunction.Transform> 
             if (in instanceof FluentNumber.FluentLong(Long value)) {
                 return value;
             }
-            throw FluentFunctionException.of( String.format( "Invalid type: '%s':'%s'; expected FluentLong", in.getClass(), in ) );
+            throw FluentFunctionException.of( String.format( "Invalid type: received a %s<%s>; expected a FluentLong",
+                    in.getClass().getSimpleName(),
+                    in.value().getClass().getSimpleName() )
+            );
         }
 
 
