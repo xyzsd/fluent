@@ -47,7 +47,8 @@ sealed interface Accel {
             //  (a) there is no jdk.incubator.vector.ByteVector
             //  (b) runtime VM option not set: "--add-modules jdk.incubator.vector"
             Class.forName( "jdk.incubator.vector.ByteVector" );
-            return new AccelSIMD();
+            //return new AccelSIMD();
+            return new AccelSWAR();
         } catch (ClassNotFoundException e) {
             return new AccelSWAR();
         }
@@ -62,6 +63,9 @@ sealed interface Accel {
     int skipBlankInline(final byte[] buf, final int startIndex);
 
     boolean isBlank(final byte[] buf, final int startIndex, final int endIndex);
+
+    long skipBlankBlock(final byte[] buf, final int startIndex);
+
 
     ///  required padding
     int pad();
@@ -99,6 +103,11 @@ sealed interface Accel {
         @Override
         public int skipBlankInline(byte[] buf, int startIndex) {
             return SWAR.skipBlankInline( buf, startIndex );
+        }
+
+        @Override
+        public long skipBlankBlock(byte[] buf, int startIndex) {
+            return SWAR.skipBlankBlock( buf, startIndex );
         }
 
         @Override
@@ -151,6 +160,11 @@ sealed interface Accel {
         @Override
         public int skipBlank(byte[] buf, int startIndex) {
             return SIMD.skipBlank( buf, startIndex );
+        }
+
+        @Override
+        public long skipBlankBlock(byte[] buf, int startIndex) {
+            return SIMD.skipBlankBlock( buf, startIndex );
         }
 
         @Override

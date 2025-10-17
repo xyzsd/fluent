@@ -76,7 +76,7 @@ final class SWAR {
     static int getIdentifierEnd(final byte[] buf, final int startIndex) {
         // SCALAR version:
         final int maxIndex = buf.length - PAD;
-        assert startIndex <  maxIndex;
+        assert startIndex <=  maxIndex;
 
         if (!FTLStream.isASCIIAlphabetic( buf[startIndex] )) {
             return startIndex;
@@ -113,7 +113,7 @@ final class SWAR {
     ///  Given a block of bytes (from startPos to endPos),
     ///  are these bytes ONLY whitespace (LF, ' ' (ASCII 0x20), CRLF (paired)) ?
     ///
-    ///  Currently this is a scalar implementation
+    ///  Currently, this is a scalar implementation
     static boolean isBlank(final byte[] buf, final int startIndex, final int endIndex) {
         // TODO: SWAR vectorization; similar to skipBlank.
         //          may be able to use skipBlank() but with an additional bound
@@ -136,7 +136,7 @@ final class SWAR {
     }
 
 
-    // not used. different implementation
+    // not used. different implementation. needs testing.
     @SuppressWarnings( "unused" )
     private static int nextLF_V2(final byte[] buf, final int index) {
         final int maxIndex = buf.length - PAD;
@@ -258,13 +258,38 @@ final class SWAR {
         return maxIndex;
     }
 
+    ///  (Mostly) Scalar (not SWAR) implementation currently, moved from original FTLStream code
+    ///  but modified to return a long.
+    static long skipBlankBlock(final byte[] buf, final int startIndex) {
+        final int maxIndex = buf.length - PAD;
+        int lineCount = 0;
+        int pos = startIndex;
+        while (pos < maxIndex) {
+            final int start = pos;
+            pos = skipBlankInline( buf, pos );    // this is accelerated
 
-    ///  SWAR skipping of spaces, linefeeds, and cr-lf combinations only.
-    ///  to detect cr-lf pairs, we need to do some shifting. therefore
-    ///  we read in data 8 bytes but advance 7 bytes each time.
-    ///  a 0x00 if we match a blank, or 0x80 if there is a nonblank (as defined here)
-    ///
-    ///  *initial prototype* single iteration
+            if (buf[pos] == '\n') {
+                pos++;
+                lineCount++;
+            } else if (buf[pos] == '\r' && (pos + 1 < maxIndex) && buf[pos + 1] == '\n') {
+                pos += 2;
+                lineCount++;
+            } else {
+                pos = start;
+                break;
+            }
+        }
+
+        return FTLStream.packLong( pos, lineCount );
+    }
+
+
+        ///  SWAR skipping of spaces, linefeeds, and cr-lf combinations only.
+        ///  to detect cr-lf pairs, we need to do some shifting. therefore
+        ///  we read in data 8 bytes but advance 7 bytes each time.
+        ///  a 0x00 if we match a blank, or 0x80 if there is a nonblank (as defined here)
+        ///
+        ///  *initial prototype* single iteration
     @SuppressWarnings( "unused" )
     private static long skipBlankLong(long in) {
         //System.out.println( "SWAR::skipBlank(long)");

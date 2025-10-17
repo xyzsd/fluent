@@ -311,14 +311,24 @@ public final class FTLStream {
         return (int) (packedLong >> 32);   // Hi int
     }
 
-    ///  Given a packed long, return the low integer (used for the enum ordinal index)
-    static int ordinal(final long packedLong) {
+    ///  Given a packed long, return the low integer 
+    private static int packedLow(final long packedLong) {
         return (int) (packedLong & 0xFFFFFFFFL);   // low int
     }
 
+    ///  Given a packed long, return the low integer (used for the enum ordinal index)
+    static int ordinal(final long packedLong) {
+        return packedLow(packedLong);
+    }
+
+    ///  Given a packed long, return the low integer (used for the line count)
+    static int lineCount(final long packedLong) {
+        return packedLow(packedLong);
+    }
+
     ///  Pack the given integers into a long.
-    static long packLong(final int positionHI, final int ordinalLO) {
-        return ((long) positionHI << 32) | (ordinalLO & 0xFFFFFFFFL);
+    static long packLong(final int positionHI, final int otherLOW) {
+        return ((long) positionHI << 32) | (otherLOW & 0xFFFFFFFFL);
     }
 
     /// True if using vectorization; false if SWAR
@@ -465,31 +475,37 @@ public final class FTLStream {
     ///  Skip a blank block.
     ///  We first skip inline. But if the next character is an EOL, stop and rewind.
     int skipBlankBlock() {
-        int count = 0;
-        while (pos < size) {
-            final int start = pos;
-            skipBlankInline();
-            if (!skipEOL()) {
-                pos = start;
-                break;
-            }
-            count++;
-        }
-
-        return count;
+        final long packed = ACCEL.skipBlankBlock( seq, pos );
+        position( FTLStream.position( packed ) );   // set position
+        return FTLStream.lineCount( packed );
+        // ORIGINAL SCALAR VERSION:
+        //
+        // int count = 0;
+        // while (pos < size) {
+        //     final int start = pos;
+        //     skipBlankInline();
+        //     if (!skipEOL()) {
+        //         pos = start;
+        //         break;
+        //     }
+        //     count++;
+        // }
+        // return count;
     }
 
     /// Skip blank blocks, but without counting of the number of lines skipped.
     void skipBlankBlockNLC() {
-        // this is not yet vectorized; essentially a placeholder.
-        while (pos < size) {
-            final int start = pos;
-            skipBlankInline();
-            if (!skipEOL()) {
-                pos = start;
-                break;
-            }
-        }
+        skipBlankBlock();   // ignore line count
+        // ORIGINAL SCALAR VERSION:
+        //
+        // while (pos < size) {
+        //     final int start = pos;
+        //     skipBlankInline();
+        //     if (!skipEOL()) {
+        //         pos = start;
+        //         break;
+        //     }
+        // }
     }
 
     ///  Skip over blank space (WS, \n, \r\n) until we hit something.
@@ -512,7 +528,7 @@ public final class FTLStream {
 
     ///  skip whitespace (which is only the ASCII space character (0x20))
     ///
-    /// We only use the return value when we check indent.
+    /// We only use the return value when we check indent, which is the number of spaces skipped.
     int skipBlankInline() {
         final int newPos = ACCEL.skipBlankInline( seq, pos );
         final int start = pos;
