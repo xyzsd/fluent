@@ -63,10 +63,6 @@ public class OffsetFnTest {
     public void verifyExceptions() {
         assertEquals( 1, resource.errors().size() );
         assertTrue( FTLTestUtils.matchParseException( resource, E0032, 6 ) );
-
-      //  [fluent.syntax.parser.ParseException: E0003 [line 5] [received 'p'] Expected token:  ,
-      //  fluent.syntax.parser.ParseException: E0032 [line 6] [received ')'] The pattern of a named argument or option must be a String or Number literal]
-
     }
 
     ///  simplify simple formats; 'value' is always the name of the assigned variable.
