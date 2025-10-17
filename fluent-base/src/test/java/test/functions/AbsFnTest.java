@@ -48,8 +48,6 @@ public class AbsFnTest {
     @BeforeAll
     public static void parseFile() throws IOException {
         resource = FTLTestUtils.parseFile( RESOURCE );
-        // if we don't use 'extendedBundleSetup', the OFFSET function will not be added to the registry,
-        // and we will get OFFSET(...) as the output for any function invocation.
         bundle = FTLTestUtils.extendedBundleSetup( resource, false );
 
         // assert that the function under test is present.
