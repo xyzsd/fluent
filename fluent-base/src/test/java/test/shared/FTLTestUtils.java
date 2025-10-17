@@ -116,6 +116,8 @@ public class FTLTestUtils {
         DefaultFunctionFactories.allNonImplicits().forEach( regBuilder::addFactory );
         final FluentFunctionRegistry registry = regBuilder.build();
 
+
+
         var builder = FluentBundle.builder( Locale.US, registry, LRUFunctionCache.of() )
                 .addResource( resource );
 
