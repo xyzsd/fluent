@@ -276,7 +276,7 @@ final class SIMD {
         final int maxIndex = buf.length;    // if there is padding at end, must subtract here (e.g., final int maxIndex = buf.length - PAD;)
         final int increment = SPECIES.length();
 
-        int lastLF = startIndex;
+        int lastLFindex = startIndex;
         int lineCount = 0;
         for (int i = startIndex; i < maxIndex; i += increment) {
             final ByteVector in = ByteVector.fromArray( SPECIES, buf, i, SPECIES.indexInRange( i, maxIndex ) );
@@ -312,13 +312,13 @@ final class SIMD {
                     return FTLStream.packLong( position, +maskedLF.trueCount() );
                 } else {
                     // use the LF from a prior vector (or start if none), with total lineCount
-                    return FTLStream.packLong( lastLF, lineCount );
+                    return FTLStream.packLong( lastLFindex, lineCount );
                 }
             }
 
             // iterate again. but we need to check for the last LF (unmasked), and store it
             if (eqLF.anyTrue()) {
-                lastLF = eqLF.lastTrue() + i + 1;
+                lastLFindex = eqLF.lastTrue() + i;
                 lineCount += eqLF.trueCount();
             }
         }
@@ -385,7 +385,7 @@ final class SIMD {
     ///  All lower lanes are unset. So, maskLanesFrom(1) would leave lane 0 set, and all lanes from
     ///  1 to SPECIES.length() would be unset.
     private static VectorMask<Byte> maskLanesTo(final int toLane) {
-        return maskLanesFrom( toLane ).not(); // or could use
+        return maskLanesFrom( toLane ).not();
     }
 
 
