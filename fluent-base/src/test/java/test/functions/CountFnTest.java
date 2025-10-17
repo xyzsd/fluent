@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
-///  ABS function tests
+///  COUNT function tests
 public class CountFnTest {
 
 

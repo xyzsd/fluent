@@ -32,11 +32,15 @@ import java.util.function.Function;
 
 /// Custom function that operates on `FluentCustom<Boolean>`
 ///
+/// Remember, this applies to Boolean values, not Strings.
+///
 /// This is most useful for `select` clauses; the select variants would be keyed as `true` or `false`.
 ///
+/// Non-booleans are passed through.
+///
 /// This function can also convert a Boolean to a numeric value (0 or 1): `BOOLEAN($arg, as:"number")`.
-/// This number can than be offset, if needed, with the [OFFSET][fluent.function.functions.numeric.OffsetFn] function
-/// if needed.
+/// This number could then be further manipulated, such as adjusted using the
+/// [OFFSET][fluent.function.functions.numeric.OffsetFn] function.
 ///
 /// Do note that if `as:"number"` is set as a default argument in the function registry, or if
 /// `BOOLEAN($arg, as:"number")` is used as a selector (rather than the default `as:"string"`),
@@ -57,12 +61,7 @@ public enum BooleanFn implements FluentFunctionFactory<FluentFunction.Transform>
                 .asEnum( DisplayAs.class, "as" )
                 .orElse( DisplayAs.STRING );
 
-        return FluentFunction.passthroughTransform( Boolean.class,
-                bool -> switch (displayAs) {
-                    case STRING -> BOOL2STRING;
-                    case NUMBER -> BOOL2LONG;
-                }
-        );
+        return FluentFunction.passthroughTransform( Boolean.class, transformFor(displayAs) );
     }
 
     @Override
@@ -70,9 +69,13 @@ public enum BooleanFn implements FluentFunctionFactory<FluentFunction.Transform>
         return true;
     }
 
-
-    // TODO: IMPORTANT: create selector. passthroughTransform does not!
-    // might be nice to 'add' it like a trait using a method somehow....
+    /// create the transform, which is dependent upon the 'as' option.
+    private static Function<Boolean,?> transformFor(final DisplayAs displayAs) {
+        return switch( displayAs) {
+            case STRING -> BOOL2STRING;
+            case NUMBER -> BOOL2LONG;
+        };
+    }
 
 
     // for option parsing
