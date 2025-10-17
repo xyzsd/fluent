@@ -47,8 +47,7 @@ sealed interface Accel {
             //  (a) there is no jdk.incubator.vector.ByteVector
             //  (b) runtime VM option not set: "--add-modules jdk.incubator.vector"
             Class.forName( "jdk.incubator.vector.ByteVector" );
-            //return new AccelSIMD();
-            return new AccelSWAR();
+            return new AccelSIMD();
         } catch (ClassNotFoundException e) {
             return new AccelSWAR();
         }
