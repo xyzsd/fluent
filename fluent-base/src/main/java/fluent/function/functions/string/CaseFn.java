@@ -29,24 +29,18 @@ import java.util.function.Function;
 
 ///  CASE() : Change the case of a String pattern
 ///
-///      Change the case of a String pattern. By default, changes case to UPPER case. Case conversion is
-///      locale-aware.
+/// Change the case of a String pattern. By default, changes case to UPPER case.
+/// Case conversion is locale-aware.
 ///
-///
-///      Non-String values are passed through.
-///
+/// Non-String values are passed through.
 ///
 /// Options:
-///
-///        - `style:` either `"upper"` (the default) or `"lower"`
-///
-///
-///      Examples:
-///
-///        - CASE("STRingVAlue") => "STRINGVALUE"
-///        - CASE("STRingVAlue", style:"upper") => "STRINGVALUE"
-///        - CASE("STRingVAlue", style:"lower") => "stringvalue"
-///        - CASE(-5) => -5
+/// - `style:` either `"upper"` (the default) or `"lower"`
+/// Examples:
+/// - CASE("STRingVAlue") => "STRINGVALUE"
+/// - CASE("STRingVAlue", style:"upper") => "STRINGVALUE"
+/// - CASE("STRingVAlue", style:"lower") => "stringvalue"
+/// - CASE(-5) => -5
 ///
 @NullMarked
 public enum CaseFn implements FluentFunctionFactory<FluentFunction.Transform>  {
