@@ -227,4 +227,23 @@ public class MiscFTLTest {
         assertEquals( 1, resource.errors().size() );
         assertTrue( FTLTestUtils.matchParseException( resource, E0010, 5 ) );
     }
+
+    @Test
+    public void invalidComment() {
+        final String in =   """
+                            # This comment is OK (space between '#' and comment text).
+                            #This comment is NOT OK, and fails parsing, but only if comments are NOT ignored.
+                            # apparently this is per spec.
+                            message = This is a message.
+                            """;
+        // Comments NOT ignored -- 1 error
+        FluentResource resource = FTLParser.parse( FTLStream.of( in ), false );
+        assertEquals( 1, resource.errors().size() );
+        assertTrue( FTLTestUtils.matchParseException( resource, E0003, 2 ) );
+
+        // Comments ignored -- no errors.
+        resource = FTLParser.parse( FTLStream.of( in ), true );
+        assertEquals( 0, resource.errors().size() );
+    }
+
 }

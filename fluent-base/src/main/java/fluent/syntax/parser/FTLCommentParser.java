@@ -60,7 +60,7 @@ final class FTLCommentParser {
                     ps.inc();
                 } else {
                     if (sb.isEmpty()) {
-                        throw FTLParser.parseException( ParseException.ErrorCode.E0003, " ", ps );
+                        throw FTLParser.parseException( ParseException.ErrorCode.E0003, "' ' (ASCII space, 0x20)", ps );
                     } else {
                         ps.dec( lineLevel );
                         break;

@@ -55,7 +55,7 @@ final class FTLPatternParser {
                 MH_GTS = lookup.findStatic( FTLPatternParser.class, "getTextSliceScalar", typeOfTarget );
             }
         } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new RuntimeException( e );
+            throw new IllegalStateException( e );
         }
     }
 
@@ -203,6 +203,7 @@ final class FTLPatternParser {
         return null;
     }
 
+    // a not-insignificant amount of time is spent in this method based on profiling
     private static TextSlice getTextSlice(FTLStream ps) {
         // The goal here is to use a MethodHandle to encourage inlining by the JVM
         try {
@@ -214,7 +215,7 @@ final class FTLPatternParser {
         }
     }
 
-    // a not-insignificant amount of time is spent in this method based on profiling
+    @SuppressWarnings( "unused" )   // used by getTextSLice() via method handle
     private static TextSlice getTextSliceScalar(FTLStream ps) {
         final int startPosition = ps.position();
         TextElementType textElementType = TextElementType.Blank;
@@ -248,6 +249,7 @@ final class FTLPatternParser {
                 textElementType, TextElementTermination.EOF );
     }
 
+    @SuppressWarnings( "unused" )   // used by getTextSLice() via method handle
     private static TextSlice getTextSliceSIMD(FTLStream ps) {
         final int startPos = ps.position();
         final long packed = ps.nextTSChar( startPos );
