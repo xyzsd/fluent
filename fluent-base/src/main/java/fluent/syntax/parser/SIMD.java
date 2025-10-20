@@ -69,11 +69,11 @@ final class SIMD {
     private static final Vector<Byte> OPEN_BRACE = SPECIES.broadcast( 0x7b );
     private static final Vector<Byte> CLOSE_BRACE = SPECIES.broadcast( 0x7d );
 
-    // these correspond to the enum ordinals in FTLPatternParser.TextSliceType
-    private static final Vector<Byte> IDX_1_LF = SPECIES.broadcast( 0x01 );
-    private static final Vector<Byte> IDX_2_CRLF = SPECIES.broadcast( 0x02 );
-    private static final Vector<Byte> IDX_3_OPEN = SPECIES.broadcast( 0x03 );
-    private static final Vector<Byte> IDX_4_CLOSE = SPECIES.broadcast( 0x04 );
+    // these correspond to the enum ordinals in FTLPatternParser.TextSliceType. EOF type is NOT used here.
+    private static final Vector<Byte> IDX_1_LF = SPECIES.broadcast( TextElementTermination.LineFeed.ordinal() );
+    private static final Vector<Byte> IDX_2_CRLF = SPECIES.broadcast( TextElementTermination.CRLF.ordinal() );
+    private static final Vector<Byte> IDX_3_OPEN = SPECIES.broadcast( TextElementTermination.PlaceableStart.ordinal() );
+    private static final Vector<Byte> IDX_4_CLOSE = SPECIES.broadcast( TextElementTermination.ERROR.ordinal() );
 
     // all lanes set
     private static final VectorMask<Byte> ALL_LANES_MASK = VectorMask.fromLong( SPECIES, LONG_FF );
@@ -348,13 +348,17 @@ final class SIMD {
             final VectorMask<Byte> eqCRLF = in.compare( VectorOperators.EQ, CR )
                     .and( leftShift( eqLF, 1 ) );
 
+
             // indices assigned based on type
+            // profiling: this is 50% of the time of this method... more efficient way? blend is overkill here, really
+            // getting the lane and then testing with if() is similar
             final ByteVector blended = ByteVector.zero( SPECIES )
                     .blend( IDX_1_LF, eqLF )
                     .blend( IDX_2_CRLF, eqCRLF )
                     .blend( IDX_3_OPEN, eqOpenBrace )
                     .blend( IDX_4_CLOSE, eqCloseBrace )
                     .and( IGNORE_LAST_LANE_MASK.toVector() );
+
 
             // combined
             final VectorMask<Byte> combined = eqOpenBrace.or( eqCloseBrace ).or( eqLF ).or( eqCRLF )
