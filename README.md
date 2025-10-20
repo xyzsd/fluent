@@ -9,19 +9,20 @@ and gender. Learn more about Project Fluent at [projectfluent.org][mozProjectFlu
 
 Status
 ------
-*UPDATE (September 2025)*
+*UPDATE (October 2025)*
 
-All the new and interesting changes are on the **FluentNG** branch, which will become version 2.0 (when ready)
+The FluentNG branch is now the main branch, and will become version 2.0 when ready (nearly there).
 This includes:
-  - Improved FTLStream operating direclty on UTF8 octets, now using SWAR for performance improvements
+  - Improved FTLStream operating direclty on UTF8 octets, now using SWAR or SIMD in the parser for performance improvements
   - Markedly improved overall code structure
   - API improvements
   - Simpler implementation of custom functions
   - Improved function implementations, some have been renamed
   - Still supports Lists (but not in Selectors)
-  - Complete set of FTL specification tests. The FluentNG-branch parser now passes *all* FTL specification tests.
+  - Complete set of FTL specification tests. The FluentNG-branch parser now passes *all* FTL specification tests. This includes handling of LF and CRLF line endings, early terminations, etc.
+  - Built functions now have tests. 
     
-Code refinements, documentation improvements, and more tests to follow.      
+Code refinements, *documentation improvements*, and more tests to follow.      
 
 Introductory Example
 --------------------
