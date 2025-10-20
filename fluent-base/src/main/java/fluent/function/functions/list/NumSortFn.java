@@ -50,6 +50,9 @@ import java.util.Locale;
 @NullMarked
 public enum NumSortFn implements FluentFunctionFactory<FluentFunction.Transform> {
 
+    // TODO: consider a passthrough version, perhaps selectable by an option flag. Numbers would be extracted from the
+    //       input list and sorted. Then, output this list along with non-numeric values from the original input.
+    // TODO: PERFORMANCE: consider single-value numeric input case; no need to sort.
 
     NUMSORT;
 
