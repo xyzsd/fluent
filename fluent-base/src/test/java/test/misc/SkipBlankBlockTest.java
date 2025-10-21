@@ -24,29 +24,19 @@
 
 package test.misc;
 
-import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
 import fluent.syntax.parser.FTLParser;
 import fluent.syntax.parser.FTLStream;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import test.shared.FTLTestUtils;
 
-import java.io.IOException;
-
-import static fluent.syntax.parser.ParseException.ErrorCode.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/// Test skipBlankBlockNLC()
+/// Test skipBlankBlock()
 ///
-public class SkipBlankBlockNLCTest {
+public class SkipBlankBlockTest {
 
 
-    /// parse the given string
-    private static FluentResource parse(String in) {
-        return FTLParser.parse( FTLStream.of( in ), true );
-    }
+
 
     @Test
     public void attributeEarlyEOF_noEquals() {
@@ -69,8 +59,7 @@ public class SkipBlankBlockNLCTest {
                             "\n\n              \r\n\r\n                 \n"+  // many spaces between first and last \n
                             "\n\n              \r\n\r\n                 \n";  // many spaces between first and last \n
 
-        final FluentResource resource = parse( in );
-        resource.entries().forEach( entry -> { System.out.println(entry); });
+        final FluentResource resource = FTLParser.parse( FTLStream.of( in ), true );
 
         // no errors
         assertEquals( 0, resource.errors().size() );
