@@ -246,4 +246,18 @@ public class MiscFTLTest {
         assertEquals( 0, resource.errors().size() );
     }
 
+    @Test
+    public void literalErrors() {
+        // as:number  the word 'number' is a string literal, and must be in quotation marks.
+        final String in =   """
+                            msg_ok = |{BOOLEAN("This is a String", as:"number")}|
+                            msg_bad_option_literal = |{BOOLEAN("This is a String", as:number)}|
+                            """;
+        // Comments NOT ignored -- 1 error
+        final FluentResource resource = FTLParser.parse( FTLStream.of( in ), true );
+        System.out.println(resource);
+        assertEquals( 1, resource.errors().size() );
+        assertTrue( FTLTestUtils.matchParseException( resource, E0032, 2 ) );
+    }
+
 }

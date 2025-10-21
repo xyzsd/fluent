@@ -204,7 +204,7 @@ public class ParseException extends RuntimeException {
         /// Positional arguments are not allowed in term references.
         E0031( "Positional arguments in term '-%s'"),
         /// A named argument or option must use a String or Number literal as its pattern.
-        E0032( "The pattern of a named argument or option must be a String or Number literal");
+        E0032( "The pattern of a named argument or option must be a String or Number literal. String literals must be quoted. For example: timeStyle:\"long\"");
 
         private final String message;
 
