@@ -1,75 +1,60 @@
 
 
-MASTER TO DO LIST
-=================
-(0) BUGS
-    all tests passed
+primary to-do list and notes/thoughts
+=====================================
 
-(1) Parser:
-    now SIMD and SWAR. SIMD will automatically activate if it can.
-    SIMD has more acclerators than SWAR, including improvements in:
-        finding/validating identifiers
-        getting TextSlices (important for general parsing)
-
-    TODO:
-        * implement SWAR isblank() for getTextSlice()
-        * implement (a working..) SIMD skipBlankBlockNLC()
-
-(2) function tests
-    this is a very large test surface, so we may only test essentials
-    core (implicit) functions (NUMBER, DATETIME), and LIST should be tested thoroughly
-
-    TODO:
-        * continue to implement tests
-            temporal: DONE
-            string: CaseFn
-            numeric:
-                Abs
-                Number  DONE
-                Offset
-                Sign
-            booleanFn
-            list:
-                ListFn  DONE
-                Count
-                NumSort
-                StringSort
-
-    TODO:
-        * and tests as examples:
-            - function renaming
-            - implicit replacement (e.g., DATETIME with TEMPORAL)
-            - simple implicit functions via lambdas
-            - setting default options for a function
-            - select on a list (we can't) by splitting up into two or more messages
-
-(3) FluentBundle
+* Finalize FluentBundle
     * formatPattern : make public, document, finalize method/params
     * finalize FmtBuilder
     * BundleException for exceptions as needed
     * documentation improvements
 
-(4) SpotBugs
-    * disable for test classes
-    * seems to be wonky/not always executing in gradle; investigate
+* DOCUMENTATION updates/revisions
+    * use new format : see NumberFn/ExtractTemporalFn
+    * continuing work on documentation
+    * wiki/readme for:
+        - why Fluent vs. ICU::MF or MF2
+        - list support & why that's important
+        - how to read in FTL
+        - locale fallback (see below)
+        - why should not use for critical controls :)
 
-(5) Look at all TODOs
+* EXAMPLES
+    * fluent-examples are NOT IN SYNC -- they are using old code base.
+    * provide examples (wiki?, but definitely in fluent-examples)
+        - renaming built-in functions
+        - replacing implicit functions (e.g., DATETIME with TEMPORAL)
+        - simple implicit functions via lambdas
+        - how to set default options for a function
+        - how to select on a list (cannot!!) but show how it can be accomplished by splitting messages into
+            formatting items and selection
 
-(6) Documentation updates/revisions
-    ** use new format : see NumberFn/ExtractTemporalFn
-    ** continuing work on documentation
+* solidify lowest JDK we can target. 21 ?
+    though SIMD improvements in successive JDKs could help
 
-(10) EXAMPLES in documentation on github OR in (need to create?) wiki
-        * why Fluent vs. ICU::MF or MF2
-        * list support & why that's important
-        * how to read in FTL
-        * how to replace DATETIME with TEMPORAL
-        * locale fallback (see below)
-        * setting default options for a formatter
-        * etc.
+* feature flag or method to disable SIMD
+    * ? at compilation
+    * at runtime
+    * would also be nice for testing
 
-(15) Performance
-    * better JMH tests for parser
+* SWAR/SIMD
+    * code improvements
+        * SIMD blend overkill for skipBlankBlock
+    * CRLF detection: determine best approach: load 2 vectors vs. shifting masks.
+    * doc notes: SIMD will activate if possible, otherwise SWAR. not as many SWAR accelerations (more scalar code)
+    * implement SWAR isBlank() for getTextSlice() [may wait until post-2.0 version]
+
+* FEATURE HIGHLIGHTS
+    - simd/swar
+    - list handling
+
+* SpotBugs
+    * disable for test classes, jmh classes
+    * seems to be wonky/not always executing in gradle; investigate [may be improved with gradle 9]
+
+* Performance
+    * need better integration with intellij profiling
+    * more & better measurements
     * JMH tests for message rendering
         * effects of caching/cache performance
         * focus on common methods
@@ -77,15 +62,13 @@ MASTER TO DO LIST
         * should also measure effects of caching
     * (lower priority) investigate potential AST optimizations
         in particular, TextSlices. getTextSlice() can create a lot of zero-length or 1-character slices.
-            make sure we are combining these or eliminating these as needed, if we can.
-
-(16) advanced thoughts/performance
-    * for rendering performance: bytecode generation or (likely easier) use StringConcatFactory (?)
+            make sure we are combining these or eliminating these as needed, if we can. Or skip if possible.
+    * for future rendering performance: bytecode generation or (likely easier) use StringConcatFactory (?)
         https://github.com/mtumilowicz/java9-string-concat?tab=readme-ov-file
         https://kotlinlang.org/docs/whatsnew1520.html#string-concatenation-via-invokedynamic
     * careful presizing of stringbuilders ?
 
-(20) Locale fallback
+* Locale fallback
      just use ICU:LocaleMatcher
         ICU:LocaleMatcher.Builder
      this would be provided by (end-user-supplied!)
@@ -102,5 +85,5 @@ MASTER TO DO LIST
              {basename}_{languagetag}.{extension}
 
 
-
+* release notification reddit / also to fluent group (GH project)
 
