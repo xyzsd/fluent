@@ -41,6 +41,4 @@ public record FluentTemporal(TemporalAccessor value) implements FluentValue<Temp
     }
 
 
-
-
 }

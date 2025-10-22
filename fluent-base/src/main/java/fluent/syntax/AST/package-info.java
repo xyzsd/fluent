@@ -23,6 +23,6 @@
 
 /// AST Nodes created during Fluent parsing.
 ///
-///     AST Nodes are immutable.
+/// AST Nodes are immutable.
 ///
 package fluent.syntax.AST;

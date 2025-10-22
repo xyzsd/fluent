@@ -141,6 +141,9 @@ public class ParseException extends RuntimeException {
     ///
     /// Each code carries a human-readable message that may include a single
     /// `%s` placeholder for optional argument interpolation.
+    ///
+    /// The human-readable diagnostic String is not guaranteed to be stable between versions, as it is
+    /// only intended for diagnostics/error messages.
     @NullMarked
     public enum ErrorCode {
         /// Generic catch‑all parsing error with contextual message.

@@ -40,14 +40,14 @@ import static fluent.syntax.parser.FTLStream.*;
 /// This parser consumes an FTLStream and produces a FluentResource that can be queried
 /// for messages, terms, and metadata. Parse exceptions are also accumulated within the FluentResource.
 ///
-/// There are two parsing modes:
-/// - Simple: comments and junk nodes are ignored for a smaller, faster AST. Best for general use.
-/// - Complete: comments are preserved and junk nodes are recorded when errors occur. Best for implementing
-///   translation or localization tools.
+/// There are two parsing modes, depending upon the `ignoreCommentsAndJunk` flag.
+/// - If `false`, comments are ignored, and 'junk nodes' are not created if parse errors are encountered. This results
+///   in a smaller, more efficient AST and is best for general use. Parse errors are still collected and can be
+///   queried in the returned FluentResource.
+/// - If `true`, comments are preserved and junk nodes (ranges of unparsable source captured when a parse error is
+///   encountered) are recorded when errors occur. Best for implementing translation or localization tools
+///   (since comments are preserved) or for error diagnosis and testing.
 ///
-/// Notes
-/// - “Junk” nodes are ranges of source captured when a parse error is encountered. They are useful for diagnostics.
-/// - Ignoring comments and junk yields a more memory‑efficient AST and can improve performance.
 @NullMarked
 public class FTLParser {
     ///  default initial size for attribute lists
@@ -56,11 +56,12 @@ public class FTLParser {
 
     private FTLParser() {}
 
-    /// Parse an FTLStream into a FluentResource using the simple mode.
+    /// Parse an FTLStream into a FluentResource.
     ///
-    /// In simple mode:
-    /// - Comments are ignored.
-    /// - Junk nodes are not created, but parse errors are still collected on the resource.
+    /// Comments will be ignored (and will not be present in the AST). 'Junk' nodes will also not be created
+    /// if a parse failure occurs.
+    ///
+    /// Parse errors are still collected for the returned FluentResource.
     ///
     /// @param stream the input stream to parse
     /// @return the parsed FluentResource
@@ -70,10 +71,8 @@ public class FTLParser {
 
     /// Parse an FTLStream into a FluentResource with control over comment and junk handling.
     ///
-    /// When `ignoreCommentsAndJunk` is true:
-    /// - Comments are not included in the AST.
-    /// - Junk nodes are not created, though parse errors are still collected.
-    /// When false, comments are preserved and junk nodes are created on parse errors.
+    /// When `ignoreCommentsAndJunk` is true, Comments are not included in the AST and Junk nodes are not created.
+    /// Parse errors are still collected for the returned FluentResource.
     ///
     /// @param stream                the input stream to parse
     /// @param ignoreCommentsAndJunk if true, omit Comment and Junk nodes from the AST
@@ -81,6 +80,7 @@ public class FTLParser {
     public static FluentResource parse(final FTLStream stream, final boolean ignoreCommentsAndJunk) {
         return (ignoreCommentsAndJunk ? parseSimple( stream ) : parseComplete( stream ));
     }
+
 
     private static FluentResource parseSimple(final FTLStream ps) {
         List<Entry> entries = new ArrayList<>();

@@ -31,11 +31,14 @@ import org.jspecify.annotations.Nullable;
 
 import static java.util.Objects.requireNonNull;
 
-/// Exceptions that can occur during Resolution
+/// Exceptions that can occur during message and pattern resolution.
 ///
-/// Since this class is not intended to be extended by users, it is sealed and also uses
-/// checked Exceptions so that we can more easily evaluate exception flow and handling during
-/// error conditions.
+/// Design:
+/// - Sealed hierarchy with checked exceptions to make error flows explicit at call sites.
+/// - Nested specific exception types for common failures (cycles, unknown references, limits exceeded).
+///
+/// The resolver catches these exceptions internally and usually converts them into FluentError values so that
+/// formatting can proceed, while also tracking the exception in Scope for diagnostics.
 @NullMarked
 public sealed class ResolutionException extends Exception {
 

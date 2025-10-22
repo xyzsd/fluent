@@ -33,9 +33,17 @@ import org.jspecify.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/// State used during pattern resolution.
+/// Scope represents per-format invocation state used by the Resolver.
 ///
-/// The lifetime of a Scope is no longer than a single FluentBundle formatPattern() call
+/// Responsibilities:
+/// - Holds a reference to the owning FluentBundle and exposes convenience accessors (locale, registry, cache, options).
+/// - Stores caller-provided arguments converted to FluentValue lists for uniform processing.
+/// - Tracks errors collected during resolution so callers can inspect them after formatting.
+/// - Detects and prevents cycles by keeping a LIFO stack of visited patterns.
+/// - Limits expansion by counting placeables to mitigate denial-of-service via unbounded interpolation.
+/// - Carries term parameters when resolving parameterized terms.
+///
+/// A Scope lives no longer than a single FluentBundle.formatPattern(...) call and is not thread-safe.
 public final class Scope {
 
     // bundle for this scope (immutable)

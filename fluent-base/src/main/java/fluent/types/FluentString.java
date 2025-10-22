@@ -28,7 +28,7 @@ import java.util.Objects;
 
 /// Wrapper for a String / CharSequence
 ///
-///  String values may not be null. Null strings may be encoded to "null" by a FluentValueCreator if so desired.
+/// String values may not be null. Null strings may be encoded to "null" by a FluentValueCreator if so desired.
 ///
 @NullMarked
 public record FluentString(String value) implements FluentValue<String> {

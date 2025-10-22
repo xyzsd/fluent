@@ -31,7 +31,7 @@ import java.util.Objects;
 
 /// FluentNumber wraps a numeric type.
 ///
-///     All numeric types are converted into Long, Double, or BigDecimal as appropriate.
+/// All numeric types are converted into a Long, Double, or BigDecimal as appropriate.
 ///
 /// @param <T>
 @NullMarked

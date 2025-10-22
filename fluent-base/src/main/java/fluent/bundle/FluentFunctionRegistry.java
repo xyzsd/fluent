@@ -38,12 +38,85 @@ import java.util.function.BiFunction;
 
 import static java.util.Objects.requireNonNull;
 
+/// Registry of Fluent functions and implicit formatters.
 ///
-/// Registry of Fluent Functions (FluentFunctions)
+/// This class maintains an immutable, thread-safe registry of function factories used during resolution.
+/// The registry is not Locale-dependent.
 ///
-/// This class maintains an immutable, threadsafe function registry, and handles both implicit and explicit functions.
+/// ## Thread-safety:
+/// - FluentFunctionRegistry is immutable and thread-safe once built; its Builder is not thread-safe.
+/// - The registry can be shared across multiple FluentBundle instances and locales.
 ///
-/// The registry is not Locale-dependent and can be shared between FluentBundles.
+/// ## Implicit formatters and reducers:
+/// Several function factories are required by the Fluent specification, specifically, a formatter for date/time values,
+/// and a formatter for numbers. This implementation, since it can handle lists ([SequencedCollection]s), also requires
+/// a list formatter. Implicit formatters (except the String formatter) cannot be removed but can be replaced.
+/// - Numbers: formatted via a Formatter<Number> factory (also acts as a Selector for plural categories).
+/// - Temporals: formatted via a Formatter<TemporalAccessor> factory.
+/// - Strings and Errors: formatted implicitly by reading their contained string value (no factory required).
+/// - Lists: reduced to a single FluentString via a TerminalReducer (outside of select expressions).
+///
+/// ## Custom implicit formatters:
+/// - Exact match: register a formatter that applies only to a specific class.
+/// - Subtype match: register a formatter that applies to any instance of a type or its subtypes. Order matters; add base types
+///   before derived types to ensure the intended match is found first during linear search.
+/// - If no custom formatter matches, a default String.valueOf(...) conversion is used for FluentCustom values.
+///
+/// ## Caveats:
+/// When building a registry, a function factory (unless renamed!) can be added only once. Function factories are typically
+/// added with [Builder#addFactory(FluentFunctionFactory)] or [Builder#addFactories(Collection)]. However, if a function
+/// is also a formatter for a custom type ([FluentCustom]), it should be added instead with 
+/// [Builder#addDefaultFormatter(Class, FluentFunctionFactory)] or [Builder#addDefaultFormatterExact(Class, FluentFunctionFactory)].
+///
+/// Example usage:
+/// {@snippet :
+///    // 0) Use defaults (NUMBER, DATETIME, LIST). No additional functions.
+///    FluentFunctionRegistry registry = FluentFunctionRegistry.builder()
+///        .build();
+///
+///    // 1) Use defaults (NUMBER, DATETIME, LIST) and also add all built-in functions
+///    FluentFunctionRegistry registry = FluentFunctionRegistry.builder()
+///        .addFactories( DefaultFunctionFactories.allNonImplicits() )
+///        .build();
+///
+///    // 2) Use defaults (NUMBER, DATETIME, LIST) and add a custom function
+///    FluentFunctionRegistry registry = FluentFunctionRegistry.builder()
+///        .addFactory(MyCustomFunction.FACTORY)  // explicit function callable from FTL
+///        .build();
+///
+///    // 3) Replace required implicit formatters if desired
+///    FluentFunctionRegistry registry2 = FluentFunctionRegistry.builder()
+///        .setTemporalFormatter(TemporalFn.TEMPORAL) // replace the default DateTimeFn.DATETIME with TemporalFn.TEMPORAL
+///        .build();
+///
+///    // 4) Add a custom implicit formatter for an exact Java type backing a FluentCustom<T>
+///    FluentFunctionRegistry registry3 = FluentFunctionRegistry.builder()
+///        .addDefaultFormatterExact(Boolean.class, (value, scope) -> value ? "yes" : "no")
+///        .build();
+///
+///    // 5) Subtype formatter example (order matters)
+///    FluentFunctionRegistry registry4 = FluentFunctionRegistry.builder()
+///        .addDefaultFormatter(Number.class, (n, scope) -> "N:" + n)
+///        .addDefaultFormatter(Integer.class, (n, scope) -> "I:" + n) // checked after Number.class
+///        .build();
+///
+///    // 6) Looking up an explicit function (usually done by the resolver via Scope)
+///    FluentFunctionCache cache = FluentFunctionCache.defaultCache();
+///    var numberFn = registry.getFunction(
+///        NumberFn.NUMBER.name(),                       // function name
+///        FluentFunction.Formatter.class,               // desired type
+///        cache,
+///        Locale.US,
+///        Options.EMPTY                                  // named params (defaults merged by Scope)
+///    );
+///    if (numberFn != null) {
+///        // apply() is normally invoked by the resolver with resolved parameters
+///    }
+///
+///    // 6) Reducing values to a string (normally via Resolver)
+///    // String out = registry.reduce(values, scope);
+///  }
+///
 @NullMarked
 public final class FluentFunctionRegistry {
 
@@ -313,7 +386,10 @@ public final class FluentFunctionRegistry {
     // class-to-format factory record for type safety
     private record C2FEntry<T>(Class<T> cls, FluentFunctionFactory<FluentFunction.Formatter<T>> formatFactory) {}
 
-    ///  Build a FluentValueFormatter
+    /// Builder for creating and configuring a FluentFunctionRegistry.
+    ///
+    /// Thread-safety: The builder is not thread-safe.
+    ///
     @NullMarked
     public static class Builder {
         // we have to make sure these are typesafe
@@ -358,34 +434,68 @@ public final class FluentFunctionRegistry {
         }
 
 
+        /// Finalizes the configuration and creates an immutable FluentFunctionRegistry.
+        ///
+        /// @return a new registry containing all configured factories and implicit formatters
         public FluentFunctionRegistry build() {
             return new FluentFunctionRegistry( this );
         }
 
 
+        /// Sets the required TerminalReducer factory.
+        ///
+        /// This reducer is used to turn lists into a single FluentString (outside of select expressions).
+        ///
+        /// @param factory reducer factory to use (must not be null)
+        /// @return this builder for chaining
         public Builder setTerminalReducer(final FluentFunctionFactory<FluentFunction.TerminalReducer> factory) {
             this.reducerFactory = requireNonNull( factory );
-            factories.put( factory.name(), factory ); // replace any existing, if present
+            factories.put( factory.name(), factory );
             return this;
         }
 
+        /// Sets the required implicit temporal formatter factory.
+        ///
+        /// The temporal formatter is also used as a Selector for temporal categories in select expressions.
+        ///
+        /// @param factory temporal formatter factory to use
+        /// @return this builder for chaining
         public Builder setTemporalFormatter(final FluentFunctionFactory<FluentFunction.Formatter<TemporalAccessor>> factory) {
             this.temporalFactory = requireNonNull( factory );
-            factories.put( factory.name(), factory ); // replace any existing, if present
+            factories.put( factory.name(), factory );
             return this;
         }
 
+        /// Replaces the required implicit number formatter factory.
+        ///
+        /// The provided factory must also implement [fluent.function.FluentFunction.Selector] to
+        /// support plural category selection in select expressions. An [IllegalArgumentException]
+        /// is thrown if that contract is not met.
+        ///
+        /// @param factory number formatter factory to use (and selector)
+        /// @return this builder for chaining
+        /// @throws IllegalArgumentException if the factory does not implement Selector
         public Builder setNumberFormatter(final FluentFunctionFactory<FluentFunction.Formatter<Number>> factory) {
             requireNonNull( factory );
             if (!(factory instanceof FluentFunction.Selector)) {
                 throw new IllegalArgumentException( String.format( "Factory '%s': Number formatter must have Selector implemented", factory.name() ) );
             }
             this.numberFactory = requireNonNull( factory );
-            factories.put( factory.name(), factory ); // replace any existing, if present
+            factories.put( factory.name(), factory );
             return this;
         }
 
-        // these can be formatters or not, but default formatting will not occur (e.g., for custom types) unless specifically set.
+        /// Adds an explicit function factory to this registry configuration.
+        /// 
+        /// These factories are callable from FTL by their name. Duplicate names are rejected.
+        /// 
+        /// Default formatting for custom types will NOT occur via this method;
+        /// instead use [Builder#addDefaultFormatter(Class, FluentFunctionFactory)]
+        /// 
+        ///
+        /// @param factory the factory to add
+        /// @return this builder for chaining
+        /// @throws IllegalArgumentException if a factory with the same name was already added
         public Builder addFactory(final FluentFunctionFactory<?> factory) {
             requireNonNull( factory );
             if (factories.putIfAbsent( factory.name(), factory ) != null) {
@@ -394,8 +504,28 @@ public final class FluentFunctionRegistry {
             return this;
         }
 
+        /// Adds multiple explicit function factories.
+        ///
+        /// @param collection collection of factories to add
+        /// @return this builder for chaining
+        /// @throws NullPointerException if collection is null
+        /// @throws IllegalArgumentException if any factory name duplicates an already added one
+        public Builder addFactories(final Collection<FluentFunctionFactory<?>> collection) {
+            requireNonNull( collection );
+            collection.forEach( this::addFactory );
+            return this;
+        }
 
-        // CANNOT remove temporal/terminal/numberformatter
+
+        /// Removes a previously added explicit function factory by name.
+        ///
+        /// Required implicit factories (NUMBER, DATETIME/TEMPORAL, LIST) cannot be removed; use the corresponding
+        /// set methods to replace them instead.
+        ///
+        ///
+        /// @param factoryName the name of the factory to remove
+        /// @return this builder for chaining
+        /// @throws IllegalArgumentException if the name refers to a required implicit factory, or if no such factory exists
         public Builder removeFactory(final String factoryName) {
             requireNonNull( factoryName );
             if (factories.containsKey( factoryName )) {
@@ -416,8 +546,17 @@ public final class FluentFunctionRegistry {
         }
 
 
-        // if factory is a transform, also will be added.
-        // cannot add if name clashes
+        /// Registers a custom implicit formatter for an exact Java type, using a named factory.
+        ///
+        /// The factory is also added to the registry's name-to-factory map, making it callable from FTL
+        /// by its name. Duplicate factory names are rejected.
+        ///
+        ///
+        /// @param cls the exact Java class to match (backing the FluentCustom value)
+        /// @param factory the formatter factory for that class
+        /// @param <T> the Java type being formatted
+        /// @return this builder for chaining
+        /// @throws IllegalArgumentException if a factory with the same name was already added
         public <T> Builder addDefaultFormatterExact(final Class<T> cls, final FluentFunctionFactory<FluentFunction.Formatter<T>> factory) {
             requireNonNull( cls );
             requireNonNull( factory );
@@ -431,10 +570,18 @@ public final class FluentFunctionRegistry {
             return this;
         }
 
-        // if factory is a transform, also will be added.
-        // cannot add if name clashes
-        // however ORDER is dependent. e.g., since it applies to subtypes, a base type must be added before a more specialized derived type
-        // since we just do a linear search
+
+        /// Registers a custom implicit formatter for a type and all of its subtypes, using a named factory.
+        ///
+        /// The factory is also added to the registry's name-to-factory map. Since this registration applies to
+        /// subtypes, lookup order is the insertion order of registrations; register base types before derived types
+        /// to ensure the intended match is found first.
+        ///
+        /// @param cls the base Java class to match (applies to cls and all subclasses)
+        /// @param factory the formatter factory
+        /// @param <T> the Java type being formatted
+        /// @return this builder for chaining
+        /// @throws IllegalArgumentException if a factory with the same name was already added
         public <T> Builder addDefaultFormatter(final Class<T> cls, final FluentFunctionFactory<FluentFunction.Formatter<T>> factory) {
             requireNonNull( cls );
             requireNonNull( factory );
@@ -449,7 +596,19 @@ public final class FluentFunctionRegistry {
             return this;
         }
 
-        // simple formatter via lambda (implicit formatter)
+        /// Registers a simple implicit formatter for an exact class type using a lambda.
+        ///
+        /// This registration does not add a callable factory by name; it only affects implicit formatting.
+        /// Attempting to register more than one formatter for the same exact class results in an exception.
+        ///
+        /// If a FluentFunctionFactory has been registered as an implicit formatter for a given type, adding
+        /// a default formatter will fail.
+        ///
+        /// @param cls the exact class to match
+        /// @param fn formatting function that receives the value and the current Scope
+        /// @param <T> the type being formatted
+        /// @return this builder for chaining
+        /// @throws IllegalArgumentException if a formatter for this exact class was already registered
         public <T> Builder addDefaultFormatterExact(final Class<T> cls, final BiFunction<T, Scope, String> fn) {
             // we ONLY add to 'exact'. cannot be called by name, so not in 'factories' name->factory map
             // however, there must not already be a type for this class registered.
@@ -459,8 +618,19 @@ public final class FluentFunctionRegistry {
             return this;
         }
 
-        // simple formatter via lambda (implicit formatter)
-        // order-dependent
+        /// Registers a simple implicit formatter for a type and all of its subtypes using a lambda.
+        ///
+        /// This registration does not add a callable factory by name. Since this is a subtype registration,
+        /// lookup is order-dependent: register base types before derived types to achieve the intended match.
+        ///
+        /// If a FluentFunctionFactory has been registered as an implicit formatter for a given type, adding
+        /// a default formatter will fail.
+        ///
+        /// @param cls the base Java class to match (applies to cls and all subclasses)
+        /// @param fn formatting function that receives the value and the current Scope
+        /// @param <T> the Java type being formatted
+        /// @return this builder for chaining
+        /// @throws IllegalArgumentException if a formatter for this class key was already registered in the subtype map
         public <T> Builder addDefaultFormatter(final Class<T> cls, final BiFunction<T, Scope, String> fn) {
             final MetaFunctionFactory<T> metaFactory = ofMeta( cls, fn );
             checkRegistered( subtypes, cls, metaFactory );
@@ -468,6 +638,13 @@ public final class FluentFunctionRegistry {
             return this;
         }
 
+        /// Wraps a simple lambda into a MetaFunctionFactory that can act as both a Formatter and a Selector
+        /// for custom types when used by the registry's implicit formatting logic.
+        ///
+        /// @param cls the Java class the lambda formats
+        /// @param fn the formatting function
+        /// @param <T> the Java type being formatted
+        /// @return a MetaFunctionFactory representing this formatter
         private <T> MetaFunctionFactory<T> ofMeta(final Class<T> cls, final BiFunction<T, Scope, String> fn) {
             return new MetaFunctionFactory<>( metaCount++, cls, fn );
         }

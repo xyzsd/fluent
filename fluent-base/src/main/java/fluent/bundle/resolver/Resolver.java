@@ -43,6 +43,23 @@ import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 
+/// Resolver is the core of formatting in the resolver package. It walks Fluent AST nodes produced by the
+/// parser and converts them into concrete FluentValue instances, and ultimately into user‑visible messages.
+///
+/// Overview:
+/// - Entry points: resolvePattern(Pattern, Scope) and resolveExpression(Expression, Scope).
+/// - Handles expansion of placeables, message/term/variable/function references, and select expressions.
+/// - Enforces safety limits such as MAX_PLACEABLES to prevent exponential expansion attacks.
+/// - Adds Unicode BiDi isolation characters (FSI/PDI) around interpolations when enabled by the bundle.
+///
+/// Key collaborators:
+/// - Scope: carries per-format call state such as variables, visited nodes, locale, and function registry/cache.
+/// - ResolutionException: describes resolution-time failures (e.g., cycles, unknown references, limits exceeded).
+/// - FluentFunction/FunctionRegistry: used when evaluating function references and reducing values to strings.
+///
+/// Notes:
+/// - This class is stateless and has only static methods; all mutable state lives in Scope.
+/// - Errors encountered are reported back via Scope (for collection) and by returning FluentError values.
 @NullMarked
 public final class Resolver {
 

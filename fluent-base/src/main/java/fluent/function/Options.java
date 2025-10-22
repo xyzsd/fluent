@@ -42,23 +42,19 @@ import static java.util.Objects.requireNonNull;
 /// This class has convenience methods which permit Long types to be queried as Integers.
 /// Convenience methods also allow String types to be queried as enum class constants or boolean values.
 ///
-/// For example,
-/// `FUNCTION(optionName:"theValue")`
-///
-///       - `has("optionName") = true`  // optionName is present
-///       - `has("optionname") = false` // note the lowercase 'n'; case-sensitive
-///       - `asBoolean("option-3") = Optional.empty()` // 'option-3' is not present
-///       - `asString("optionName") = "theValue"`
-///       - `asBoolean("optionName") = Exception` // "theValue" is neither "true" nor "false"
+/// For example, given `FUNCTION(optionName:"theValue")`
+/// - `has("optionName") = true`  // optionName is present
+/// - `has("optionname") = false` // note the lowercase 'n'; case-sensitive
+/// - `asBoolean("option-3") = Optional.empty()` // 'option-3' is not present
+/// - `asString("optionName") = "theValue"`
+/// - `asBoolean("optionName") = Exception` // "theValue" is neither "true" nor "false"
 ///
 ///
-/// For example, `ANOTHERFUNCTION(optionName:"TruE")`, and
-/// also given the class `enum MyEnum{TRUE, FALSE, MAYBE}`
-///
-///       - `has("optionName") = true`
-///       - `asString("optionName") = "TruE"`
-///       - `asBoolean("optionName") = Boolean.TRUE` // case-insensitive match
-///       - `asEnum(MyEnum.class, "optionName") = MyEnum.TRUE` // case-insensitive enum name match
+/// For example, `ANOTHERFUNCTION(optionName:"TruE")`, and also given the class `enum MyEnum{TRUE, FALSE, MAYBE}`
+/// - `has("optionName") = true`
+/// - `asString("optionName") = "TruE"`
+/// - `asBoolean("optionName") = Boolean.TRUE` // case-insensitive match. This would fail for `optionName:"MAYBE"`
+/// - `asEnum(MyEnum.class, "optionName") = MyEnum.TRUE` // case-insensitive enum name match
 ///
 @NullMarked
 public final class Options {

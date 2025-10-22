@@ -54,16 +54,17 @@ public sealed interface FluentValue<T>
     /// however this is generally true. Number types are widened to the pattern that is
     /// most appropriate (long, double, or BigDecimal).
     ///
-    /// FluentValues passed in will return out without modification (they will
+    /// FluentValues passed in will be returned without modification (they will
     /// not be wrapped within another FluentValue).
     ///
     /// If a null or a Collection is provided, an exception will be thrown.
     /// For Collections, use {@link #ofCollection(Object)}.
     ///
-    ///
     /// @param any non-null input
     /// @param <V> type
     /// @return FluentValue
+    /// @throws NullPointerException if any is null.
+    /// @throws IllegalArgumentException if any is a collection.
     static <V> FluentValue<?> of(final V any) {
         return switch(any) {
             case null -> throw new NullPointerException("null values not allowed");
@@ -75,6 +76,7 @@ public sealed interface FluentValue<T>
             default -> FluentCustom.of(any);
         };
     }
+
 
     /// Null-safe mapper.
     ///
@@ -89,6 +91,7 @@ public sealed interface FluentValue<T>
     static <V> FluentValue<?> ofNullable(@Nullable final V any) {
         return of( (any == null) ? FLUENT_NULL : any );
     }
+
 
     /// Convert a Collection to a List of FluentValues.
     ///
@@ -105,7 +108,7 @@ public sealed interface FluentValue<T>
         return switch(in) {
             case null -> List.of(FLUENT_NULL);
             case SequencedCollection<?> seq -> convertCollection(seq);
-            // These could be passed, but do not make sense. Must check AFTER SequencedCollection
+            // These could be passed in... but do not make sense. Must check AFTER SequencedCollection
             case Collection<?> _, Map<?,?> _ -> throw new IllegalArgumentException("Only SequencedCollections are supported");
             // default (including singular items)
             default -> List.of( of( in ));

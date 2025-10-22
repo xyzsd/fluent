@@ -31,12 +31,14 @@ import java.util.List;
 
 /// Immutable class holding the AST from parsing.
 ///
-/// This consists of 3 lists:
+/// FluentResources are used to create FluentBundles.
+///
+/// This is a simple holder of 3 lists:
 ///     - A List of AST entries
 ///     - A List of errors encountered during parsing
-///     - (optionally) 'Junk' (unparseable sections)
+///     - A list of 'Junk', which represent the text of unparseable sections
 ///
-/// FluentResources are used to create FluentBundles.
+/// Lists may be empty.
 ///
 @NullMarked
 public record FluentResource(List<Entry> entries, List<ParseException> errors, List<Junk> junk) {
