@@ -93,28 +93,6 @@ import static java.util.Objects.requireNonNull;
 ///    FluentFunctionRegistry registry3 = FluentFunctionRegistry.builder()
 ///        .addDefaultFormatterExact(Boolean.class, (value, scope) -> value ? "yes" : "no")
 ///        .build();
-///
-///    // 5) Subtype formatter example (order matters)
-///    FluentFunctionRegistry registry4 = FluentFunctionRegistry.builder()
-///        .addDefaultFormatter(Number.class, (n, scope) -> "N:" + n)
-///        .addDefaultFormatter(Integer.class, (n, scope) -> "I:" + n) // checked after Number.class
-///        .build();
-///
-///    // 6) Looking up an explicit function (usually done by the resolver via Scope)
-///    FluentFunctionCache cache = FluentFunctionCache.defaultCache();
-///    var numberFn = registry.getFunction(
-///        NumberFn.NUMBER.name(),                       // function name
-///        FluentFunction.Formatter.class,               // desired type
-///        cache,
-///        Locale.US,
-///        Options.EMPTY                                  // named params (defaults merged by Scope)
-///    );
-///    if (numberFn != null) {
-///        // apply() is normally invoked by the resolver with resolved parameters
-///    }
-///
-///    // 6) Reducing values to a string (normally via Resolver)
-///    // String out = registry.reduce(values, scope);
 ///  }
 ///
 @NullMarked
@@ -391,6 +369,7 @@ public final class FluentFunctionRegistry {
     /// Thread-safety: The builder is not thread-safe.
     ///
     @NullMarked
+    @SuppressWarnings( "unused" )
     public static class Builder {
         // we have to make sure these are typesafe
         private final Map<Class<?>, C2FEntry<?>> exact = new HashMap<>();
