@@ -37,37 +37,37 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.Function;
 
-/// STRINGSORT() items
+/// ##STRINGSORT()
+/// A non-reducing string formatting and string sorting function.
 ///
-/// STRINGSORT is a non-reducing string formatting and string sorting function.
 /// STRINGSORT works in the following manner:
 /// - For each non-String item, convert to a String using the implicit formatter for the type.
 ///   NOTE: if specific formatting is preferred, it should be performed prior to sorting. For example,
 ///   `STRINGSORT(NUMBER($pattern, $anotherValue))`.
+/// - Sort the String values and return the list of values. All values emitted from a Sort will be String values.
+///   Therefore, if (e.g., numeric) type manipulation is needed, it must be performed prior to sorting.
+/// - Note: STRINGSORT() is a String-based sort. Therefore, it may not appropriately sort numbers, since
+///   it will do so after numbers have been formatted to strings.
 ///
-/// - Sort the String values and return the list of values.
-///
-/// - To reiterate, all values emitted from a Sort will be String values. Therefore, if (e.g., numeric) type
-///   manipulation is needed, it must be performed prior to sorting.
-///
-/// - Note: STRINGSORT() is a String-based sort. Therefore, it is not generally appropriate to sort numbers, since
-///   it will do so after number formatting.
-///
-///
-/// STRINGSORT() options:
-/// -`order:` "natural" or "reversed". Default is natural. Reverses sort order if "reversed".
-/// -`strength:` sorting strength: "primary","secondary","tertiary","identical". The meanings
+/// ## Options
+/// -`order:` `natural` or `reversed`. Default is natural.
+/// -`strength:` sorting strength: "primary", "secondary", "tertiary", "identical". The meanings
 ///   of these are Locale-dependent.
 /// - `primary:` different base letters considered different (e.g., "a" vs. "b")
-///    - `secondary:` different accented forms considered different
-///    - `tertiary:` e.g.: case differences "a" vs "A"
-///    - `identical:` all character differences are considered unique
-/// -`decomposition:` sorting decomposition: "none","full","canonical". For languages with
+///    - `secondary` different accented forms considered different
+///    - `tertiary` sort on case differences; for example, "a" vs "A"
+///    - `identical` all character differences are considered unique
+/// -`decomposition:` sorting decomposition: `none`, `full`, `canonical`. For languages with
 ///   accented characters, canonical or full decomposition should be used.
+/// - `none:` accented characters are not decomposed (see [Unicode Annex #15](https://www.unicode.org/reports/tr15/)
+///    - `canonical` decompose characters with canonical variants (form D)
+///    - `full` decompose canonical variants and Unicode compatibility variants (form KD)
 ///
-/// - `none:` accented characters are not decomposed
-///    - `canonical:` decompose characters with canonical variants (form D)
-///    - `full:` decompose canonical variants and Unicode compatibility variants (form KD)
+/// ## Examples
+/// {@snippet :
+///         STRINGSORT("alpha", "charlie", "delta", order:"reversed") // "delta", "charlie", "alpha"
+/// }
+///
 ///
 @NullMarked
 public enum StringSortFn implements FluentFunctionFactory<FluentFunction.Transform> {

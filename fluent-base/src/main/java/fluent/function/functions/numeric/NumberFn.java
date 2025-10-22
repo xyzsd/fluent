@@ -63,7 +63,7 @@ import java.util.Locale;
 /// Intl.NumberFormat. Internally this function uses ICU4J. Some options map directly,
 /// others are approximations.
 /// 
-/// - **kind** (optional): Controls selection behavior.
+/// - **kind** (optional): Controls selection behavior. Only used in 'select' expressions.
 ///     - `CARDINAL` (default): Selects into CLDR cardinal categories using locale rules.
 ///     - `ORDINAL`: Selects into CLDR ordinal categories using locale rules.
 ///     - `EXACT`: Disables CLDR selection; selection uses the final formatted string
@@ -87,10 +87,10 @@ import java.util.Locale;
 ///     are supplied.
 ///
 /// - **minimumIntegerDigits** (optional): Pads with leading zeros up to the specified width.
-/// - **minimumFractionDigits** (optional)
-/// - **maximumFractionDigits** (optional)
-/// - **minimumSignificantDigits** (optional)
-/// - **maximumSignificantDigits** (optional)
+/// - **minimumFractionDigits** (optional): minimum number of fraction digits to display.
+/// - **maximumFractionDigits** (optional): maximum number of raction digits to display.
+/// - **minimumSignificantDigits** (optional): minimum number of significant digits to display.
+/// - **maximumSignificantDigits** (optional): maximum number of significant digits to display.
 ///     
 /// - If both _minimumFractionDigits_ and _maximumFractionDigits_ are supplied, then
 ///     `minimumFractionDigits <= maximumFractionDigits` must hold or an error is thrown.
@@ -98,13 +98,11 @@ import java.util.Locale;
 /// - Significant-digit options can be combined with fraction-digit options; when both are
 ///     present, the formatter uses ICU's relaxed rounding priority.
 ///     
-///   
 /// - **useGrouping** (optional): Controls grouping separators. Values: `ALWAYS`,
 ///     `TRUE` (same as ALWAYS), `AUTO`, `MIN2`, `FALSE`.
 ///
 ///
 /// ## Errors
-/// 
 /// - Invalid skeletons or option combinations raise a [FluentFunctionException].
 /// - Supplying inconsistent digit constraints (e.g., minimumFractionDigits greater than
 ///     maximumFractionDigits) raises a [FluentFunctionException].
@@ -136,18 +134,23 @@ import java.util.Locale;
 ///   # Ordinal Selection
 ///   # remember, [one] in English will apply to '1' but also '21', '31', etc.
 ///   # so if the message was "{$n}st place, Outstanding!" that could result in "1st place, Outstanding"
-///   # but also "21st place, Oustanding!", which is less outstanding.
-///   { NUMBER($n, kind:"ORDINAL") ->
+///   # but also "21st place, Oustanding!"... which is less outstanding.
+///   { NUMBER($n, kind:"ordinal") ->
 ///     [one] {NUMBER($n)}st place.
 ///     [two] {NUMBER($n)}nd place.
 ///     [few] {NUMBER($n)}rd place.
 ///    *[other] {NUMBER($n)}th place.
 ///   }
 ///
-///   # Skeletons (only allowed alone, or with 'kind')
-///   { NUMBER(1234.5, skeleton:"group-min2 .00") }  # -> "1234.50"
-///   { NUMBER(10.0, skeleton:"currency/CAD") }  # -> "CA$10.00"
-///   { NUMBER(10.0, skeleton:"currency/CAD unit-width-narrow") }  # -> "$10.00"
+///   # Skeletons
+///   # no other named options are allowed with skeletons, except 'kind'.
+///   #
+///   # -> "1234.50"
+///   { NUMBER(1234.5, skeleton:"group-min2 .00") }
+///   # -> "CA$10.00"
+///   { NUMBER(10.0, skeleton:"currency/CAD") }
+///   # -> "$10.00"
+///   { NUMBER(10.0, skeleton:"currency/CAD unit-width-narrow") }
 /// }
 ///
 ///

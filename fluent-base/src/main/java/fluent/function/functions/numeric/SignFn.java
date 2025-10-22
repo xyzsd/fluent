@@ -34,31 +34,35 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
 
-/// SIGN() : Sign of a numeric pattern (and more...)
+/// ## SIGN()
+/// Sign of a numeric pattern (and more...)
 ///
 /// Returns a string indicating the sign of a numeric pattern.
 ///
-/// Non-numeric values are passed through unchanged.
-/// If no values are present, no values will be returned.
+/// Non-numeric values are passed through unchanged. If no values are present, no values will be returned.
 ///
 /// Specifically:
+/// - negative values => `"negative"`
+/// - zero => `"zero"`
+/// - positive values => `"positive"`
 ///
-///       - negative values => "negative"
-///       - zero => "zero"
-///       - positive values => "positive"
+/// For floating-point types, `"zero"` will be returned for both positive or negative zero. Additionally:
+/// - NaN => `"NaN"`
+/// - positive infinity => `"positiveInfinity"`
+/// - negative infinity=> `"negativeInfinity"`
 ///
-/// For floating-point types, "zero" will be returned for both positive or negative zero. Additionally:
-///
-///       - NaN => "NaN"
-///       - positive infinity => "positiveInfinity"
-///       - negative infinity=> "negativeInfinity"
+/// ## Examples
+/// {@snippet :
+///     SIGN(-0.0)                  // "zero"
+///     SIGN(-3)                    // "negative"
+///     SIGN("string input")        // "string input"
+/// }
 ///
 /// This function is not sensitive to Locale or Options.
 @NullMarked
 public enum SignFn implements FluentFunctionFactory<FluentFunction.Transform>, FluentFunction.Transform {
 
     SIGN;
-
 
     private static String sign(FluentNumber<?> fluentNumber) {
         return switch (fluentNumber) {

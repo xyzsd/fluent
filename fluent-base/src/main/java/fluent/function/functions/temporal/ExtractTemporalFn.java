@@ -38,7 +38,7 @@ import java.util.function.Function;
 /// [java.time.ZonedDateTime], etc.) and replaces that item with the extracted numeric value.
 /// Non-temporal inputs are passed through unchanged. Errors are passed through unchanged.
 ///
-/// ## Option(s)
+/// ## Options
 ///     - **field** (required): The [ChronoField] to extract. Any constant from `ChronoField`
 ///     is accepted, for example: `YEAR`, `MONTH_OF_YEAR`, `MINUTE_OF_HOUR`, etc.
 ///
@@ -76,11 +76,6 @@ import java.util.function.Function;
 ///   { SELECT(XTEMPORAL($date, field:"DAY_OF_WEEK")) }
 /// }
 ///
-/// ## See also
-///
-///     - [TemporalFn] – pattern-based formatting of date/time values into strings.
-///     - [java.time.temporal.TemporalField]
-///     - [ChronoField]
 ///
 @NullMarked
 public enum ExtractTemporalFn implements FluentFunctionFactory<FluentFunction.Transform>  {

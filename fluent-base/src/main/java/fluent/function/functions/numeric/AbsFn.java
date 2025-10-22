@@ -31,19 +31,23 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
 
-///  ABS() : Absolute pattern
+/// ## ABS():
+/// Absolute value.
 ///
-///      Returns the absolute pattern of a number, keeping the same numeric type.
+/// Returns the absolute value of a number, keeping the same numeric type.
 ///
-///      Non-numeric values are passed through.
-///      If no values are input, none are returned.
+/// Non-numeric values are passed through.
 ///
-///      Examples:
+/// If no values are input, none are returned.
 ///
-///        - ABS(-5) => 5
-///        - ABS("string_value") => "string_value"
+/// ## Examples
+/// {@snippet :
+///    ABS(-5) => 5
+///    ABS("string_value") => "string_value"
+/// }
 ///
-///  This function is not sensitive to Locale or Options.
+///
+/// This function is not sensitive to Locale or Options.
 @NullMarked
 public enum AbsFn implements FluentFunctionFactory<FluentFunction.Transform>, FluentFunction.Transform {
 

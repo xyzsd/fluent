@@ -33,9 +33,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
-/// NUMSORT() - locale-aware Number sorting
+/// ## NUMSORT()
+/// Locale-aware Number sorting
 ///
-/// NUMSORT() sorts numbers, first by converting them to BigDecimals and then sorting.
+/// `NUMSORT()` sorts numbers, first by converting them to BigDecimals and then sorting.
 /// Specific formatting rules, if desired, can be applied after NUMSORT().
 ///
 /// For example, `NUMBER( NUMSORT($numList), minimumSignificantDigits:6)`
@@ -44,7 +45,12 @@ import java.util.Locale;
 /// numeric values to their text (String) representation.
 ///
 /// Options:
-/// - `order`: may be `"ascending"` (the default) or `"descending"`
+/// - `order`: either `"ascending"` (the default) or `"descending"`
+///
+/// ## Examples
+/// {@snippet :
+///     NUMSORT(3,2,1, order:"ascending")  // '1,2,3'
+/// }
 ///
 /// NUMSORT() will error on non-numeric input; for example, `NUMSORT(3, 2, 1, "barf")` will result in an error.
 @NullMarked

@@ -30,21 +30,22 @@ import org.jspecify.annotations.NullMarked;
 import java.util.List;
 import java.util.Locale;
 
-/// OFFSET(): Integral-offset function
+/// ## OFFSET()
+/// Integral-offset function. Offsets each positional argument by a fixed integer amount.
 ///
-/// Offset each positional pattern by a fixed amount.
-///
-/// Examples:
-///
+/// ## Examples
+/// {@snippet :
 ///       - OFFSET(5, increment:1) -> 6
 ///       - OFFSET(5, decrement:1) -> 4
-///       - OFFSET($var, addend:1) -> adds 1 to each item in `var`
+///       - OFFSET(3,5,7, decrement:1) -> '2, 4, 6' (subtracts 1 from each item in `var`)
+///       - OFFSET($var, decrement:1) -> subtracts 1 from each item in `var`
 ///       - OFFSET(5, decrement:-1) -> 6        // though this is not recommended! use 'increment' instead
 ///       - OFFSET()                                  // ERROR : 'increment' or 'decrement' not specified
 ///       - OFFSET("stringvalue", increment:1),       // ERROR : string pattern; must be an integral type
 ///       - OFFSET(3.3, increment:1)                  // ERROR : double pattern; must be an integral type
 ///       - OFFSET(3, increment:1.113)                // ERROR : increment or decrement MUST be integral type
 ///       - OFFSET(3, increment:1, decrement:3)       // ERROR : can only have either 'increment' or 'decrement'
+/// }
 ///
 /// No 'passthrough' occurs with this method. If any positional argument is NOT an integral type (integer or long),
 /// an error will occur.

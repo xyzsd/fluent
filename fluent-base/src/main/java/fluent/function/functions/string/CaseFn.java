@@ -27,20 +27,24 @@ import org.jspecify.annotations.NullMarked;
 import java.util.Locale;
 import java.util.function.Function;
 
-///  CASE() : Change the case of a String pattern
+/// ## CASE()
+/// Change the case of a String pattern.
 ///
-/// Change the case of a String pattern. By default, changes case to UPPER case.
-/// Case conversion is locale-aware.
+/// By default, changes case to UPPER case. Case conversion is locale-aware.
 ///
 /// Non-String values are passed through.
 ///
 /// Options:
 /// - `style:` either `"upper"` (the default) or `"lower"`
-/// Examples:
-/// - CASE("STRingVAlue") => "STRINGVALUE"
-/// - CASE("STRingVAlue", style:"upper") => "STRINGVALUE"
-/// - CASE("STRingVAlue", style:"lower") => "stringvalue"
-/// - CASE(-5) => -5
+///
+/// ## Examples
+/// {@snippet :
+///     CASE("STRingVAlue")                 // "STRINGVALUE"
+///     CASE("STRingVAlue", style:"upper")  // "STRINGVALUE"
+///     CASE("STRingVAlue", style:"lower")  // "stringvalue"
+///     CASE(-5)                            // -5   (as a FluentLong; non-string values are passed through)
+/// }
+/// 
 ///
 @NullMarked
 public enum CaseFn implements FluentFunctionFactory<FluentFunction.Transform>  {

@@ -32,23 +32,31 @@ import org.jspecify.annotations.NullMarked;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
+import java.time.temporal.TemporalAmount;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Supplier;
 
-/// TEMPORAL(): Pattern-based formatter of time values
+/// ## TEMPORAL()
+/// Pattern-based formatter of time values.
 ///
 /// At least one pattern is required. Non-temporal values are passed through unchanged.
 ///
-/// Required parameter (either one but *not* both):
-/// - `pattern:` String pattern ('skeleton') per DateTimeFormatter (e.g., "hh:mm").
-/// - `as:` One of the constants in [DateTimeFormatter][java.time.format.DateTimeFormatter]
-///     such as ISO_DATE or ISO_DATE_TIME
+/// ## Options
+/// - Specify one of `pattern` or `as` (mutually exclusive)
+/// - `pattern:` String pattern (skeleton) per DateTimeFormatter specification (e.g., "hh:mm").
+/// - `as:` One of the constants in [DateTimeFormatter] such as [DateTimeFormatter#ISO_DATE] or [DateTimeFormatter#RFC_1123_DATE_TIME]
 ///
-/// CAVEATS:
+/// ## Examples
+/// {@snippet :
+///     # given $temporal = ZonedDateTime.of(LocalDateTime.of(2025,9,10,11, 12, 13), ZoneId.of("UTC"))
+///     TEMPORAL($temporal, as:"RFC_1123_DATE_TIME")    // "Wed, 10 Sep 2025 11:12:13 GMT"
+///     TEMPORAL($temporal, pattern:"yyyy-MM-dd")       // "2025-09-10"
+/// }
+///
+/// ## Notes
 /// - Some format options will require a timezone.
-/// - this function cannot be used to localize or display [TemporalAmount][java.time.temporal.TemporalAmount]s
-///             such as `Duration` or `Period`.
+/// - this function cannot be used to localize or display [TemporalAmount]s such as [Duration] or [Period].
 ///
 @NullMarked
 public enum TemporalFn implements FluentFunctionFactory<FluentFunction.Formatter<TemporalAccessor>> {

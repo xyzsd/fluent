@@ -33,18 +33,22 @@ import org.jspecify.annotations.NullMarked;
 import java.util.List;
 import java.util.Locale;
 
-/// COUNT(): Counts the supplied arguments.
+/// ## COUNT()
+/// Counts the supplied arguments.
 ///
 /// If supplied arguments are Lists, items in the lists are also counted.
 /// Count is not Locale sensitive and has no options.
 ///
-/// Examples:
-///    - `COUNT()` => 0
-///    - `COUNT("hello")` => 1
-///    - `COUNT(7)` => 1
-///    - `COUNT("hello", 7)` => 2
-///    - `COUNT($myvar)` where `$myvar = List.of("item","another","yet another")` => 3
-///    - `COUNT($myvar, "hello")` where `$myvar = List.of("item","another","yet another")` => 4
+/// ## Examples
+/// {@snippet :
+///    COUNT()             // 0
+///    COUNT("hello")      // 1
+///    COUNT(7)            // 1
+///    COUNT("hello", 7)   // 2
+///    # the following assume $myvar = List.of("item","another","yet another")
+///    COUNT($myvar)           // 3
+///    COUNT($myvar, "hello")  // 4
+/// }
 ///
 ///  This is a reducing function. Count returns a single number (FluentLong) as its output.
 ///  If any arguments are errors, an error message will be output.

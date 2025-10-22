@@ -30,19 +30,33 @@ import org.jspecify.annotations.NullMarked;
 import java.util.Locale;
 import java.util.function.Function;
 
-/// Custom function that operates on `FluentCustom<Boolean>`
+/// ## BOOLEAN()
+/// A function that operates on `FluentCustom<Boolean>` values.
 ///
-/// Remember, this applies to Boolean values, not Strings.
+/// Note: this applies to Boolean values, not Strings!
 ///
 /// This is most useful for `select` clauses; the select variants would be keyed as `true` or `false`.
 ///
 /// Non-booleans are passed through.
 ///
-/// This function can also convert a Boolean to a numeric value (0 or 1): `BOOLEAN($arg, as:"number")`.
-/// This number could then be further manipulated, such as adjusted using the
+/// ## Options
+/// -**as**: `string` (default) or `number`. If `number` is use,d the value is converted to a 0 or 1 as a FluentLong.
+/// This value could be further manipulated, for example, such as adjusting it with the
 /// [OFFSET][fluent.function.functions.numeric.OffsetFn] function.
 ///
-/// Do note that if `as:"number"` is set as a default argument in the function registry, or if
+/// ## Examples
+/// {@snippet :
+///     BOOLEAN($val)                   // if val is Boolean.TRUE, result is "true" (as a string)
+///     BOOLEAN($val, as:"number")      // if val is Boolean.TRUE, result is "1" (as a number)
+///
+///     OFFSET( BOOLEAN($val, as:"number"), increment:7)     // if $val is true, result is '8' otherwise '7'
+///
+///     BOOLEAN("true")                 // ERROR: 'true' is a String, not a boolean.
+///     BOOLEAN(1)                      // ERROR: 1 is a number, not a boolean
+/// }
+///
+/// ## Notes
+/// If `as:"number"` is set as a default argument in the function registry, or if
 /// `BOOLEAN($arg, as:"number")` is used as a selector (rather than the default `as:"string"`),
 /// the returned FluentLong value (0 or 1) will undergo [NUMBER][fluent.function.functions.numeric.NumberFn] selection
 /// according to plural rules.

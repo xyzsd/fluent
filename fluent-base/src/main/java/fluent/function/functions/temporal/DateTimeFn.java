@@ -37,7 +37,8 @@ import java.time.temporal.*;
 import java.util.List;
 import java.util.Locale;
 
-/// DATETIME(): basic date and time formatting
+/// ## DATETIME()
+/// Basic date and time formatting of temporal values.
 ///
 /// This does not replace or attempt to implement all the functions of JavaScript Intl.DateFormat
 ///
@@ -48,18 +49,21 @@ import java.util.Locale;
 /// For more powerful formatting of dates and times, use the TEMPORAL function.
 ///
 /// Alternatively, the DATETIME implicit can be replaced with TEMPORAL if desired.
-/// {@snippet :
-///    // TODO: illustrate how to replace DATETIME with TEMPORAL
 ///
+/// ## Examples
+/// {@snippet :
+///    # given $temporal = ZonedDateTime.of(LocalDateTime.of(2025,9,10,11, 12, 13), ZoneId.of("UTC"))
+///    DATETIME($temporal, dateStyle:"medium", timeStyle:"medium") // "Sep 10, 2025, 11:12:13 AM"
+///    DATETIME($temporal, dateStyle:"short", timeStyle:"short")   // "9/10/25, 11:12 AM"
 /// }
 ///
+///
 /// IMPORTANT NOTES:
-/// - Some format options (e.g., timeStyle:FULL or LONG) will require a timezone.
-/// - LocalDateTime, LocalTime do NOT have time zones defined
-/// - this function cannot be used to localize or display [TemporalAmount][java.time.temporal.TemporalAmount]s
-///             such as `Duration` or `Period`.
-/// - Special handling for [Instant][java.time.Instant]: Instants are converted to ZonedDateTime (zone: UTC),
-///             so that they can be formatted (because Instants are created with the UTC time zone)
+/// - Some format options (e.g., timeStyle:"full" or timeStyle:"long") will require a timezone. [LocalDateTime] and
+/// [LocalTime] do NOT have time zones defined
+/// - this function cannot be used to localize or display [TemporalAmount]s such as [Duration] or [Period].
+/// - There is special handling for [Instant]. Instants are converted to [ZonedDateTime]s (zone: UTC), so that they
+///   can be formatted. Reasoning: Instants are created with the UTC time zone.
 ///
 @NullMarked
 public enum DateTimeFn implements FluentFunctionFactory<FluentFunction.Formatter<TemporalAccessor>> {
