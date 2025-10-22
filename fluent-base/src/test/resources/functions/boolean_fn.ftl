@@ -13,6 +13,9 @@ msg_not_boolean_3 = |{BOOLEAN("This is a String", as:"number")}|
 # single variable
 msg_boolean = |{BOOLEAN($value)}|
 
+# demonstrate how a boolean is handled in a message, without invoking BOOLEAN
+msg_simple = This is a message with the value '{$value}', a single boolean value.
+
 # multiple variables
 msg_multiple_variables = |{BOOLEAN($value_1, $value_2)}|
 

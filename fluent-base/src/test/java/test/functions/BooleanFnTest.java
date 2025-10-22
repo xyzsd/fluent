@@ -93,6 +93,22 @@ public class BooleanFnTest {
     }
 
     @Test
+    public void simpleTest() {
+        // NOTE:
+        // This works 'as expected' (displaying 'true' or 'false'), even though BOOLEAN() is not registered as a
+        // default formatter for Boolean values. When there is no formatter defined for a type (no formatter defined
+        // for FluentCustom<Boolean>), String.valueOf() is used to format the object. In this case, String.valueOf(boolean)
+        // will result in 'true' or 'false'.
+        assertEquals(
+                "This is a message with the value 'true', a single boolean value.",
+                FTLTestUtils.fmt( bundle, "msg_simple",
+                        Map.of(
+                                "value", Boolean.TRUE
+                        )
+                )
+        );    }
+
+    @Test
     public void singleVariableSingleValue() {
         assertEquals(
                 "|true|",
