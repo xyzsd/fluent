@@ -12,4 +12,6 @@ plugins {
 }
 
 rootProject.name = "fluent"
-include("fluent-base")  // todo: add fluent-examples later
+include("fluent-base")
+include("fluent-examples:hello")
+include("fluent-examples:renamed-functions")

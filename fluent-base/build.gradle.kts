@@ -36,7 +36,7 @@ plugins {
     id("me.champeau.jmh") version "0.7.3"
 }
 
-version = "1.9NG-SNAPSHOT"
+version = "2.0NG-SNAPSHOT"
 group = "net.xyzsd.fluent"
 
 repositories {
@@ -53,12 +53,29 @@ dependencies {
     api("org.jspecify:jspecify:1.0.0")
     implementation("com.ibm.icu:icu4j:77.1")
     //
-    testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.1")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.1")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.14.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.14.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.14.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+
+jmh {
+    warmupIterations = 1
+    iterations = 10
+    fork = 2
+    jmhVersion = "1.37"
+}
+
+tasks.compileJava {
+    options.encoding = "UTF-8"
+    options.compilerArgs.add("-Xlint:all,-serial")
+    // preview features used: 'unnamed variables', (delivered in JDK 22), and the vector API (not yet final)
+    // Required for SIMD
+    options.compilerArgs.add("--enable-preview")
+    options.compilerArgs.add("--add-modules")
+    options.compilerArgs.add("jdk.incubator.vector")
+}
 
 java {
     // IMPORTANT!
@@ -71,39 +88,16 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(23)
     }
-
-
-}
-
-tasks.withType<JavaCompile> {
-    options.compilerArgs.addAll(listOf("--enable-preview"))
-    options.compilerArgs.add("--add-modules")
-    options.compilerArgs.add("jdk.incubator.vector")
-}
-
-
-
-jmh {
-    warmupIterations = 1
-    iterations = 10
-    fork = 2
-    jmhVersion = "1.37"
-}
-
-tasks.compileJava {
-    options.encoding = "UTF-8"
-    options.compilerArgs.add("-Xlint:all,-dangling-doc-comments,-serial")
 }
 
 tasks.jar {
+    // These should be unnecessary for Gradle 9
     setPreserveFileTimestamps(false)
     setReproducibleFileOrder(true)
 }
 
 tasks.javadoc {
     val javadocOptions = options as CoreJavadocOptions
-    //javadocOptions.addStringOption("source", "21")
-    //javadocOptions.addBooleanOption("-enable-preview", true)
     javadocOptions.addStringOption("Xdoclint:none", "-quiet")   // for sanity
 }
 

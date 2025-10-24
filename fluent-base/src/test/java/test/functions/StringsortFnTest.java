@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class StringsortFnTest {
 
 
-    static final List<String> STRINGZ = List.of("alpha", "charlie", "delta", "beta", "__underscored__");
+    static final List<String> STRINGZ = List.of("alpha", "charlie", "delta", "beta", "_underscored_");
     static final String RESOURCE = "functions/stringsort_fn.ftl";
     static FluentResource resource;
     static FluentBundle bundle;
@@ -85,7 +85,7 @@ public class StringsortFnTest {
     @Test
     public void sortDefault() {
         assertEquals(
-                "|__underscored__, alpha, beta, charlie, delta|",
+                "|_underscored_, alpha, beta, charlie, delta|",
                 fmt(  "stringsort_default", STRINGZ)
         );
     }
@@ -94,7 +94,7 @@ public class StringsortFnTest {
     @Test
     public void sortNatural() {
         assertEquals(
-                "|__underscored__, alpha, beta, charlie, delta|",
+                "|_underscored_, alpha, beta, charlie, delta|",
                 fmt(  "stringsort_ascending", STRINGZ)
         );
     }
@@ -103,7 +103,7 @@ public class StringsortFnTest {
     @Test
     public void sortReversed() {
         assertEquals(
-                "|delta, charlie, beta, alpha, __underscored__|",
+                "|delta, charlie, beta, alpha, _underscored_|",
                 fmt(  "stringsort_descending", STRINGZ)
         );
     }
