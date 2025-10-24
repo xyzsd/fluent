@@ -13,5 +13,7 @@ plugins {
 
 rootProject.name = "fluent"
 include("fluent-base")
+//
 include("fluent-examples:hello")
 include("fluent-examples:renamed-functions")
+include("fluent-examples:simple-implicits")
