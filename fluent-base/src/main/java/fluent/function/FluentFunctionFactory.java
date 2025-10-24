@@ -62,7 +62,7 @@ public interface FluentFunctionFactory<T extends FluentFunction> {
     /// Change the [#name] of a [FluentFunctionFactory].
     ///
     /// The name must conform to Fluent syntax guidelines.
-    static <T extends FluentFunction> FluentFunctionFactory<T> rename(final String name, final FluentFunctionFactory<T> in) {
+    static <T extends FluentFunction> FluentFunctionFactory<T> rename(final FluentFunctionFactory<T> in, final String name) {
         requireNonNull(name);
         requireNonNull(in);
         if (name.isEmpty()) { throw new IllegalArgumentException("name cannot be empty"); }

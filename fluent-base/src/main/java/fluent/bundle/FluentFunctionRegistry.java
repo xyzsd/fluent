@@ -262,7 +262,9 @@ public final class FluentFunctionRegistry {
             };
         } catch (FluentFunctionException e) {
             scope.addException( e );
-            return "{[implicitFormat] "+e.getMessage()+"}";
+            return "{ImplicitFormat of "+fluentValue.getClass().getSimpleName()+
+                    "<"+fluentValue.value().getClass().getSimpleName()+">: "+
+                    e.getMessage()+"}";
         }
     }
 
@@ -428,6 +430,7 @@ public final class FluentFunctionRegistry {
         /// @param factory reducer factory to use (must not be null)
         /// @return this builder for chaining
         public Builder setTerminalReducer(final FluentFunctionFactory<FluentFunction.TerminalReducer> factory) {
+            factories.remove( reducerFactory.name() );
             this.reducerFactory = requireNonNull( factory );
             factories.put( factory.name(), factory );
             return this;
@@ -440,6 +443,7 @@ public final class FluentFunctionRegistry {
         /// @param factory temporal formatter factory to use
         /// @return this builder for chaining
         public Builder setTemporalFormatter(final FluentFunctionFactory<FluentFunction.Formatter<TemporalAccessor>> factory) {
+            factories.remove( temporalFactory.name() );
             this.temporalFactory = requireNonNull( factory );
             factories.put( factory.name(), factory );
             return this;
@@ -455,6 +459,7 @@ public final class FluentFunctionRegistry {
         /// @return this builder for chaining
         /// @throws IllegalArgumentException if the factory does not implement Selector
         public Builder setNumberFormatter(final FluentFunctionFactory<FluentFunction.Formatter<Number>> factory) {
+            factories.remove( numberFactory.name() );
             requireNonNull( factory );
             if (!(factory instanceof FluentFunction.Selector)) {
                 throw new IllegalArgumentException( String.format( "Factory '%s': Number formatter must have Selector implemented", factory.name() ) );
