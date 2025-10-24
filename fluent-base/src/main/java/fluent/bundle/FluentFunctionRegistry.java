@@ -354,7 +354,7 @@ public final class FluentFunctionRegistry {
 
         // subtype
         for (final C2FEntry<?> entry : customList) {
-            if (cls.isAssignableFrom( entry.cls() )) {
+            if (entry.cls().isAssignableFrom( cls )) {
                 return ((C2FEntry<T>) entry).formatFactory;
             }
         }

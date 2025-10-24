@@ -51,7 +51,7 @@ public final class FTLStream {
     //  set of functions to use for accelerated operations (SIMD vs. SWAR)
     private static final Accel ACCEL = Accel.get();
 
-    // magic constants for ASCII comparisons.
+    // magic constants for scalar ASCII comparisons.
     private static final byte MAGIC_CAPS_ALPHA_OFFSET = ((byte) (-65 + Byte.MIN_VALUE)); // 'A' (uppercase A)
     private static final byte MAGIC_LC_ALPHA_OFFSET = ((byte) (-97 + Byte.MIN_VALUE)); // 'a' (lowercase A)
     private static final byte MAGIC_ALPHA_RANGE = ((byte) (26 + Byte.MIN_VALUE));  // 26 letters
