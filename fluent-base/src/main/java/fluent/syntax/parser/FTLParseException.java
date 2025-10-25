@@ -29,7 +29,7 @@ import java.util.Objects;
 
 /// Exceptions encountered during parsing Fluent (FTL) resources.
 @NullMarked
-public class ParseException extends RuntimeException {
+public class FTLParseException extends RuntimeException {
 
     private final ErrorCode errorCode;
     private final String arg;               // arguments
@@ -37,7 +37,7 @@ public class ParseException extends RuntimeException {
     @Nullable private final String ch;      // input received; may be null
 
 
-    private ParseException(ErrorCode errorCode, String arg, int line, @Nullable String ch) {
+    private FTLParseException(ErrorCode errorCode, String arg, int line, @Nullable String ch) {
         super( Objects.requireNonNull(errorCode).message() );
         Objects.requireNonNull( arg );
 
@@ -47,7 +47,7 @@ public class ParseException extends RuntimeException {
         this.ch = ch;
     }
 
-    private ParseException(Throwable cause) {
+    private FTLParseException(Throwable cause) {
         super(ErrorCode.E0001.message, cause);
         this.errorCode = ErrorCode.E0001;
         this.arg = cause.getMessage();
@@ -59,8 +59,8 @@ public class ParseException extends RuntimeException {
     ///
     /// This should be used very sparingly.
     ///
-    public static ParseException of(Throwable cause) {
-        return new ParseException( cause );
+    public static FTLParseException of(Throwable cause) {
+        return new FTLParseException( cause );
     }
     /// Create a ParseException with an explicit message argument and line number.
     ///
@@ -68,8 +68,8 @@ public class ParseException extends RuntimeException {
     /// @param arg the argument to interpolate into the error message format
     /// @param line the 1-based line where the error occurred; 0 indicates EOF
     /// @return a new ParseException instance
-    public static ParseException of(ErrorCode errorCode, String arg, int line) {
-        return new ParseException( errorCode, arg, line, null );
+    public static FTLParseException of(ErrorCode errorCode, String arg, int line) {
+        return new FTLParseException( errorCode, arg, line, null );
     }
 
     /// Create a ParseException with an explicit message argument, line number and the last received character.
@@ -79,8 +79,8 @@ public class ParseException extends RuntimeException {
     /// @param line the 1-based line where the error occurred; 0 indicates EOF
     /// @param received the last received character (as a string) from the input, or null if unknown
     /// @return a new ParseException instance
-    public static ParseException of(ErrorCode errorCode, String arg, int line, @Nullable String received) {
-        return new ParseException( errorCode, arg, line, received );
+    public static FTLParseException of(ErrorCode errorCode, String arg, int line, @Nullable String received) {
+        return new FTLParseException( errorCode, arg, line, received );
     }
 
 

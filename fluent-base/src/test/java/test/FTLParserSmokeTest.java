@@ -31,7 +31,7 @@ import fluent.bundle.LRUFunctionCache;
 import fluent.function.functions.list.CountFn;
 import fluent.syntax.parser.FTLParser;
 import fluent.syntax.parser.FTLStream;
-import fluent.syntax.parser.ParseException;
+import fluent.syntax.parser.FTLParseException;
 import fluent.types.FluentNumber;
 import fluent.types.FluentString;
 import org.junit.jupiter.api.Test;
@@ -308,7 +308,7 @@ class FTLParserSmokeTest {
 
         final FluentResource parse = FTLParser.parse( FTLStream.of( s1 ) );
         assertEquals( parse.errors().size(), 1 );
-        assertEquals( parse.errors().get( 0 ).errorCode(), ParseException.ErrorCode.E0031 );
+        assertEquals( parse.errors().get( 0 ).errorCode(), FTLParseException.ErrorCode.E0031 );
     }
 
     @Test

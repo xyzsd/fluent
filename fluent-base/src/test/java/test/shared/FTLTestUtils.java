@@ -37,7 +37,7 @@ import fluent.function.functions.DefaultFunctionFactories;
 import fluent.syntax.AST.*;
 import fluent.syntax.parser.FTLParser;
 import fluent.syntax.parser.FTLStream;
-import fluent.syntax.parser.ParseException;
+import fluent.syntax.parser.FTLParseException;
 import fluent.types.FluentString;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -74,7 +74,7 @@ public class FTLTestUtils {
     }
 
     // search resource for the given errorcode-line exception
-    public static boolean matchParseException(final FluentResource resource, final ParseException.ErrorCode errorCode, final int line) {
+    public static boolean matchParseException(final FluentResource resource, final FTLParseException.ErrorCode errorCode, final int line) {
         final boolean match = resource.errors()
                 .stream()
                 .anyMatch( e -> (e.errorCode() == errorCode) && (e.line() == line) );

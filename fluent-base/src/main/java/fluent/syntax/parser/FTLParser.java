@@ -25,7 +25,7 @@ package fluent.syntax.parser;
 
 import fluent.bundle.FluentResource;
 import fluent.syntax.AST.*;
-import fluent.syntax.parser.ParseException.ErrorCode;
+import fluent.syntax.parser.FTLParseException.ErrorCode;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -84,7 +84,7 @@ public class FTLParser {
 
     private static FluentResource parseSimple(final FTLStream ps) {
         List<Entry> entries = new ArrayList<>();
-        List<ParseException> errors = new ArrayList<>();
+        List<FTLParseException> errors = new ArrayList<>();
 
         ps.skipBlankBlockNLC();
 
@@ -96,7 +96,7 @@ public class FTLParser {
                 if (entry != null) {
                     entries.add( entry );
                 }
-            } catch (ParseException ex) {
+            } catch (FTLParseException ex) {
                 ps.skipToNextEntryStart();  // should not throw!
                 errors.add( ex );
                 // 'Junk' is ignored
@@ -111,7 +111,7 @@ public class FTLParser {
     private static FluentResource parseComplete(final FTLStream ps) {
         List<Entry> entries = new ArrayList<>();
         List<Junk> junk = new ArrayList<>();
-        List<ParseException> errors = new ArrayList<>();
+        List<FTLParseException> errors = new ArrayList<>();
         ps.skipBlankBlockNLC();
 
         Commentary.Comment lastComment = null;
@@ -142,7 +142,7 @@ public class FTLParser {
                 } else {
                     entries.add( entry );
                 }
-            } catch (ParseException ex) {
+            } catch (FTLParseException ex) {
                 ps.skipToNextEntryStart();  // should not throw
                 errors.add( ex );
                 final String text = ps.subString( entryStart, ps.position() );
@@ -187,7 +187,7 @@ public class FTLParser {
         // but attributes and pattern cannot BOTH be empty.
         // use entryStart as position (more helpful)
         if (pattern == null && attributes.isEmpty()) {
-            throw ParseException.of(
+            throw FTLParseException.of(
                     ErrorCode.E0005,
                     id.name(),
                     ps.positionToLine( entryStart )
@@ -213,7 +213,7 @@ public class FTLParser {
         if (pattern != null) {
             return new Term( id, pattern, attributes );
         } else {
-            throw ParseException.of(
+            throw FTLParseException.of(
                     ErrorCode.E0006,
                     id.name(),
                     ps.positionToLine( entryStart ) // safe if entryStart OOB
@@ -357,7 +357,7 @@ public class FTLParser {
     }
 
 
-    // also used by FTLPatternParser_2
+    // also used by FTLPatternParser
     static Expression getPlaceable(final FTLStream ps) {
         ps.expectChar( (byte) '{' );
         ps.skipBlank();
@@ -623,7 +623,7 @@ public class FTLParser {
         for (int i = 0; i < name.length(); i++) {
             final byte b = (byte) name.charAt( i );
             if (FTLStream.isASCIILowerCase( b )) {
-                throw ParseException.of(
+                throw FTLParseException.of(
                         ErrorCode.E0008,
                         name,
                         ps.positionToLine( ps.position() ),
@@ -643,7 +643,7 @@ public class FTLParser {
     /// @param errorCode the error code describing the parsing failure
     /// @param stream    the token stream that supplies current location and received byte
     /// @return a new ParseException instance pointing at the stream's current line
-    static ParseException parseException(final ErrorCode errorCode, final FTLStream stream) {
+    static FTLParseException parseException(final ErrorCode errorCode, final FTLStream stream) {
         return parseException( errorCode, "[argument unspecified]", stream );
     }
 
@@ -657,12 +657,12 @@ public class FTLParser {
     /// @param argument  the argument to interpolate into the error message format
     /// @param stream    the token stream that supplies current location and received byte
     /// @return a new ParseException instance pointing at the stream's current line
-    static ParseException parseException(final ErrorCode errorCode, final String argument, final FTLStream stream) {
+    static FTLParseException parseException(final ErrorCode errorCode, final String argument, final FTLStream stream) {
         // if we are EOF, stream.at() will throw an exception (if there is no padding)
         final int line = stream.positionToLine( stream.position() );
         final String received = (line != 0) ? byteToString( stream.at() ) : byteToString( EOF );
 
-        return ParseException.of(
+        return FTLParseException.of(
                 errorCode,
                 argument,
                 line,

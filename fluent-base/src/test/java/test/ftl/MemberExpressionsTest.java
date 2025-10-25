@@ -32,8 +32,8 @@ import test.shared.FTLTestUtils;
 
 import java.io.IOException;
 
-import static fluent.syntax.parser.ParseException.ErrorCode.E0018;
-import static fluent.syntax.parser.ParseException.ErrorCode.E0019;
+import static fluent.syntax.parser.FTLParseException.ErrorCode.E0018;
+import static fluent.syntax.parser.FTLParseException.ErrorCode.E0019;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

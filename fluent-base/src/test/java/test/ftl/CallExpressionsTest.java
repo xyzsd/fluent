@@ -44,7 +44,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-import static fluent.syntax.parser.ParseException.ErrorCode.*;
+import static fluent.syntax.parser.FTLParseException.ErrorCode.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

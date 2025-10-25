@@ -25,7 +25,7 @@ import org.jspecify.annotations.NullMarked;
 
 import fluent.syntax.AST.Entry;
 import fluent.syntax.AST.Junk;
-import fluent.syntax.parser.ParseException;
+import fluent.syntax.parser.FTLParseException;
 
 import java.util.List;
 
@@ -41,10 +41,10 @@ import java.util.List;
 /// Lists may be empty.
 ///
 @NullMarked
-public record FluentResource(List<Entry> entries, List<ParseException> errors, List<Junk> junk) {
+public record FluentResource(List<Entry> entries, List<FTLParseException> errors, List<Junk> junk) {
 
 
-    public FluentResource(List<Entry> entries, List<ParseException> errors, List<Junk> junk) {
+    public FluentResource(List<Entry> entries, List<FTLParseException> errors, List<Junk> junk) {
         this.entries = List.copyOf(entries);
         this.errors = List.copyOf(errors);
         this.junk = List.copyOf(junk);

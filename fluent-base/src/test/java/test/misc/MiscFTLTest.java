@@ -30,7 +30,7 @@ import fluent.syntax.parser.FTLStream;
 import org.junit.jupiter.api.Test;
 import test.shared.FTLTestUtils;
 
-import static fluent.syntax.parser.ParseException.ErrorCode.*;
+import static fluent.syntax.parser.FTLParseException.ErrorCode.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

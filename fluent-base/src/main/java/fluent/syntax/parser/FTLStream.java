@@ -341,7 +341,7 @@ public final class FTLStream {
     /// If the current position is out-of-bounds (e.g., EOF), 0 is returned.
     ///
     /// @return the line number (>= 0); 0 indicates an invalid position
-    public int positionToLine() {
+    int positionToLine() {
         return positionToLine( position() );
     }
 
@@ -351,7 +351,7 @@ public final class FTLStream {
     ///
     /// @param position a byte offset into the decoded stream
     /// @return the line number (>= 0); 0 indicates an invalid position (typically EOF)
-    public int positionToLine(final int position) {
+    int positionToLine(final int position) {
         if (position < 0 || position >= size) {
             return 0;
         }
@@ -457,7 +457,7 @@ public final class FTLStream {
     /// This will also throw an exception if we are out of bounds (only positive bound checked)
     void expectChar(final byte b) {
         if (pos >= size || at() != b) {
-            throw FTLParser.parseException( ParseException.ErrorCode.E0003,
+            throw FTLParser.parseException( FTLParseException.ErrorCode.E0003,
                     FTLStream.byteToString( b ), this );
         }
         pos++;
@@ -600,7 +600,7 @@ public final class FTLStream {
     ///
     /// @param requiredLength 4 or 6 hex bytes
     /// @return code point as an int (which is equivalent to a Java String of 1 or 2 characters)
-    /// @throws ParseException if hex sequence is not of the required length, or is not a valid code point.
+    /// @throws FTLParseException if hex sequence is not of the required length, or is not a valid code point.
     int getUnicodeEscape(final int requiredLength) {
         final int start = position();
         int codePoint = 0;      // calculate in situ
@@ -619,8 +619,8 @@ public final class FTLStream {
 
         if (((position() - start) != requiredLength) || !Character.isValidCodePoint( codePoint )) {
             final int end = (position() > requiredLength) ? position() : (position() + 1);
-            throw ParseException.of(
-                    ParseException.ErrorCode.E0026,
+            throw FTLParseException.of(
+                    FTLParseException.ErrorCode.E0026,
                     subString( start, end ),
                     positionToLine()
             );
@@ -649,7 +649,7 @@ public final class FTLStream {
             inc();
         }
         if (start == position()) {
-            throw FTLParser.parseException( ParseException.ErrorCode.E0004,
+            throw FTLParser.parseException( FTLParseException.ErrorCode.E0004,
                     "0-9",
                     this
             );

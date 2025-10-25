@@ -31,11 +31,9 @@ import org.junit.jupiter.api.Test;
 import test.shared.FTLTestUtils;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.Map;
 
-import static fluent.syntax.parser.ParseException.ErrorCode.E0003;
-import static fluent.syntax.parser.ParseException.ErrorCode.E0032;
+import static fluent.syntax.parser.FTLParseException.ErrorCode.E0032;
 import static org.junit.jupiter.api.Assertions.*;
 
 

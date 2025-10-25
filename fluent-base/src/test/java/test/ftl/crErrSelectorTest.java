@@ -30,7 +30,7 @@ import test.shared.FTLTestUtils;
 
 import java.io.IOException;
 
-import static fluent.syntax.parser.ParseException.ErrorCode.E0004;
+import static fluent.syntax.parser.FTLParseException.ErrorCode.E0004;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

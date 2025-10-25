@@ -33,7 +33,6 @@ import test.shared.FTLTestUtils;
 import java.io.IOException;
 import java.util.Map;
 
-import static fluent.syntax.parser.ParseException.ErrorCode.E0032;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

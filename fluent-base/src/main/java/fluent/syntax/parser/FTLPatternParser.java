@@ -208,10 +208,10 @@ final class FTLPatternParser {
         // The goal here is to use a MethodHandle to encourage inlining by the JVM
         try {
             return (TextSlice) MH_GTS.invokeExact( ps );
-        } catch (ParseException p) {
+        } catch (FTLParseException p) {
             throw p;
         } catch (Throwable t) {
-            throw ParseException.of( t );
+            throw FTLParseException.of( t );
         }
     }
 
@@ -238,7 +238,7 @@ final class FTLPatternParser {
                 return new TextSlice( startPosition, ps.position(),
                         textElementType, TextElementTermination.PlaceableStart );
             } else if (cb == '}') {
-                throw FTLParser.parseException( ParseException.ErrorCode.E0027, ps );
+                throw FTLParser.parseException( FTLParseException.ErrorCode.E0027, ps );
             } else {
                 ps.inc();
                 textElementType = TextElementType.NonBlank;
@@ -279,7 +279,7 @@ final class FTLPatternParser {
             case ERROR -> {
                 // unbalanced closing brace
                 ps.position( endPos );
-                throw FTLParser.parseException( ParseException.ErrorCode.E0027, ps );
+                throw FTLParser.parseException( FTLParseException.ErrorCode.E0027, ps );
             }
         };
     }

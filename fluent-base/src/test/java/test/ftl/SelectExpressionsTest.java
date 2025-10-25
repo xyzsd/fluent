@@ -33,7 +33,7 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
 
-import static fluent.syntax.parser.ParseException.ErrorCode.*;
+import static fluent.syntax.parser.FTLParseException.ErrorCode.*;
 import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

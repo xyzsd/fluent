@@ -36,8 +36,8 @@ import test.shared.FTLTestUtils;
 import java.io.IOException;
 import java.util.Map;
 
-import static fluent.syntax.parser.ParseException.ErrorCode.E0016;
-import static fluent.syntax.parser.ParseException.ErrorCode.E0017;
+import static fluent.syntax.parser.FTLParseException.ErrorCode.E0016;
+import static fluent.syntax.parser.FTLParseException.ErrorCode.E0017;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ReferenceExpressionsTest {
