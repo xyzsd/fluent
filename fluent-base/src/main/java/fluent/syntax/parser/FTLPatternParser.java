@@ -42,27 +42,8 @@ import java.util.List;
 @NullMarked
 final class FTLPatternParser {
 
-    /*
-    // method handle for getTextSlice(), so we don't have to put it in Accel or FTLStream.
-    private static final MethodHandle MH_GTS;
-
-    static {
-        MethodHandles.Lookup lookup = MethodHandles.lookup();
-        MethodType typeOfTarget = MethodType.methodType( TextSlice.class, FTLStream.class );
-        try {
-            if (FTLStream.isSIMD()) {
-                MH_GTS = lookup.findStatic( FTLPatternParser.class, "getTextSliceSIMD", typeOfTarget );
-            } else {
-                MH_GTS = lookup.findStatic( FTLPatternParser.class, "getTextSliceScalar", typeOfTarget );
-            }
-        } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new IllegalStateException( e );
-        }
-    }
-
-
-     */
     private FTLPatternParser() {}
+
 
     // parse a pattern
     // NOTE: Profiling indicates that method dominates parsing time (expectedly)
@@ -206,89 +187,6 @@ final class FTLPatternParser {
         return null;
     }
 
-    /*
-    // a not-insignificant amount of time is spent in this method based on profiling
-    private static TextSlice getTextSlice(FTLStream ps) {
-        // The goal here is to use a MethodHandle to encourage inlining by the JVM
-        try {
-            return (TextSlice) MH_GTS.invokeExact( ps );
-        } catch (FTLParseException p) {
-            throw p;
-        } catch (Throwable t) {
-            throw FTLParseException.of( t );
-        }
-    }
-
-    @SuppressWarnings( "unused" )   // used by getTextSLice() via method handle
-    private static TextSlice getTextSliceScalar(FTLStream ps) {
-        final int startPosition = ps.position();
-        TextElementType textElementType = TextElementType.Blank;
-
-        while (ps.hasRemaining()) {
-            final byte cb = ps.at();
-            if (cb == ' ') {
-                ps.inc();
-            } else if (cb == '\n') {
-                ps.inc();
-                return new TextSlice( startPosition, ps.position(),
-                        textElementType, TextElementTermination.LineFeed );
-            } else if (cb == '\r' && ps.isNextChar( (byte) '\n' )) {
-                ps.inc();
-                return new TextSlice( startPosition,
-                        ps.position() - 1,              // exclude '\r'
-                        textElementType,
-                        TextElementTermination.CRLF );
-            } else if (cb == '{') {
-                return new TextSlice( startPosition, ps.position(),
-                        textElementType, TextElementTermination.PlaceableStart );
-            } else if (cb == '}') {
-                throw FTLParser.parseException( FTLParseException.ErrorCode.E0027, ps );
-            } else {
-                ps.inc();
-                textElementType = TextElementType.NonBlank;
-            }
-        }
-
-        return new TextSlice( startPosition, ps.position(),
-                textElementType, TextElementTermination.EOF );
-    }
-
-    @SuppressWarnings( "unused" )   // used by getTextSLice() via method handle
-    private static TextSlice getTextSliceSIMD(FTLStream ps) {
-        final int startPos = ps.position();
-        final long packed = ps.nextTSChar( startPos );
-        final TextElementTermination termination = TextElementTermination.VALUES[FTLStream.ordinal( packed )];
-        final int endPos = FTLStream.position( packed );
-
-        final TextElementType textElementType = ps.isBlank( startPos, endPos )
-                ? TextElementType.Blank
-                : TextElementType.NonBlank;
-
-        return switch (termination) {
-            case LineFeed -> {
-                ps.position( endPos + 1 );
-                yield new TextSlice( startPos, endPos + 1,
-                        textElementType, termination );
-            }
-            case CRLF -> {
-                ps.position( endPos + 1 );
-                yield new TextSlice( startPos, endPos,
-                        textElementType, termination );
-            }
-            case PlaceableStart, EOF -> {
-                ps.position( endPos );
-                yield new TextSlice( startPos, endPos,
-                        textElementType, termination );
-            }
-            case ERROR -> {
-                // unbalanced closing brace
-                ps.position( endPos );
-                throw FTLParser.parseException( FTLParseException.ErrorCode.E0027, ps );
-            }
-        };
-    }
-
-     */
 
 
     // This enum tracks the reason for which a text slice ended.
