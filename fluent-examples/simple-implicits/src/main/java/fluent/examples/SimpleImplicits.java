@@ -9,10 +9,7 @@ import fluent.function.FluentFunction;
 import fluent.function.FluentFunctionFactory;
 import fluent.function.Options;
 import fluent.function.ResolvedParameters;
-import fluent.function.functions.numeric.OffsetFn;
 import fluent.syntax.parser.FTLParser;
-import fluent.syntax.parser.FTLStream;
-import fluent.types.FluentNumber;
 import fluent.types.FluentString;
 import fluent.types.FluentValue;
 import org.jspecify.annotations.NullMarked;
@@ -204,7 +201,7 @@ public class SimpleImplicits {
     private static FluentResource parseFTL(String resourceName) throws IOException {
         final FluentResource resource = FTLParser.parse(
                 // This is a simple and efficient way to get an FTL file as a resource
-                FTLStream.from( Thread.currentThread().getContextClassLoader(), resourceName )
+                Thread.currentThread().getContextClassLoader(), resourceName
         );
 
         if (!resource.errors().isEmpty()) {

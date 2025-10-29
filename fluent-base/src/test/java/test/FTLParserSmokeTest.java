@@ -30,7 +30,6 @@ import fluent.bundle.FluentResource;
 import fluent.bundle.LRUFunctionCache;
 import fluent.function.functions.list.CountFn;
 import fluent.syntax.parser.FTLParser;
-import fluent.syntax.parser.FTLStream;
 import fluent.syntax.parser.FTLParseException;
 import fluent.types.FluentNumber;
 import fluent.types.FluentString;
@@ -58,7 +57,7 @@ class FTLParserSmokeTest {
     };
 
     private static FluentBundle parse(String in) {
-        final FluentResource parse = FTLParser.parse( FTLStream.of( in ) );
+        final FluentResource parse = FTLParser.parse( in );
         if (parse.hasErrors()) {
             System.err.println( "errors on parse: " + parse.errors() );
         }
@@ -306,7 +305,7 @@ class FTLParserSmokeTest {
                 visit = Visit { -https("positional1", "positional2", host: "example.com") } for more information.
                 """;
 
-        final FluentResource parse = FTLParser.parse( FTLStream.of( s1 ) );
+        final FluentResource parse = FTLParser.parse( s1 );
         assertEquals( parse.errors().size(), 1 );
         assertEquals( parse.errors().get( 0 ).errorCode(), FTLParseException.ErrorCode.E0031 );
     }

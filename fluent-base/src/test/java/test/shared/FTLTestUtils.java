@@ -36,7 +36,6 @@ import fluent.function.ResolvedParameters;
 import fluent.function.functions.DefaultFunctionFactories;
 import fluent.syntax.AST.*;
 import fluent.syntax.parser.FTLParser;
-import fluent.syntax.parser.FTLStream;
 import fluent.syntax.parser.FTLParseException;
 import fluent.types.FluentString;
 import org.jspecify.annotations.NullMarked;
@@ -68,9 +67,11 @@ public class FTLTestUtils {
         requireNonNull( fileName );
         System.out.println( "Input FTL: " + fileName );
 
-        return FTLParser.parse( FTLStream.from( Thread.currentThread().getContextClassLoader(), fileName ),
-                false );    // don't ignore comments!
-
+        return FTLParser.parse(
+                Thread.currentThread().getContextClassLoader(),
+                fileName,
+                FTLParser.ParseOptions.EXTENDED,
+                FTLParser.Implementation.AUTO );
     }
 
     // search resource for the given errorcode-line exception
@@ -86,7 +87,8 @@ public class FTLTestUtils {
 
     // bundle from string
     public static FluentBundle bundleFromString(final String in) {
-        final FluentResource resource = FTLParser.parse( FTLStream.of( in ), false );
+        final FluentResource resource = FTLParser.parse( in, FTLParser.ParseOptions.EXTENDED,
+                FTLParser.Implementation.AUTO );
         return basicBundleSetup( resource, false );
     }
 
@@ -115,7 +117,6 @@ public class FTLTestUtils {
         final FluentFunctionRegistry.Builder regBuilder = FluentFunctionRegistry.builder();
         DefaultFunctionFactories.allNonImplicits().forEach( regBuilder::addFactory );
         final FluentFunctionRegistry registry = regBuilder.build();
-
 
 
         var builder = FluentBundle.builder( Locale.US, registry, LRUFunctionCache.of() )

@@ -26,7 +26,6 @@ package test.misc;
 
 import fluent.bundle.FluentResource;
 import fluent.syntax.parser.FTLParser;
-import fluent.syntax.parser.FTLStream;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -59,7 +58,8 @@ public class SkipBlankBlockTest {
                             "\n\n              \r\n\r\n                 \n"+  // many spaces between first and last \n
                             "\n\n              \r\n\r\n                 \n";  // many spaces between first and last \n
 
-        final FluentResource resource = FTLParser.parse( FTLStream.of( in ), true );
+        final FluentResource resource = FTLParser.parse( in, FTLParser.ParseOptions.DEFAULT,
+                FTLParser.Implementation.AUTO );
 
         // no errors
         assertEquals( 0, resource.errors().size() );

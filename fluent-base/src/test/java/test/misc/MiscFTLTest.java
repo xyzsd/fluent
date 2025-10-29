@@ -26,7 +26,6 @@ package test.misc;
 
 import fluent.bundle.FluentResource;
 import fluent.syntax.parser.FTLParser;
-import fluent.syntax.parser.FTLStream;
 import org.junit.jupiter.api.Test;
 import test.shared.FTLTestUtils;
 
@@ -40,26 +39,27 @@ public class MiscFTLTest {
 
     /// parse the given string
     private static FluentResource parse(String in) {
-        return FTLParser.parse( FTLStream.of( in ), false );
+        return FTLParser.parse( in, FTLParser.ParseOptions.EXTENDED,
+                FTLParser.Implementation.AUTO );
     }
 
     private static void show(FluentResource resource) {
-        System.out.println("BEGIN");
+        System.out.println( "BEGIN" );
         resource.errors().forEach( System.out::println );
-        System.out.println("-----");
+        System.out.println( "-----" );
         resource.entries().forEach( System.out::println );
-        System.out.println("-----");
+        System.out.println( "-----" );
         resource.junk().forEach( System.out::println );
-        System.out.println("END\n");
+        System.out.println( "END\n" );
     }
 
 
     @Test
     public void attributeEarlyEOF_noEquals() {
         // missing '=' at EOF
-        final String in =   """
-                            message = Message pattern.
-                                    .attrib""";
+        final String in = """
+                message = Message pattern.
+                        .attrib""";
 
         final FluentResource resource = parse( in );
         assertEquals( 1, resource.errors().size() );
@@ -69,9 +69,9 @@ public class MiscFTLTest {
     @Test
     public void attributeEarlyEOF_noID1() {
         // fails after dot, which is EOF (but also is line 2)
-        final String in =   """
-                            message = Message pattern.
-                                    .""";
+        final String in = """
+                message = Message pattern.
+                        .""";
 
         final FluentResource resource = parse( in );
         assertEquals( 1, resource.errors().size() );
@@ -81,10 +81,10 @@ public class MiscFTLTest {
     @Test
     public void attributeEarlyEOF_noID2() {
         // also fails, but instead of EOF, gives line 2 (where dot is)
-        final String in =   """
-                            message = Message pattern.
-                                    .
-                                    """;
+        final String in = """
+                message = Message pattern.
+                        .
+                """;
 
         final FluentResource resource = parse( in );
         assertEquals( 1, resource.errors().size() );
@@ -94,9 +94,9 @@ public class MiscFTLTest {
     @Test
     public void attributeEarlyEOF_noAttribute() {
         // this is OK
-        final String in =   """
-                            message = Message pattern.
-                                    """;
+        final String in = """
+                message = Message pattern.
+                """;
 
         final FluentResource resource = parse( in );
         assertEquals( 0, resource.errors().size() );
@@ -107,11 +107,11 @@ public class MiscFTLTest {
     @Test
     public void selectOK() {
         // this is OK
-        final String in =   """
-                            unread = { $value ->
-                                [one] You have one unread message.
-                                *[other] You have { $value } unread messages.
-                            }""";
+        final String in = """
+                unread = { $value ->
+                    [one] You have one unread message.
+                    *[other] You have { $value } unread messages.
+                }""";
 
         final FluentResource resource = parse( in );
         assertEquals( 0, resource.errors().size() );
@@ -121,10 +121,10 @@ public class MiscFTLTest {
     @Test
     public void selectNoVariant() {
         // no variants!
-        final String in =   """
-                            unread = { $value ->
-                                 
-                            }""";
+        final String in = """
+                unread = { $value ->
+                
+                }""";
 
         final FluentResource resource = parse( in );
         assertEquals( 1, resource.errors().size() );
@@ -134,9 +134,9 @@ public class MiscFTLTest {
     @Test
     public void selectNoVariantEOF() {
         // no variants! but occurs at EOF
-        final String in =   """
-                            unread = { $value ->
-                            """;
+        final String in = """
+                unread = { $value ->
+                """;
 
         final FluentResource resource = parse( in );
         assertEquals( 1, resource.errors().size() );
@@ -146,10 +146,10 @@ public class MiscFTLTest {
     @Test
     public void selectJustLeftBracket() {
         // expect a variant key (identifier or number)
-        final String in =   """
-                            unread = { $value ->
-                                [
-                            """;
+        final String in = """
+                unread = { $value ->
+                    [
+                """;
 
         final FluentResource resource = parse( in );
         assertEquals( 1, resource.errors().size() );
@@ -159,10 +159,10 @@ public class MiscFTLTest {
     @Test
     public void selectIncompleteIdentifier() {
         // no closing square bracket
-        final String in =   """
-                            unread = { $value ->
-                                [id
-                            """;
+        final String in = """
+                unread = { $value ->
+                    [id
+                """;
 
         final FluentResource resource = parse( in );
         assertEquals( 1, resource.errors().size() );
@@ -172,10 +172,10 @@ public class MiscFTLTest {
     @Test
     public void selectIncompleteIdentifier2() {
         // no closing square bracket, but for a number
-        final String in =   """
-                            unread = { $value ->
-                                [34 some words
-                            """;
+        final String in = """
+                unread = { $value ->
+                    [34 some words
+                """;
 
         final FluentResource resource = parse( in );
         assertEquals( 1, resource.errors().size() );
@@ -185,11 +185,11 @@ public class MiscFTLTest {
     @Test
     public void selectIncompleteIdentifier3() {
         // no closing square bracket, but for a number, but after a legal variant
-        final String in =   """
-                            unread = { $value ->
-                                [val1] value 1.
-                                [34
-                            """;
+        final String in = """
+                unread = { $value ->
+                    [val1] value 1.
+                    [34
+                """;
 
         final FluentResource resource = parse( in );
         assertEquals( 1, resource.errors().size() );
@@ -200,11 +200,11 @@ public class MiscFTLTest {
     @Test
     public void selectNoDefault() {
         // no default, AND no closing brace
-        final String in =   """
-                            unread = { $value ->
-                                [val1] value 1.
-                                [34] a number literal
-                            """;
+        final String in = """
+                unread = { $value ->
+                    [val1] value 1.
+                    [34] a number literal
+                """;
 
         final FluentResource resource = parse( in );
         assertEquals( 1, resource.errors().size() );
@@ -215,13 +215,13 @@ public class MiscFTLTest {
     @Test
     public void selectNoDefault2() {
         // no default, but with closing brace (so error is not at EOF)
-        final String in =   """
-                            unread = { $value ->
-                                [val1] value 1.
-                                [34] a number literal
-                                
-                            }
-                            """;
+        final String in = """
+                unread = { $value ->
+                    [val1] value 1.
+                    [34] a number literal
+                
+                }
+                """;
 
         final FluentResource resource = parse( in );
         assertEquals( 1, resource.errors().size() );
@@ -230,32 +230,35 @@ public class MiscFTLTest {
 
     @Test
     public void invalidComment() {
-        final String in =   """
-                            # This comment is OK (space between '#' and comment text).
-                            #This comment is NOT OK, and fails parsing, but only if comments are NOT ignored.
-                            # apparently this is per spec.
-                            message = This is a message.
-                            """;
+        final String in = """
+                # This comment is OK (space between '#' and comment text).
+                #This comment is NOT OK, and fails parsing, but only if comments are NOT ignored.
+                # apparently this is per spec.
+                message = This is a message.
+                """;
         // Comments NOT ignored -- 1 error
-        FluentResource resource = FTLParser.parse( FTLStream.of( in ), false );
+        FluentResource resource = FTLParser.parse( in, FTLParser.ParseOptions.EXTENDED,
+                FTLParser.Implementation.AUTO );
         assertEquals( 1, resource.errors().size() );
         assertTrue( FTLTestUtils.matchParseException( resource, E0003, 2 ) );
 
         // Comments ignored -- no errors.
-        resource = FTLParser.parse( FTLStream.of( in ), true );
+        resource = FTLParser.parse( in, FTLParser.ParseOptions.DEFAULT,
+                FTLParser.Implementation.AUTO );
         assertEquals( 0, resource.errors().size() );
     }
+
 
     @Test
     public void literalErrors() {
         // as:number  the word 'number' is a string literal, and must be in quotation marks.
-        final String in =   """
-                            msg_ok = |{BOOLEAN("This is a String", as:"number")}|
-                            msg_bad_option_literal = |{BOOLEAN("This is a String", as:number)}|
-                            """;
+        final String in = """
+                msg_ok = |{BOOLEAN("This is a String", as:"number")}|
+                msg_bad_option_literal = |{BOOLEAN("This is a String", as:number)}|
+                """;
         // Comments NOT ignored -- 1 error
-        final FluentResource resource = FTLParser.parse( FTLStream.of( in ), true );
-        System.out.println(resource);
+        final FluentResource resource = FTLParser.parse(  in );
+        System.out.println( resource );
         assertEquals( 1, resource.errors().size() );
         assertTrue( FTLTestUtils.matchParseException( resource, E0032, 2 ) );
     }

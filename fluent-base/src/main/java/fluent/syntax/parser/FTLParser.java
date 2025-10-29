@@ -29,56 +29,251 @@ import fluent.syntax.parser.FTLParseException.ErrorCode;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import static fluent.syntax.parser.FTLStream.*;
+import static java.util.Objects.requireNonNull;
 
 /// Parse Fluent Translation List (FTL) source into a FluentResource AST.
 ///
 /// This parser consumes an FTLStream and produces a FluentResource that can be queried
 /// for messages, terms, and metadata. Parse exceptions are also accumulated within the FluentResource.
 ///
-/// There are two parsing modes, depending upon the `ignoreCommentsAndJunk` flag.
-/// - If `false`, comments are ignored, and 'junk nodes' are not created if parse errors are encountered. This results
-///   in a smaller, more efficient AST and is best for general use. Parse errors are still collected and can be
-///   queried in the returned FluentResource.
-/// - If `true`, comments are preserved and junk nodes (ranges of unparsable source captured when a parse error is
-///   encountered) are recorded when errors occur. Best for implementing translation or localization tools
-///   (since comments are preserved) or for error diagnosis and testing.
 ///
+///
+// TODO: **** update docs ******
 @NullMarked
 public class FTLParser {
     ///  default initial size for attribute lists
     private static final int ATTRIBUTE_LIST_SIZE = 4;
 
+    ///  can we SIMD?
+    private static final boolean canSIMD = canSIMD();
+
+    ///  The Logger
+    private static final System.Logger logger = System.getLogger( "fluent.syntax.FTLParser" );
+
+    /// Options which determine how FTL is parsed.
+    ///
+    /// Specifically, determines whether Comments should be parsed (usually they are skipped), and whether
+    /// [Junk] nodes are created. [Junk] nodes are the unparseable segments encountered during parse errors,
+    /// and can be useful for diagnostics.
+    ///
+    /// Parse errors are reported in all modes.
+    public enum ParseOptions {
+        /// Default parse, which skips comments (more performant parsing, and smaller AST) and Junk.
+        /// Most performant and best suited for general use.
+        DEFAULT,
+
+        /// Extended parse, which includes Comments and Junk.
+        ///
+        /// Most useful for testing, diagnostics, and translation tools.
+        EXTENDED
+    }
+
+    /// Select the Parser implementation.
+    ///
+    /// This defaults to AUTO, but a specific implementation can be chosen if desired. These options may be narrowed
+    /// or removed in a future release.
+    public enum Implementation {
+        /// Automatically determine the best implementation to use.
+        AUTO,
+        /// Use the scalar implementation.*/
+        SCALAR,
+        /// Use the SWAR implementation. Best if we do not want to use the incubating vector class.
+        SWAR,
+        /// Use the SIMD implementation, which depends on (incubating) vector package.
+        SIMD
+    }
+
 
     private FTLParser() {}
 
-    /// Parse an FTLStream into a FluentResource.
-    ///
-    /// Comments will be ignored (and will not be present in the AST). 'Junk' nodes will also not be created
-    /// if a parse failure occurs.
-    ///
-    /// Parse errors are still collected for the returned FluentResource.
-    ///
-    /// @param stream the input stream to parse
-    /// @return the parsed FluentResource
-    public static FluentResource parse(final FTLStream stream) {
-        return parseSimple( stream );
+
+    public static FluentResource parse(final byte[] array) {
+        return parse( array, ParseOptions.DEFAULT, Implementation.AUTO );
     }
 
-    /// Parse an FTLStream into a FluentResource with control over comment and junk handling.
+
+    /// Parse input from a String.
     ///
-    /// When `ignoreCommentsAndJunk` is true, Comments are not included in the AST and Junk nodes are not created.
-    /// Parse errors are still collected for the returned FluentResource.
+    /// The string is converted to an array of UTF-8 encoded bytes.
+    /// This is convenient for tests or very small inputs, but is not efficient.
+    /// For most inputs, prefer byte[]/ByteBuffer or resource loading.
     ///
-    /// @param stream                the input stream to parse
-    /// @param ignoreCommentsAndJunk if true, omit Comment and Junk nodes from the AST
-    /// @return the parsed FluentResource
-    public static FluentResource parse(final FTLStream stream, final boolean ignoreCommentsAndJunk) {
-        return (ignoreCommentsAndJunk ? parseSimple( stream ) : parseComplete( stream ));
+    /// @param in non-empty source text
+    /// @return a FluentResource parsed from the given input.
+    /// @throws IllegalArgumentException if the input is empty
+    public static FluentResource parse(String in) {
+        return parse( in, ParseOptions.DEFAULT, Implementation.AUTO );
+    }
+
+    /// Create a stream from a ByteBuffer.
+    ///
+    /// This stream will reference the backing array of the buffer.
+    /// The buffer must have a non-zero limit.
+    ///
+    /// @param bb a ByteBuffer whose remaining bytes contain UTF‑8 encoded FTL source
+    /// @return a FluentResource parsed from the given input.
+    /// @throws IllegalArgumentException         if the buffer has zero length
+    /// @throws java.nio.ReadOnlyBufferException if the buffer is backed by an array but is read-only
+    /// @throws UnsupportedOperationException    if the buffer is not backed by an accessible array
+    public static FluentResource parse(final ByteBuffer bb) {
+        return parse( bb, ParseOptions.DEFAULT, Implementation.AUTO );
+    }
+
+    /// Parse input from a classLoader-derived resource.
+    ///
+    /// Example:
+    /// {@snippet :
+    ///     FluentResource resource = fluent.syntax.parser.FTLParser.parse(
+    ///         Thread.currentThread().getContextClassLoader(),
+    ///         "fluent/examples/hello/en-US/main.ftl"
+    ///     );
+    ///}
+    ///
+    /// @param classLoader a class loader (e.g., Thread.currentThread().getContextClassLoader())
+    /// @param resource    the classpath resource to load
+    /// @return a FluentResource parsed from the given input.
+    /// @throws IOException           if an I/O error occurs while reading
+    /// @throws FileNotFoundException if the resource cannot be found
+    public static FluentResource parse(final ClassLoader classLoader, final String resource) throws IOException {
+        return parse( classLoader, resource, ParseOptions.DEFAULT, Implementation.AUTO );
+    }
+
+
+    /// Parse input from a String.
+    ///
+    /// The string is converted to an array of UTF-8 encoded bytes.
+    /// This is convenient for tests or very small inputs, but is not efficient.
+    /// For most inputs, prefer byte[]/ByteBuffer or resource loading.
+    ///
+    /// @param in             non-empty source text
+    /// @param parseOptions
+    /// @param implementation
+    /// @return a FluentResource parsed from the given input.
+    public static FluentResource parse(String in, ParseOptions parseOptions, Implementation implementation) {
+        requireNonNull( in );
+        requireNonNull( parseOptions );
+        requireNonNull( implementation );
+
+        if (in.isEmpty()) {
+            return FluentResource.of();
+        }
+
+        return parse( in.getBytes( StandardCharsets.UTF_8 ), parseOptions, implementation );
+    }
+
+    /// Create a stream from a ByteBuffer.
+    ///
+    /// This stream will reference the backing array of the buffer.
+    /// The buffer must have a non-zero limit.
+    ///
+    /// @param bb             a ByteBuffer whose remaining bytes contain UTF‑8 encoded FTL source
+    /// @param parseOptions
+    /// @param implementation
+    /// @return a FluentResource parsed from the given input.
+    /// @throws java.nio.ReadOnlyBufferException if the buffer is backed by an array but is read-only
+    /// @throws UnsupportedOperationException    if the buffer is not backed by an accessible array
+    public static FluentResource parse(final ByteBuffer bb, ParseOptions parseOptions, Implementation implementation) {
+        requireNonNull( bb );
+        requireNonNull( parseOptions );
+        requireNonNull( implementation );
+        if (bb.limit() == 0) {
+            return FluentResource.of();
+        }
+        return parse( bb.array(), parseOptions, implementation );
+    }
+
+    /// Parse input from a classLoader-derived resource.
+    ///
+    /// @param classLoader    a class loader (e.g., Thread.currentThread().getContextClassLoader())
+    /// @param resource       the classpath resource to load
+    /// @param parseOptions
+    /// @param implementation
+    /// @return a FluentResource parsed from the given input.
+    /// @throws IOException           if an I/O error occurs while reading
+    /// @throws FileNotFoundException if the resource cannot be found
+    public static FluentResource parse(final ClassLoader classLoader, final String resource, ParseOptions parseOptions, Implementation implementation) throws IOException {
+        requireNonNull( classLoader );
+        requireNonNull( resource );
+        requireNonNull( parseOptions );
+        requireNonNull( implementation );
+
+        try (InputStream is = classLoader.getResourceAsStream( resource )) {
+            if (is == null) {
+                throw new FileNotFoundException( resource );
+            }
+
+            return parse( is.readAllBytes(), parseOptions, implementation );
+        }
+    }
+
+
+    /// Create a stream from a byte array.
+    ///
+    /// If any mutation of the input array occurs during parsing, parse behavior is undefined.
+    /// The input array must be non-empty.
+    ///
+    /// Input bytes are interpreted as UTF‑8.
+    ///
+    /// @param array          the UTF‑8 encoded bytes of FTL source
+    /// @param parseOptions
+    /// @param implementation
+    /// @return a FluentResource parsed from the given input.
+    public static FluentResource parse(final byte[] array, final ParseOptions parseOptions, final Implementation implementation) {
+        requireNonNull( array );
+        requireNonNull( parseOptions );
+        requireNonNull( implementation );
+        if (array.length == 0) {
+            return FluentResource.of();
+        }
+
+        // decide implementation
+        final FTLStream ftlStream =
+                switch (implementation) {
+                    case AUTO, SIMD -> {
+                        if (canSIMD) {
+                            yield new FTLStreamSIMD( array );
+                        } else {
+                            yield new FTLStreamSWAR( array );
+                        }
+                    }
+                    case SCALAR -> new FTLStream( array );
+                    case SWAR -> new FTLStreamSWAR( array );
+                };
+
+        return switch (parseOptions) {
+            case DEFAULT -> parseSimple( ftlStream );
+            case EXTENDED -> parseComplete( ftlStream );
+        };
+    }
+
+
+    private static boolean canSIMD() {
+        try {
+            // this will fail if either:
+            //  (a) there is no jdk.incubator.vector.ByteVector
+            //  (b) the runtime VM option is NOT set: "--add-modules jdk.incubator.vector"
+            Class.forName( "jdk.incubator.vector.ByteVector" );
+            if (logger != null) {
+                logger.log( System.Logger.Level.INFO, "SIMD Enabled." );
+            }
+            return true;
+        } catch (ClassNotFoundException e) {
+            if (logger != null) {
+                logger.log( System.Logger.Level.WARNING, "SIMD disabled. See documentation for more information." );
+            }
+            return false;
+        }
     }
 
 

@@ -9,14 +9,11 @@ import fluent.function.Options;
 import fluent.function.functions.temporal.DateTimeFn;
 import fluent.function.functions.temporal.TemporalFn;
 import fluent.syntax.parser.FTLParser;
-import fluent.syntax.parser.FTLStream;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -124,7 +121,7 @@ public class RenamedFunctions {
     private static FluentResource parseFTL(String resourceName) throws IOException {
         final FluentResource resource = FTLParser.parse(
                 // This is a simple and efficient way to get an FTL file as a resource
-                FTLStream.from( Thread.currentThread().getContextClassLoader(), resourceName )
+                Thread.currentThread().getContextClassLoader(), resourceName
         );
 
         if (!resource.errors().isEmpty()) {

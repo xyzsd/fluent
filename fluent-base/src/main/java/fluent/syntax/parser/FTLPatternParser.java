@@ -42,6 +42,7 @@ import java.util.List;
 @NullMarked
 final class FTLPatternParser {
 
+    /*
     // method handle for getTextSlice(), so we don't have to put it in Accel or FTLStream.
     private static final MethodHandle MH_GTS;
 
@@ -59,6 +60,8 @@ final class FTLPatternParser {
         }
     }
 
+
+     */
     private FTLPatternParser() {}
 
     // parse a pattern
@@ -103,7 +106,7 @@ final class FTLPatternParser {
                     // else : continue
                 }
 
-                final TextSlice textSlice = getTextSlice( ps );
+                final TextSlice textSlice = ps.getTextSlice();
 
                 if (textSlice.start() != textSlice.end()) {     // == for <CR> alone (ignored)
                     if (textElementRole == TextElementPosition.LineStart
@@ -203,6 +206,7 @@ final class FTLPatternParser {
         return null;
     }
 
+    /*
     // a not-insignificant amount of time is spent in this method based on profiling
     private static TextSlice getTextSlice(FTLStream ps) {
         // The goal here is to use a MethodHandle to encourage inlining by the JVM
@@ -284,6 +288,8 @@ final class FTLPatternParser {
         };
     }
 
+     */
+
 
     // This enum tracks the reason for which a text slice ended.
     // It is used by the pattern to set the proper state for the next line.
@@ -315,7 +321,7 @@ final class FTLPatternParser {
     // This enum tracks whether the text element is blank or not.
     // This is important to identify text elements which should not be taken into account
     // when calculating common indent.
-    private enum TextElementType {
+    enum TextElementType {
         Blank,
         NonBlank,
     }

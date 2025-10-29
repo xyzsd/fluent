@@ -43,8 +43,8 @@ public class PerfTest {
 
         // parse & ignore comments
         final FluentResource resource = FTLParser.parse(
-                FTLStream.from( Thread.currentThread().getContextClassLoader(), RESOURCE ),
-                true );
+                Thread.currentThread().getContextClassLoader(), RESOURCE
+        );
 
         assertEquals( 493, resource.entries().size() );
         assertEquals( 0, resource.errors().size() );

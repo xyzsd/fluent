@@ -25,12 +25,21 @@
 <!-- exclusion filters to reduce spotbugs complaints -->
 <FindBugsFilter>
     <Match>
-        <Class name="fluent.syntax.parser.SWAR" />
+        <Class name="fluent.syntax.parser.FTLStreamSWAR" />
         <Bug code="UPM"/>
     </Match>
     <!-- exclude test sources  -->
     <Match>
+        <Class name="test.FTLParserSmokeTest" />
+    </Match>
+    <Match>
         <Package name="test.ftl" />
+    </Match>
+    <Match>
+        <Package name="test.misc" />
+    </Match>
+    <Match>
+        <Package name="test.perf" />
     </Match>
     <Match>
         <Package name="test.shared" />

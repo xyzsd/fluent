@@ -26,7 +26,6 @@ package parser;
 
 import fluent.bundle.FluentResource;
 import fluent.syntax.parser.FTLParser;
-import fluent.syntax.parser.FTLStream;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
@@ -46,8 +45,7 @@ public class ParserBench {
     public void measureParser(Blackhole blackhole) throws IOException {
         final ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
         final FluentResource parsedResource = FTLParser.parse(
-                FTLStream.from( contextClassLoader, RESOURCE ),
-                true    // IGNORE comments (and junk)
+                 contextClassLoader, RESOURCE
         );
         blackhole.consume( parsedResource );
     }

@@ -5,7 +5,6 @@ import fluent.bundle.FluentFunctionRegistry;
 import fluent.bundle.FluentResource;
 import fluent.bundle.LRUFunctionCache;
 import fluent.syntax.parser.FTLParser;
-import fluent.syntax.parser.FTLStream;
 
 import java.io.IOException;
 import java.util.List;
@@ -25,7 +24,7 @@ public class Hello {
         // NOTE: this can throw an IOException
         final FluentResource resource = FTLParser.parse(
                 // This is a simple and efficient way to get an FTL file as a resource
-                FTLStream.from( Thread.currentThread().getContextClassLoader(), "hello.ftl" )
+                 Thread.currentThread().getContextClassLoader(), "hello.ftl"
         );
 
         // The FTLResource contains the data model (AST).

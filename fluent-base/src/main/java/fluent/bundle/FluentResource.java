@@ -44,10 +44,15 @@ import java.util.List;
 public record FluentResource(List<Entry> entries, List<FTLParseException> errors, List<Junk> junk) {
 
 
-    public FluentResource(List<Entry> entries, List<FTLParseException> errors, List<Junk> junk) {
-        this.entries = List.copyOf(entries);
-        this.errors = List.copyOf(errors);
-        this.junk = List.copyOf(junk);
+    public FluentResource {
+        entries = List.copyOf(entries);
+        errors = List.copyOf(errors);
+        junk = List.copyOf(junk);
+    }
+
+    // an Empty FluentResource
+    public static FluentResource of() {
+        return new FluentResource( List.of(), List.of(), List.of() );
     }
 
     /// True if there are errors
