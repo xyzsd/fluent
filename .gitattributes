@@ -10,3 +10,19 @@
 # Binary files should be left untouched
 *.jar           binary
 
+# source files
+.java           text eol=lf
+.kts            text eol=lf
+
+# FTL files can have LF or CRLF as line endings.
+# Generally one style should be preferred. However, for testing, we want to test both, without having any conversion
+# occur that interferes with testing.
+#
+# default FTL line ending style
+*.ftl      eol=lf
+
+# specific test for CRLF line endings
+fluent-base/src/test/resources/fixtures/crlf.ftl   eol=crlf
+
+# specific test for CR-only (see test for details) 
+fluent-base/src/test/resources/fixtures/cr.ftl     eol=cr
