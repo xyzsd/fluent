@@ -15,4 +15,4 @@ key02 =
 err03 = { "str
 
 # ERROR Missing newline after ->.
-err04 = { $sel -> }
+err04 = {  $sel ->  }
