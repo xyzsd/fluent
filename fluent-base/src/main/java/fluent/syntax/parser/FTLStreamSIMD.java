@@ -320,16 +320,12 @@ final class FTLStreamSIMD extends FTLStream {
     /// returns a *packed long* storing the position and line count
     ///
     private static long skipBlankBlock(final byte[] buf, final int startIndex) {
-        System.out.println("skipBlankBlock() startIndex: " + startIndex);
         final int maxIndex = buf.length;    // if there is padding at end, must subtract here (e.g., final int maxIndex = buf.length - PAD;)
         final int increment = SPECIES.length();
-        System.out.println("skipBlankBlock() maxIndex: " + maxIndex);
-        System.out.println("skipBlankBlock() increment: " + increment);
 
         int lastLFindex = startIndex;
         int lineCount = 0;
         for (int i = startIndex; i < maxIndex; i += increment) {
-            System.out.println("  i:"+i);
             final ByteVector in = ByteVector.fromArray( SPECIES, buf, i, SPECIES.indexInRange( i, maxIndex ) );
             final ByteVector inShifted = ByteVector.fromArray( SPECIES, buf, i + 1, SPECIES.indexInRange( i + 1, maxIndex ) );
 
@@ -360,13 +356,9 @@ final class FTLStreamSIMD extends FTLStream {
                     // or, failing that, 'startPosition'.
                     final int position = (i + maskedLF.lastTrue() + 1);
                     // line count: number of linefeeds (also works for CRLF) (which is: maskedLF.trueCount())
-                    System.out.println("exit AAAAAA");
                     return FTLStream.packLong( position, +maskedLF.trueCount() );
                 } else {
                     // use the LF from a prior vector (or start if none), with total lineCount
-                    System.out.println("  lastLFindex = "+lastLFindex);
-                    System.out.println("  lineCount = "+lineCount);
-                    System.out.println("exit BBBBBB");
                     return FTLStream.packLong( lastLFindex, lineCount );
                 }
             }
@@ -377,7 +369,6 @@ final class FTLStreamSIMD extends FTLStream {
                 lineCount += eqLF.trueCount();
             }
         }
-        System.out.println("exit CCCCCC");
         return FTLStream.packLong( startIndex, lineCount );
     }
 
