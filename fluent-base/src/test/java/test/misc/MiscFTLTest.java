@@ -40,17 +40,7 @@ public class MiscFTLTest {
     /// parse the given string
     private static FluentResource parse(String in) {
         return FTLParser.parse( in, FTLParser.ParseOptions.EXTENDED,
-                FTLParser.Implementation.AUTO );
-    }
-
-    private static void show(FluentResource resource) {
-        System.out.println( "BEGIN" );
-        resource.errors().forEach( System.out::println );
-        System.out.println( "-----" );
-        resource.entries().forEach( System.out::println );
-        System.out.println( "-----" );
-        resource.junk().forEach( System.out::println );
-        System.out.println( "END\n" );
+                FTLParser.Implementation.SCALAR );
     }
 
 
@@ -238,13 +228,13 @@ public class MiscFTLTest {
                 """;
         // Comments NOT ignored -- 1 error
         FluentResource resource = FTLParser.parse( in, FTLParser.ParseOptions.EXTENDED,
-                FTLParser.Implementation.AUTO );
+                FTLParser.Implementation.SCALAR );
         assertEquals( 1, resource.errors().size() );
         assertTrue( FTLTestUtils.matchParseException( resource, E0003, 2 ) );
 
         // Comments ignored -- no errors.
         resource = FTLParser.parse( in, FTLParser.ParseOptions.DEFAULT,
-                FTLParser.Implementation.AUTO );
+                FTLParser.Implementation.SCALAR );
         assertEquals( 0, resource.errors().size() );
     }
 

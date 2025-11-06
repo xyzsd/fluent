@@ -35,11 +35,9 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static fluent.syntax.parser.FTLStream.*;
 import static java.util.Objects.requireNonNull;
 
 /// Parse Fluent Translation List (FTL) source into a [fluent.bundle.FluentResource] AST.
@@ -118,14 +116,11 @@ public class FTLParser {
     /// This defaults to AUTO, but a specific implementation can be chosen if desired. These options may be narrowed
     /// or removed in a future release.
     public enum Implementation {
-        /// Automatically determine the best implementation to use.
-        AUTO,
-        /// Use the scalar implementation.*/
+        /// Use the scalar implementation.
         SCALAR,
-        /// Use the SWAR implementation. Best if we do not want to use the incubating vector class.
-        SWAR,
-        /// Use the SIMD implementation, which depends on (incubating) vector package.
-        SIMD
+        /// Use the SIMD implementation, which depends on (incubating) vector package. This will fallback to
+        /// SCALAR if the vector package is not available.
+        SIMD,
     }
 
 
@@ -133,7 +128,7 @@ public class FTLParser {
 
 
     public static FluentResource parse(final byte[] array) {
-        return parse( array, ParseOptions.DEFAULT, Implementation.AUTO );
+        return parse( array, ParseOptions.DEFAULT, Implementation.SCALAR );
     }
 
 
@@ -147,7 +142,7 @@ public class FTLParser {
     /// @return a FluentResource parsed from the given input.
     /// @throws IllegalArgumentException if the input is empty
     public static FluentResource parse(String in) {
-        return parse( in, ParseOptions.DEFAULT, Implementation.AUTO );
+        return parse( in, ParseOptions.DEFAULT, Implementation.SCALAR );
     }
 
     /// Create a stream from a ByteBuffer.
@@ -161,7 +156,7 @@ public class FTLParser {
     /// @throws java.nio.ReadOnlyBufferException if the buffer is backed by an array but is read-only
     /// @throws UnsupportedOperationException    if the buffer is not backed by an accessible array
     public static FluentResource parse(final ByteBuffer bb) {
-        return parse( bb, ParseOptions.DEFAULT, Implementation.AUTO );
+        return parse( bb, ParseOptions.DEFAULT, Implementation.SCALAR );
     }
 
     /// Parse input from a classLoader-derived resource.
@@ -180,7 +175,7 @@ public class FTLParser {
     /// @throws IOException           if an I/O error occurs while reading
     /// @throws FileNotFoundException if the resource cannot be found
     public static FluentResource parse(final ClassLoader classLoader, final String resource) throws IOException {
-        return parse( classLoader, resource, ParseOptions.DEFAULT, Implementation.AUTO );
+        return parse( classLoader, resource, ParseOptions.DEFAULT, Implementation.SCALAR );
     }
 
 
@@ -274,22 +269,20 @@ public class FTLParser {
         }
 
         // decide implementation
-        final FTLStream ftlStream =
-                switch (implementation) {
-                    case AUTO, SIMD -> {
-                        if (canSIMD) {
-                            yield new FTLStreamSIMD( array );
-                        } else {
-                            yield new FTLStreamSWAR( array );
-                        }
-                    }
-                    case SCALAR -> new FTLStream( array );
-                    case SWAR -> new FTLStreamSWAR( array );
-                };
+        final FTLStreamOps ops = switch (implementation) {
+            case SCALAR -> FTLStreamOps.SCALAR;
+            case SIMD -> {
+                if (canSIMD) {
+                    yield FTLStreamOps.SIMD;
+                } else {
+                    yield FTLStreamOps.SCALAR;
+                }
+            }
+        };
 
         return switch (parseOptions) {
-            case DEFAULT -> parseSimple( ftlStream );
-            case EXTENDED -> parseComplete( ftlStream );
+            case DEFAULT -> parseSimple( new FTLStream( ops, array ) );
+            case EXTENDED -> parseComplete( new FTLStream( ops, array ) );
         };
     }
 
@@ -471,7 +464,7 @@ public class FTLParser {
             }
 
             if (!ps.isCurrentChar( (byte) '.' )) {
-                ps.position( line_start );
+                ps.setPosition( line_start );
                 break;
             }
 
@@ -500,6 +493,12 @@ public class FTLParser {
     private static Identifier getIdentifier(final FTLStream ps) {
         // new version
         final int idStart = ps.position();
+
+        // we could be at the end
+        if (!ps.hasRemaining()) {
+            throw parseException( ErrorCode.E0004, "character from range [a-zA-Z] for the start of an identifier, not EOF", ps );
+        }
+
         final int idEnd = ps.getIdentifierEnd( idStart );
 
         // initial character of identifier invalid
@@ -508,7 +507,7 @@ public class FTLParser {
         }
 
         final String idName = ps.subString( idStart, idEnd );
-        ps.position( idEnd );
+        ps.setPosition( idEnd );
         return new Identifier( idName );
     }
 
@@ -700,7 +699,7 @@ public class FTLParser {
                         }
                         default -> throw parseException(
                                 ErrorCode.E0025,
-                                "\\" + FTLStream.byteToString( ps.at( ps.position() + 1 ) ),
+                                "\\" + CommonOps.byteToString( ps.at( ps.position() + 1 ) ),
                                 ps
                         );
                     }
@@ -719,7 +718,7 @@ public class FTLParser {
 
             ps.expectChar( (byte) '"' );
             return Literal.StringLiteral.of( sb.toString() );
-        } else if (isASCIIDigit( initialChar )) {
+        } else if (CommonOps.isASCIIDigit( initialChar )) {
             return getNumberLiteral( ps );
         } else if (initialChar == '-') {
             ps.inc();
@@ -746,7 +745,7 @@ public class FTLParser {
         } else if (initialChar == '$') {
             ps.inc();
             return new InlineExpression.VariableReference( getIdentifier( ps ) );
-        } else if (isASCIIAlphabetic( initialChar )) {
+        } else if (CommonOps.isASCIIAlphabetic( initialChar )) {
             // identifier could be a MessageReference or a FunctionReference. So the identifier
             // structure has to be refined.
             final Identifier id = getIdentifier( ps );
@@ -859,12 +858,12 @@ public class FTLParser {
 
         for (int i = 0; i < name.length(); i++) {
             final byte b = (byte) name.charAt( i );
-            if (FTLStream.isASCIILowerCase( b )) {
+            if (CommonOps.isASCIILowerCase( b )) {
                 throw FTLParseException.of(
                         ErrorCode.E0008,
                         name,
                         ps.positionToLine( ps.position() ),
-                        FTLStream.byteToString( b )
+                        CommonOps.byteToString( b )
                 );
             }
         }
@@ -897,7 +896,7 @@ public class FTLParser {
     static FTLParseException parseException(final ErrorCode errorCode, final String argument, final FTLStream stream) {
         // if we are EOF, stream.at() will throw an exception (if there is no padding)
         final int line = stream.positionToLine( stream.position() );
-        final String received = (line != 0) ? byteToString( stream.at() ) : byteToString( EOF );
+        final String received = (line != 0) ? CommonOps.byteToString( stream.at() ) : CommonOps.byteToString( CommonOps.EOF );
 
         return FTLParseException.of(
                 errorCode,

@@ -60,6 +60,9 @@ public class FTLTestUtils {
         ec.exceptions().forEach( e -> System.err.println( "  " + e ) );
     };
 
+    /// 'null' Logger for testing (nothing is logged)
+    static final Consumer<FluentBundle.ErrorContext> NOP_LOGGER = (ec) -> {};
+
 
     private FTLTestUtils() {}
 
@@ -67,12 +70,28 @@ public class FTLTestUtils {
         requireNonNull( fileName );
         System.out.println( "Input FTL: " + fileName );
 
+        final FTLParser.Implementation implementation = FTLParser.Implementation.SCALAR;
+
         return FTLParser.parse(
                 Thread.currentThread().getContextClassLoader(),
                 fileName,
                 FTLParser.ParseOptions.EXTENDED,
-                FTLParser.Implementation.AUTO );
+                implementation );
     }
+
+
+    // useful for debugging resource file
+    @SuppressWarnings( "unused" )
+    public static void show(FluentResource resource) {
+        System.out.println( "BEGIN" );
+        resource.errors().forEach( System.out::println );
+        System.out.println( "-----" );
+        resource.entries().forEach( System.out::println );
+        System.out.println( "-----" );
+        resource.junk().forEach( System.out::println );
+        System.out.println( "END\n" );
+    }
+
 
     // search resource for the given errorcode-line exception
     public static boolean matchParseException(final FluentResource resource, final FTLParseException.ErrorCode errorCode, final int line) {
@@ -86,9 +105,10 @@ public class FTLTestUtils {
     }
 
     // bundle from string
+    @SuppressWarnings( "unused" )
     public static FluentBundle bundleFromString(final String in) {
         final FluentResource resource = FTLParser.parse( in, FTLParser.ParseOptions.EXTENDED,
-                FTLParser.Implementation.AUTO );
+                FTLParser.Implementation.SCALAR );
         return basicBundleSetup( resource, false );
     }
 
@@ -99,15 +119,12 @@ public class FTLTestUtils {
         final FluentFunctionRegistry registry = FluentFunctionRegistry.builder()
                 .build();
 
+        final Consumer<FluentBundle.ErrorContext> errorLogger = withErrorLogger ? TEST_ERROR_LOGGER : NOP_LOGGER;
 
-        var builder = FluentBundle.builder( Locale.US, registry, LRUFunctionCache.of() )
-                .addResource( resource );
-
-        if (withErrorLogger) {
-            builder = builder.withLogger( TEST_ERROR_LOGGER );
-        }
-
-        return builder.build();
+        return FluentBundle.builder( Locale.US, registry, LRUFunctionCache.of() )
+                .addResource( resource )
+                .withLogger( errorLogger )
+                .build();
     }
 
     ///  extended bundle setup -- all functions
@@ -119,14 +136,11 @@ public class FTLTestUtils {
         final FluentFunctionRegistry registry = regBuilder.build();
 
 
-        var builder = FluentBundle.builder( Locale.US, registry, LRUFunctionCache.of() )
-                .addResource( resource );
-
-        if (withErrorLogger) {
-            builder = builder.withLogger( TEST_ERROR_LOGGER );
-        }
-
-        return builder.build();
+        final Consumer<FluentBundle.ErrorContext> errorLogger = withErrorLogger ? TEST_ERROR_LOGGER : NOP_LOGGER;
+        return FluentBundle.builder( Locale.US, registry, LRUFunctionCache.of() )
+                .addResource( resource )
+                .withLogger( errorLogger )
+                .build();
     }
 
     public static String fmt(final FluentBundle bndl, final String msgID) {
@@ -250,6 +264,7 @@ public class FTLTestUtils {
         }
 
         ///  OPTIONAL: set 'creator' which can observe creation and check options
+        @SuppressWarnings( "unused" )
         public synchronized void setCreator(Consumer<Options> creator) {
             this.creator = requireNonNull( creator );
         }

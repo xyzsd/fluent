@@ -1,11 +1,8 @@
 package fluent.syntax.parser;
 
 import jdk.incubator.vector.*;
-import org.jspecify.annotations.NullMarked;
 
-@NullMarked
-final class FTLStreamSIMD extends FTLStream {
-
+final class SIMDOps {
     // much more powerful and much easier to implement than SWAR
     //
     // note that some of these methods can be optimized further
@@ -19,119 +16,37 @@ final class FTLStreamSIMD extends FTLStream {
 
     // suitable for upto 64 lanes (8*64=512 bits). Used to generate masks.
     private static final long LONG_FF = 0xFF_FF_FF_FF_FF_FF_FF_FFL;
-
     // vector species we are using
     private static final VectorSpecies<Byte> SPECIES = ByteVector.SPECIES_PREFERRED;
-
-    // ASCII chars for comparison
-    private static final Vector<Byte> LOWERCASE_A = SPECIES.broadcast( 0x61 );
-    private static final Vector<Byte> LOWERCASE_Z = SPECIES.broadcast( 0x7a );
-    private static final Vector<Byte> UPPERCASE_A = SPECIES.broadcast( 0x41 );
-    private static final Vector<Byte> UPPERCASE_Z = SPECIES.broadcast( 0x5a );
-    private static final Vector<Byte> NUM_0 = SPECIES.broadcast( 0x30 );
-    private static final Vector<Byte> NUM_9 = SPECIES.broadcast( 0x39 );
-    private static final Vector<Byte> UNDERSCORE = SPECIES.broadcast( 0x5f );
-    private static final Vector<Byte> HYPHEN = SPECIES.broadcast( 0x2d );
-    private static final Vector<Byte> SPACE = SPECIES.broadcast( 0x20 );
-    private static final Vector<Byte> CR = SPECIES.broadcast( 0x0d );
-    private static final Vector<Byte> LF = SPECIES.broadcast( 0x0a );
-    private static final Vector<Byte> OPEN_BRACE = SPECIES.broadcast( 0x7b );
-    private static final Vector<Byte> CLOSE_BRACE = SPECIES.broadcast( 0x7d );
-
-    // these correspond to the enum ordinals in FTLPatternParser.TextSliceType. EOF type is NOT used here.
-    private static final Vector<Byte> IDX_1_LF = SPECIES.broadcast( FTLPatternParser.TextElementTermination.LineFeed.ordinal() );
-    private static final Vector<Byte> IDX_2_CRLF = SPECIES.broadcast( FTLPatternParser.TextElementTermination.CRLF.ordinal() );
-    private static final Vector<Byte> IDX_3_OPEN = SPECIES.broadcast( FTLPatternParser.TextElementTermination.PlaceableStart.ordinal() );
-    private static final Vector<Byte> IDX_4_CLOSE = SPECIES.broadcast( FTLPatternParser.TextElementTermination.ERROR.ordinal() );
-
-    // all lanes set
-    private static final VectorMask<Byte> ALL_LANES_MASK = VectorMask.fromLong( SPECIES, LONG_FF );
     // first lane unset; e.g., Mask[.TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT] (for 32 lanes)
     private static final VectorMask<Byte> IGNORE_FIRST_LANE_MASK = VectorMask.fromLong( SPECIES,
             (LONG_FF << 1) );
+    // all lanes set
+    private static final VectorMask<Byte> ALL_LANES_MASK = VectorMask.fromLong( SPECIES, LONG_FF );
+    private static final Vector<Byte> IDX_4_CLOSE = SPECIES.broadcast( FTLPatternParser.TextElementTermination.ERROR.ordinal() );
+    private static final Vector<Byte> IDX_3_OPEN = SPECIES.broadcast( FTLPatternParser.TextElementTermination.PlaceableStart.ordinal() );
+    private static final Vector<Byte> IDX_2_CRLF = SPECIES.broadcast( FTLPatternParser.TextElementTermination.CRLF.ordinal() );
+    // these correspond to the enum ordinals in FTLPatternParser.TextSliceType. EOF type is NOT used here.
+    private static final Vector<Byte> IDX_1_LF = SPECIES.broadcast( FTLPatternParser.TextElementTermination.LineFeed.ordinal() );
+    private static final Vector<Byte> CLOSE_BRACE = SPECIES.broadcast( 0x7d );
+    private static final Vector<Byte> OPEN_BRACE = SPECIES.broadcast( 0x7b );
+    private static final Vector<Byte> LF = SPECIES.broadcast( 0x0a );
+    private static final Vector<Byte> CR = SPECIES.broadcast( 0x0d );
+    private static final Vector<Byte> SPACE = SPECIES.broadcast( 0x20 );
+    private static final Vector<Byte> HYPHEN = SPECIES.broadcast( 0x2d );
+    private static final Vector<Byte> UNDERSCORE = SPECIES.broadcast( 0x5f );
+    private static final Vector<Byte> NUM_9 = SPECIES.broadcast( 0x39 );
+    private static final Vector<Byte> NUM_0 = SPECIES.broadcast( 0x30 );
+    private static final Vector<Byte> UPPERCASE_Z = SPECIES.broadcast( 0x5a );
+    private static final Vector<Byte> UPPERCASE_A = SPECIES.broadcast( 0x41 );
+    private static final Vector<Byte> LOWERCASE_Z = SPECIES.broadcast( 0x7a );
+    // ASCII chars for comparison
+    private static final Vector<Byte> LOWERCASE_A = SPECIES.broadcast( 0x61 );
     // last lane unset; e.g., Mask[TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT.] (for 32 lanes)
     private static final VectorMask<Byte> IGNORE_LAST_LANE_MASK = leftShift( 1 );
 
 
-    ///  No copy, no padding.
-    FTLStreamSIMD(byte[] array) {
-        super( array );
-    }
-
-
-    @Override
-    int skipBlankBlock() {
-        final long packed = FTLStreamSIMD.skipBlankBlock( seq, pos );
-        pos = FTLStream.unpackPosition( packed ); // set position
-        return FTLStream.unpackLineCount( packed );
-    }
-
-    @Override
-    void skipBlankBlockNLC() {
-        skipBlankBlock();   // ignore line count
-    }
-
-    @Override
-    void skipBlank() {
-        pos = FTLStreamSIMD.skipBlank( seq, pos );
-    }
-
-    @Override
-    int skipBlankInline() {
-        final int newPos = FTLStreamSIMD.skipBlankInline( seq, pos );
-        final int start = pos;
-        pos = newPos;
-        return (newPos - start);
-    }
-
-    @Override
-    void skipToEOL() {
-        pos = FTLStreamSIMD.nextLF( seq, pos );
-    }
-
-    @Override
-    int getIdentifierEnd(int startIndex) {
-        return FTLStreamSIMD.getIdentifierEnd( seq, startIndex );
-    }
-
-
-    ///  SIMD
-    @Override
-    FTLPatternParser.TextSlice getTextSlice() {
-        final int startPos = position();
-        final long packed = FTLStreamSIMD.nextTSChar( seq, startPos );
-
-        final FTLPatternParser.TextElementTermination termination = FTLPatternParser.TextElementTermination.VALUES[FTLStream.unpackOrdinal( packed )];
-        final int endPos = FTLStream.unpackPosition( packed );
-
-        final FTLPatternParser.TextElementType textElementType = FTLStreamSIMD.isBlank( seq, startPos, endPos )
-                ? FTLPatternParser.TextElementType.Blank
-                : FTLPatternParser.TextElementType.NonBlank;
-
-        return switch (termination) {
-            case LineFeed -> {
-                position( endPos + 1 );
-                yield new FTLPatternParser.TextSlice( startPos, endPos + 1,
-                        textElementType, termination );
-            }
-            case CRLF -> {
-                position( endPos + 1 );
-                yield new FTLPatternParser.TextSlice( startPos, endPos,
-                        textElementType, termination );
-            }
-            case PlaceableStart, EOF -> {
-                position( endPos );
-                yield new FTLPatternParser.TextSlice( startPos, endPos,
-                        textElementType, termination );
-            }
-            case ERROR -> {
-                // unbalanced closing brace
-                position( endPos );
-                throw FTLParser.parseException( FTLParseException.ErrorCode.E0027, this );
-            }
-        };
-    }
-
+    private SIMDOps() {}
 
 
     /// Extract an identifier.
@@ -139,7 +54,7 @@ final class FTLStreamSIMD extends FTLStream {
     ///
     /// Returns the first non-matching character that is nonconformant (usually indicating the end of the identifier).
     /// If the first non-matching character is equal to startIndex, then the identifier begins with an illegal character.
-    private static int getIdentifierEnd(final byte[] buf, final int startIndex) {
+    static int getIdentifierEnd(final byte[] buf, final int startIndex) {
         final int maxIndex = buf.length;    // if there is padding at end, must subtract here
         // first vector
         {
@@ -170,12 +85,12 @@ final class FTLStreamSIMD extends FTLStream {
         return maxIndex;
     }
 
-
     // upper case, lower case, digits, and allowed punctuation (-_).
     // digits and punctuation can be masked off
+    // NOTE ::: VectorOperators.UNSIGNED_LE is now ULE in JDK25
     private static VectorMask<Byte> idUpperAndLower(final ByteVector in, final VectorMask<Byte> mask) {
-        final VectorMask<Byte> isAlphabetic = in.compare( VectorOperators.UNSIGNED_GE, UPPERCASE_A )
-                .and( in.compare( VectorOperators.UNSIGNED_LE, UPPERCASE_Z ) )
+        final VectorMask<Byte> isAlphabetic = in.compare( VectorOperators.UNSIGNED_GE /*VectorOperators.UGE*/, UPPERCASE_A )
+                .and( in.compare( VectorOperators.UNSIGNED_LE /*VectorOperators.ULE*/, UPPERCASE_Z ) )
                 .or(
                         in.compare( VectorOperators.UNSIGNED_GE, LOWERCASE_A )
                                 .and( in.compare( VectorOperators.UNSIGNED_LE, LOWERCASE_Z ) )
@@ -194,10 +109,9 @@ final class FTLStreamSIMD extends FTLStream {
         return isAlphabetic.or( isDigit ).or( isPunctuation );
     }
 
-
     ///  Find position of next LF in buffer, or return last position in buf.
     ///  Used for skipping comments
-    private static int nextLF(final byte[] buf, final int startIndex) {
+    static int nextLF(final byte[] buf, final int startIndex) {
         final int maxIndex = buf.length;    // if there is padding at end, must subtract here (e.g., final int maxIndex = buf.length - PAD;)
         for (int i = startIndex; i < maxIndex; i += SPECIES.length()) {
             final VectorMask<Byte> rangeMask = SPECIES.indexInRange( i, maxIndex );
@@ -228,7 +142,7 @@ final class FTLStreamSIMD extends FTLStream {
     }
 
     ///  Find the first non-space character (since line endings have LF or CRLF, this always stays on a single line)
-    private static int skipBlankInline(final byte[] buf, final int startIndex) {
+    static int skipBlankInline(final byte[] buf, final int startIndex) {
         final int maxIndex = buf.length;    // if there is padding at end, must subtract here (e.g., final int maxIndex = buf.length - PAD;)
         for (int i = startIndex; i < maxIndex; i += SPECIES.length()) {
             final VectorMask<Byte> rangeMask = SPECIES.indexInRange( i, maxIndex );
@@ -243,18 +157,16 @@ final class FTLStreamSIMD extends FTLStream {
         return maxIndex;
     }
 
-
     ///  Find first non-blank (by Fluent definition of whitespace) character.
-    private static int skipBlank(final byte[] buf, final int startIndex) {
+    static int skipBlank(final byte[] buf, final int startIndex) {
         return skipBlankRanged( buf, startIndex, buf.length );
     }
 
     /// True if the given range within buf[] only consists of Fluent whitespace
     /// (consists only of space, LF, or CR-LF pair)
-    private static boolean isBlank(final byte[] buf, final int startIndex, final int endIndex) {
+    static boolean isBlank(final byte[] buf, final int startIndex, final int endIndex) {
         return (skipBlankRanged( buf, startIndex, endIndex ) == endIndex);
     }
-
 
     /// Skip blanks.
     /// This skips contiguous runs of ASCII Space (0x20), LF (0x0a), and CR-LF pairs (0x0d,0x0a).
@@ -319,7 +231,7 @@ final class FTLStreamSIMD extends FTLStream {
     ///
     /// returns a *packed long* storing the position and line count
     ///
-    private static long skipBlankBlock(final byte[] buf, final int startIndex) {
+    static long skipBlankBlock(final byte[] buf, final int startIndex) {
         final int maxIndex = buf.length;    // if there is padding at end, must subtract here (e.g., final int maxIndex = buf.length - PAD;)
         final int increment = SPECIES.length();
 
@@ -356,10 +268,10 @@ final class FTLStreamSIMD extends FTLStream {
                     // or, failing that, 'startPosition'.
                     final int position = (i + maskedLF.lastTrue() + 1);
                     // line count: number of linefeeds (also works for CRLF) (which is: maskedLF.trueCount())
-                    return FTLStream.packLong( position, +maskedLF.trueCount() );
+                    return CommonOps.packLong( position, +maskedLF.trueCount() );
                 } else {
                     // use the LF from a prior vector (or start if none), with total lineCount
-                    return FTLStream.packLong( lastLFindex, lineCount );
+                    return CommonOps.packLong( lastLFindex, lineCount );
                 }
             }
 
@@ -369,13 +281,12 @@ final class FTLStreamSIMD extends FTLStream {
                 lineCount += eqLF.trueCount();
             }
         }
-        return FTLStream.packLong( startIndex, lineCount );
+        return CommonOps.packLong( startIndex, lineCount );
     }
-
 
     ///  Customized matcher for FTLPatternParser.getTextSlice()
     ///  Returns a packed long consisting of position and ordinal
-    private static long nextTSChar(final byte[] buf, final int startIndex) {
+    static long nextTSChar(final byte[] buf, final int startIndex) {
         final int maxIndex = buf.length;    // if there is padding at end, must subtract here (e.g., final int maxIndex = buf.length - PAD;)
         final int increment = SPECIES.length() - 1;
         for (int i = startIndex; i < maxIndex; i += increment) {
@@ -413,16 +324,53 @@ final class FTLStreamSIMD extends FTLStream {
 
             if (combined.anyTrue()) {
                 final int firstTrue = combined.firstTrue();
-                return FTLStream.packLong(
+                return CommonOps.packLong(
                         firstTrue + i,
                         blended.lane( firstTrue )
                 );
             }
         }
         // position : max, EOF
-        return FTLStream.packLong( maxIndex, FTLPatternParser.TextElementTermination.EOF.ordinal() );
+        return CommonOps.packLong( maxIndex, FTLPatternParser.TextElementTermination.EOF.ordinal() );
     }
 
+    /*
+    ///  SIMD (this works..)
+    FTLPatternParser.TextSlice getTextSlice() {
+        final int startPos = position();
+        final long packed = SIMDOps.nextTSChar( seq, startPos );
+
+        final FTLPatternParser.TextElementTermination termination = FTLPatternParser.TextElementTermination.VALUES[CommonOps.unpackOrdinal( packed )];
+        final int endPos = CommonOps.unpackPosition( packed );
+
+        final FTLPatternParser.TextElementType textElementType = SIMDOps.isBlank( seq, startPos, endPos )
+                ? FTLPatternParser.TextElementType.Blank
+                : FTLPatternParser.TextElementType.NonBlank;
+
+        return switch (termination) {
+            case LineFeed -> {
+                position( endPos + 1 );
+                yield new FTLPatternParser.TextSlice( startPos, endPos + 1,
+                        textElementType, termination );
+            }
+            case CRLF -> {
+                position( endPos + 1 );
+                yield new FTLPatternParser.TextSlice( startPos, endPos,
+                        textElementType, termination );
+            }
+            case PlaceableStart, EOF -> {
+                position( endPos );
+                yield new FTLPatternParser.TextSlice( startPos, endPos,
+                        textElementType, termination );
+            }
+            case ERROR -> {
+                // unbalanced closing brace
+                position( endPos );
+                throw FTLParser.parseException( FTLParseException.ErrorCode.E0027, this );
+            }
+        };
+    }
+    */
 
     ///  Create a VectorMask with all lanes equal to or greater than the given lane, set.
     ///  All lower lanes are unset. So, maskLanesFrom(1) would leave lane 0 unset, and all lanes from
@@ -438,7 +386,6 @@ final class FTLStreamSIMD extends FTLStream {
     private static VectorMask<Byte> maskLanesTo(final int toLane) {
         return maskLanesFrom( toLane ).not();
     }
-
 
     ///  Create a VectorMask with the (highest) n lanes unset, and all other lanes set
     private static VectorMask<Byte> leftShift(final int nLanes) {

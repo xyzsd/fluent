@@ -31,9 +31,6 @@ import fluent.syntax.parser.PEPlaceholder.TextElementHolder;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -81,7 +78,7 @@ final class FTLPatternParser {
                     if (!ps.hasRemaining() || (indent == 0 && !ps.isEOL())) {
                         break;
                     } else if (!ps.isBytePatternContinuation()) {
-                        ps.position( sliceStart );    // rewind
+                        ps.setPosition( sliceStart );    // rewind
                         break;
                     }
                     // else : continue

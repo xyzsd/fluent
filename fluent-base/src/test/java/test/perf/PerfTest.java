@@ -35,18 +35,26 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class PerfTest {
 
     private static final String RESOURCE = "perf/gecko_strings.ftl";
+    private static final int ITERATIONS = 10000;
 
     // really we are just validating the PerfTest file here
     @Test
     public void parseAndVerifyBundle() throws IOException {
         System.out.println( "Input FTL: " + RESOURCE );
 
-        // parse & ignore comments
-        final FluentResource resource = FTLParser.parse(
-                Thread.currentThread().getContextClassLoader(), RESOURCE
-        );
-
-        assertEquals( 493, resource.entries().size() );
-        assertEquals( 0, resource.errors().size() );
+        int count = 0;
+        for (int i = 0; i < ITERATIONS; i++) {
+            // parse & ignore comments
+            final FluentResource resource = FTLParser.parse(
+                    Thread.currentThread().getContextClassLoader(),
+                    RESOURCE,
+                    FTLParser.ParseOptions.DEFAULT,
+                    FTLParser.Implementation.SCALAR
+            );
+            count += resource.entries().size();
+            assertEquals( 493, resource.entries().size() );
+            assertEquals( 0, resource.errors().size() );
+        }
+        System.out.println( count );
     }
 }

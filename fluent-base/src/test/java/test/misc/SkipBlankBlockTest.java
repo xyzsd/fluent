@@ -59,7 +59,7 @@ public class SkipBlankBlockTest {
                             "\n\n              \r\n\r\n                 \n";  // many spaces between first and last \n
 
         final FluentResource resource = FTLParser.parse( in, FTLParser.ParseOptions.DEFAULT,
-                FTLParser.Implementation.AUTO );
+                FTLParser.Implementation.SCALAR );
 
         // no errors
         assertEquals( 0, resource.errors().size() );

@@ -44,6 +44,7 @@ public class AstralTest {
     static FluentResource resource;
     static FluentBundle bundle;
 
+
     @BeforeAll
     public static void parseFile() throws IOException {
         resource = FTLTestUtils.parseFile( RESOURCE );

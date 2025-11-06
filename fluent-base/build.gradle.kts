@@ -62,17 +62,20 @@ dependencies {
 
 jmh {
     warmupIterations = 1
-    iterations = 10
+    iterations = 3
     fork = 2
     jmhVersion = "1.37"
+    jvmArgs = listOf("--add-modules jdk.incubator.vector")
 }
 
 tasks.compileJava {
     options.encoding = "UTF-8"
     options.compilerArgs.add("-Xlint:all,-serial")
-    // preview features used: 'unnamed variables', (delivered in JDK 22), and the vector API (not yet final)
-    // Required for SIMD
-    options.compilerArgs.add("--enable-preview")
+    // no preview features used, BUT if using JDK21, need to enable preview features because
+    // we use "unnamed variables" (final delivery in JDK 22).
+    //options.compilerArgs.add("--enable-preview")
+    //
+    // incubating features used: vector API (required for SIMD)
     options.compilerArgs.add("--add-modules")
     options.compilerArgs.add("jdk.incubator.vector")
 }
@@ -88,12 +91,6 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(23)
     }
-}
-
-tasks.jar {
-    // These should be unnecessary for Gradle 9
-    setPreserveFileTimestamps(false)
-    setReproducibleFileOrder(true)
 }
 
 tasks.javadoc {
