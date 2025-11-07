@@ -20,7 +20,7 @@
  *
  */
 
-package fluent.syntax.AST;
+package fluent.syntax.ast;
 
 import org.jspecify.annotations.NullMarked;
 

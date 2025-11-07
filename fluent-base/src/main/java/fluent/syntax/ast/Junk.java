@@ -20,18 +20,11 @@
  *
  */
 
-package fluent.syntax.AST;
+package fluent.syntax.ast;
 
 import org.jspecify.annotations.NullMarked;
 
-import java.util.List;
-
-///  Pattern
+///  Junk: sections that cannot be parsed.
 @NullMarked
-public record Pattern(List<PatternElement> elements) implements SyntaxNode {
-
-    public Pattern {
-        elements = List.copyOf( elements );
-    }
-
+public record Junk(String content) implements SyntaxNode {
 }

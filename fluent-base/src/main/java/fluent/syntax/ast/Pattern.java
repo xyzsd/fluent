@@ -20,18 +20,18 @@
  *
  */
 
-package fluent.syntax.AST;
-
+package fluent.syntax.ast;
 
 import org.jspecify.annotations.NullMarked;
 
-/// Parent of Placeable and TextElement
+import java.util.List;
+
+///  Pattern
 @NullMarked
-public sealed interface PatternElement extends SyntaxNode {
+public record Pattern(List<PatternElement> elements) implements SyntaxNode {
 
-    record TextElement(String value) implements PatternElement {
+    public Pattern {
+        elements = List.copyOf( elements );
     }
 
-    record Placeable(Expression expression) implements PatternElement, InlineExpression {
-    }
 }

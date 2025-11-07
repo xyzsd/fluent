@@ -23,9 +23,9 @@
 package fluent.syntax.parser;
 
 
-import fluent.syntax.AST.Expression;
-import fluent.syntax.AST.Pattern;
-import fluent.syntax.AST.PatternElement;
+import fluent.syntax.ast.Expression;
+import fluent.syntax.ast.Pattern;
+import fluent.syntax.ast.PatternElement;
 import fluent.syntax.parser.PEPlaceholder.PlaceableHolder;
 import fluent.syntax.parser.PEPlaceholder.TextElementHolder;
 import org.jspecify.annotations.NullMarked;
@@ -200,7 +200,8 @@ final class FTLPatternParser {
         // ERROR is only used by getTextSlice(). Should not occur anywhere else.
         ERROR;              // index 4 '}' closed brace;
 
-        static final TextElementTermination[] VALUES = TextElementTermination.values();
+        // not used currently
+        // static final TextElementTermination[] VALUES = TextElementTermination.values();
     }
 
 

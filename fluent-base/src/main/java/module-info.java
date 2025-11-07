@@ -32,7 +32,7 @@ module net.xyzsd.fluent {
     // We are exporting all for now.
     exports fluent.bundle;
     exports fluent.bundle.resolver;
-    exports fluent.syntax.AST;
+    exports fluent.syntax.ast;
     exports fluent.syntax.parser;
     exports fluent.types;
     // Everything in fluent.function.* and descendants should be exported.

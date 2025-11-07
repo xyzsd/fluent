@@ -23,7 +23,7 @@ package fluent.function.functions.temporal;
 
 import fluent.bundle.resolver.Scope;
 import fluent.function.*;
-import fluent.syntax.AST.VariantKey;
+import fluent.syntax.ast.VariantKey;
 import fluent.types.FluentString;
 import fluent.types.FluentTemporal;
 import fluent.types.FluentValue;

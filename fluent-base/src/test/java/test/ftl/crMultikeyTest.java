@@ -26,7 +26,7 @@ package test.ftl;
 
 import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
-import fluent.syntax.AST.Entry;
+import fluent.syntax.ast.Entry;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import test.shared.FTLTestUtils;
@@ -34,7 +34,6 @@ import test.shared.FTLTestUtils;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class crMultikeyTest {
 
@@ -46,22 +45,6 @@ public class crMultikeyTest {
     public static void parseFile() throws IOException {
         resource = FTLTestUtils.parseFile( RESOURCE );
         bundle = FTLTestUtils.basicBundleSetup(resource, false);
-
-        resource.entries().forEach( entry -> {System.out.println(entry);});
-        final Entry first = resource.entries().getFirst();
-        /*
-        if (first instanceof Message msg) {
-            System.out.println(msg.pattern().elements().size());
-            final PatternElement p = msg.pattern().elements().getFirst();
-            if(p instanceof PatternElement.TextElement t) {
-                for(int i=0; i<t.value().length(); i++) {
-                    System.out.println(t.value().charAt(i) + " : "+Integer.toHexString( (int)t.value().charAt(i)));
-                }
-            }
-            msg.pattern().elements().forEach( entry -> {System.out.println(entry);});
-            msg.pattern().elements().forEach( pattern -> { System.out.println("|"+pattern+"|");});
-        }
-        */
     }
 
 

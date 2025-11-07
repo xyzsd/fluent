@@ -20,12 +20,11 @@
  *
  */
 
-package fluent.syntax.AST;
+package fluent.syntax.ast;
 
 import org.jspecify.annotations.NullMarked;
 
-/// Parent of Inline and Select expressions
+/// parent of Message, Term, and all Comments
 @NullMarked
-public sealed interface Expression extends SyntaxNode
-        permits InlineExpression, SelectExpression {
+public sealed interface Entry extends SyntaxNode permits Commentary, Term, Message {
 }

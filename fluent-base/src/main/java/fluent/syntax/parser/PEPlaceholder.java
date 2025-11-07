@@ -22,7 +22,7 @@
 
 package fluent.syntax.parser;
 
-import fluent.syntax.AST.PatternElement;
+import fluent.syntax.ast.PatternElement;
 import org.jspecify.annotations.NullMarked;
 
 

@@ -21,8 +21,8 @@
  */
 package fluent.function;
 
-import fluent.syntax.AST.CallArguments;
-import fluent.syntax.AST.NamedArgument;
+import fluent.syntax.ast.CallArguments;
+import fluent.syntax.ast.NamedArgument;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 

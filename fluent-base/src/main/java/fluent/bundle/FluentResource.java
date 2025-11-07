@@ -23,8 +23,8 @@ package fluent.bundle;
 
 import org.jspecify.annotations.NullMarked;
 
-import fluent.syntax.AST.Entry;
-import fluent.syntax.AST.Junk;
+import fluent.syntax.ast.Entry;
+import fluent.syntax.ast.Junk;
 import fluent.syntax.parser.FTLParseException;
 
 import java.util.List;

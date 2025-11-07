@@ -34,7 +34,7 @@ import fluent.function.FluentFunctionFactory;
 import fluent.function.Options;
 import fluent.function.ResolvedParameters;
 import fluent.function.functions.DefaultFunctionFactories;
-import fluent.syntax.AST.*;
+import fluent.syntax.ast.*;
 import fluent.syntax.parser.FTLParser;
 import fluent.syntax.parser.FTLParseException;
 import fluent.types.FluentString;

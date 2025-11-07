@@ -20,19 +20,12 @@
  *
  */
 
-package fluent.syntax.AST;
+package fluent.syntax.ast;
 
-import java.util.List;
 import org.jspecify.annotations.NullMarked;
 
-///  arguments for function calls
+/// Parent of Inline and Select expressions
 @NullMarked
-public record CallArguments(List<Expression> positionals,
-                            List<NamedArgument> named) implements SyntaxNode {
-
-    public CallArguments {
-        positionals = List.copyOf( positionals );
-        named = List.copyOf( named );
-    }
-
+public sealed interface Expression extends SyntaxNode
+        permits InlineExpression, SelectExpression {
 }

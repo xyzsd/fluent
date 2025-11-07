@@ -26,9 +26,9 @@ package test.ftl;
 
 import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
-import fluent.syntax.AST.InlineExpression;
-import fluent.syntax.AST.Message;
-import fluent.syntax.AST.PatternElement;
+import fluent.syntax.ast.InlineExpression;
+import fluent.syntax.ast.Message;
+import fluent.syntax.ast.PatternElement;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import test.shared.FTLTestUtils;
@@ -82,7 +82,7 @@ public class ReferenceExpressionsTest {
     @Test
     public void msgRefPlaceable() {
         final PatternElement.Placeable placeable = getPlaceable( bundle, "message-reference-placeable" );
-        assertTrue( placeable.expression() instanceof InlineExpression.MessageReference );
+        assertInstanceOf( InlineExpression.MessageReference.class, placeable.expression() );
         final String name = ((InlineExpression.MessageReference) placeable.expression()).name();
         assertEquals(
                 "msg",
@@ -93,7 +93,7 @@ public class ReferenceExpressionsTest {
     @Test
     public void termRefPlaceable() {
         final PatternElement.Placeable placeable = getPlaceable( bundle, "term-reference-placeable" );
-        assertTrue( placeable.expression() instanceof InlineExpression.TermReference );
+        assertInstanceOf( InlineExpression.TermReference.class, placeable.expression() );
         final String name = ((InlineExpression.TermReference) placeable.expression()).name();
         assertEquals(
                 "term",
@@ -114,7 +114,7 @@ public class ReferenceExpressionsTest {
     public void fnRefPlaceable() {
         // not really a function reference, just a message key in all caps
         final PatternElement.Placeable placeable = getPlaceable( bundle, "function-reference-placeable" );
-        assertTrue( placeable.expression() instanceof InlineExpression.MessageReference );
+        assertInstanceOf( InlineExpression.MessageReference.class, placeable.expression() );
         final String name = ((InlineExpression.MessageReference) placeable.expression()).name();
         assertEquals(
                 "FUN",

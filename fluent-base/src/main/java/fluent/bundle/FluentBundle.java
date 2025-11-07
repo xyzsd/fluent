@@ -26,7 +26,7 @@ import fluent.bundle.resolver.Resolver;
 import fluent.bundle.resolver.Scope;
 import fluent.function.FluentFunctionException;
 import fluent.function.Options;
-import fluent.syntax.AST.*;
+import fluent.syntax.ast.*;
 import fluent.types.FluentValue;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -84,7 +84,7 @@ public class FluentBundle {
     private final FluentFunctionRegistry registry;   // accessed only via Scope
     private final FluentFunctionCache cache;
     private final Map<String, Options> defaultOptions;
-    @Nullable private final Consumer<ErrorContext> errorConsumer;
+    private final @Nullable Consumer<ErrorContext> errorConsumer;
 
 
     private FluentBundle(Builder b) {

@@ -24,7 +24,7 @@ package fluent.function;
 
 import fluent.bundle.resolver.Resolver;
 import fluent.bundle.resolver.Scope;
-import fluent.syntax.AST.CallArguments;
+import fluent.syntax.ast.CallArguments;
 import fluent.types.FluentValue;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;

@@ -24,8 +24,8 @@
 
 package fluent.bundle.resolver;
 
-import fluent.syntax.AST.Identifiable;
-import fluent.syntax.AST.InlineExpression;
+import fluent.syntax.ast.Identifiable;
+import fluent.syntax.ast.InlineExpression;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 

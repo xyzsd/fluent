@@ -20,22 +20,13 @@
  *
  */
 
-package fluent.syntax.AST;
+package fluent.syntax.ast;
 
 import org.jspecify.annotations.NullMarked;
 
-///  Identifier
-///
-///  Identifiers may have specific constraints; for example, Function identifiers
-///  have a more strict definition than, say, Term or Message identifiers.
+/// Parent of all AST Nodes.
 @NullMarked
-public record Identifier(String name) implements SyntaxNode, VariantKey {
-
-    // FUTURE: This could be a sealed interface, with specific records for
-    // specific types of identifiers (e.g., FunctionIdentifier, MessageIdentifier, etc.)
-
-    @Override
-    public String name() {
-        return name;
-    }
+public sealed interface SyntaxNode
+        permits Attribute, CallArguments, Entry, Expression, Identifier,
+        Junk, NamedArgument, Pattern, PatternElement, Variant {
 }

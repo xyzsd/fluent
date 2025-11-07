@@ -26,7 +26,7 @@ import fluent.bundle.FluentFunctionCache;
 import fluent.bundle.FluentFunctionRegistry;
 import fluent.bundle.resolver.ResolutionException.CyclicException;
 import fluent.function.*;
-import fluent.syntax.AST.*;
+import fluent.syntax.ast.*;
 import fluent.types.FluentValue;
 import org.jspecify.annotations.Nullable;
 

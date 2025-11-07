@@ -24,7 +24,7 @@
 package fluent.syntax.parser;
 
 import fluent.bundle.FluentResource;
-import fluent.syntax.AST.*;
+import fluent.syntax.ast.*;
 import fluent.syntax.parser.FTLParseException.ErrorCode;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;

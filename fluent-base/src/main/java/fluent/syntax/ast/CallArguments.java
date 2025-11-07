@@ -20,11 +20,19 @@
  *
  */
 
-package fluent.syntax.AST;
+package fluent.syntax.ast;
 
+import java.util.List;
 import org.jspecify.annotations.NullMarked;
 
-///  Junk: sections that cannot be parsed.
+///  arguments for function calls
 @NullMarked
-public record Junk(String content) implements SyntaxNode {
+public record CallArguments(List<Expression> positionals,
+                            List<NamedArgument> named) implements SyntaxNode {
+
+    public CallArguments {
+        positionals = List.copyOf( positionals );
+        named = List.copyOf( named );
+    }
+
 }

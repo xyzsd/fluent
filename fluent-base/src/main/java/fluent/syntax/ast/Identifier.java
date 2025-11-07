@@ -1,4 +1,3 @@
-
 /*
  *
  *  Copyright (C) 2021-2025, xyzsd (Zach Del) 
@@ -21,8 +20,22 @@
  *
  */
 
-/// AST Nodes created during Fluent parsing.
+package fluent.syntax.ast;
+
+import org.jspecify.annotations.NullMarked;
+
+///  Identifier
 ///
-/// AST Nodes are immutable.
-///
-package fluent.syntax.AST;
+///  Identifiers may have specific constraints; for example, Function identifiers
+///  have a more strict definition than, say, Term or Message identifiers.
+@NullMarked
+public record Identifier(String name) implements SyntaxNode, VariantKey {
+
+    // FUTURE: This could be a sealed interface, with specific records for
+    // specific types of identifiers (e.g., FunctionIdentifier, MessageIdentifier, etc.)
+
+    @Override
+    public String name() {
+        return name;
+    }
+}

@@ -20,13 +20,13 @@
  *
  */
 
-package fluent.syntax.AST;
+package fluent.syntax.ast;
 
 import org.jspecify.annotations.NullMarked;
 
-/// Parent of all AST Nodes.
+///  Named arguments (in functions)
 @NullMarked
-public sealed interface SyntaxNode
-        permits Attribute, CallArguments, Entry, Expression, Identifier,
-        Junk, NamedArgument, Pattern, PatternElement, Variant {
+public record NamedArgument(Identifier name,
+                            Literal<?> value) implements SyntaxNode {
+
 }

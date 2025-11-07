@@ -20,13 +20,18 @@
  *
  */
 
-package fluent.syntax.AST;
+package fluent.syntax.ast;
+
 
 import org.jspecify.annotations.NullMarked;
 
-///  Named arguments (in functions)
+/// Parent of Placeable and TextElement
 @NullMarked
-public record NamedArgument(Identifier name,
-                            Literal<?> value) implements SyntaxNode {
+public sealed interface PatternElement extends SyntaxNode {
 
+    record TextElement(String value) implements PatternElement {
+    }
+
+    record Placeable(Expression expression) implements PatternElement, InlineExpression {
+    }
 }

@@ -27,7 +27,7 @@ import com.ibm.icu.util.Currency;
 import com.ibm.icu.util.MeasureUnit;
 import fluent.bundle.resolver.Scope;
 import fluent.function.*;
-import fluent.syntax.AST.VariantKey;
+import fluent.syntax.ast.VariantKey;
 import fluent.types.FluentNumber;
 import fluent.types.FluentString;
 import fluent.types.FluentValue;

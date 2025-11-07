@@ -22,7 +22,7 @@
 package fluent.function;
 
 import fluent.bundle.resolver.Scope;
-import fluent.syntax.AST.VariantKey;
+import fluent.syntax.ast.VariantKey;
 import fluent.types.FluentError;
 import fluent.types.FluentNumber;
 import fluent.types.FluentString;
