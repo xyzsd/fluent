@@ -60,9 +60,6 @@ public class FTLTestUtils {
         ec.exceptions().forEach( e -> System.err.println( "  " + e ) );
     };
 
-    /// 'null' Logger for testing (nothing is logged)
-    static final Consumer<FluentBundle.ErrorContext> NOP_LOGGER = (ec) -> {};
-
 
     private FTLTestUtils() {}
 
@@ -119,7 +116,8 @@ public class FTLTestUtils {
         final FluentFunctionRegistry registry = FluentFunctionRegistry.builder()
                 .build();
 
-        final Consumer<FluentBundle.ErrorContext> errorLogger = withErrorLogger ? TEST_ERROR_LOGGER : NOP_LOGGER;
+        // a 'null' logger is allowed
+        final Consumer<FluentBundle.ErrorContext> errorLogger = withErrorLogger ? TEST_ERROR_LOGGER : null;
 
         return FluentBundle.builder( Locale.US, registry, LRUFunctionCache.of() )
                 .addResource( resource )
@@ -135,8 +133,9 @@ public class FTLTestUtils {
         DefaultFunctionFactories.allNonImplicits().forEach( regBuilder::addFactory );
         final FluentFunctionRegistry registry = regBuilder.build();
 
+        // a 'null' logger is allowed
+        final Consumer<FluentBundle.ErrorContext> errorLogger = withErrorLogger ? TEST_ERROR_LOGGER : null;
 
-        final Consumer<FluentBundle.ErrorContext> errorLogger = withErrorLogger ? TEST_ERROR_LOGGER : NOP_LOGGER;
         return FluentBundle.builder( Locale.US, registry, LRUFunctionCache.of() )
                 .addResource( resource )
                 .withLogger( errorLogger )

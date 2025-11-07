@@ -42,14 +42,15 @@ import static java.util.Objects.requireNonNull;
 @NullMarked
 public sealed class ResolutionException extends Exception {
 
-
-    protected ResolutionException(String message) {
+    ///  Constructor. A non-null message is required.
+    private ResolutionException(String message) {
         super( requireNonNull( message ) );
     }
 
-    protected ResolutionException(String message, @Nullable Throwable cause) {
-        super( requireNonNull( message ), cause );
+    private ResolutionException(String message, Throwable cause) {
+        super( requireNonNull( message ), requireNonNull( cause ) );
     }
+
 
     ///  getMessage(), but should never be null.
     public String getMessage() {
@@ -73,6 +74,19 @@ public sealed class ResolutionException extends Exception {
         }
     }
 
+    ///  If a fallback message is supplied, and that fails (for some reason)
+    public static final class FallbackFailure extends ResolutionException {
+        public FallbackFailure(Exception cause) {
+            super( makeMsg( requireNonNull( cause ) ), cause );
+        }
+
+        private static String makeMsg(final Exception cause) {
+            final String causeMsg = (cause.getMessage() == null) ? "(no message)" : cause.getMessage();
+            return String.format( "Fallback failure! Cause: %s: %s", cause.getClass(), causeMsg );
+        }
+
+    }
+
     ///  Reference exceptions
     public static final class ReferenceException extends ResolutionException {
 
@@ -93,7 +107,7 @@ public sealed class ResolutionException extends Exception {
         ///  Used when there is no Pattern for a Message
         public static ReferenceException noValue(final String messageID) {
             requireNonNull( messageID );
-            return new ReferenceException( "No pattern specified for message: '" + messageID +"'");
+            return new ReferenceException( "No pattern specified for message: '" + messageID + "'" );
         }
 
         ///  Unknown Message or Attribute for a Message
@@ -109,9 +123,9 @@ public sealed class ResolutionException extends Exception {
         public static ReferenceException unknownMessageOrAttribute(final String messageID, final @Nullable String attributeID) {
             requireNonNull( messageID );
             if (attributeID == null) {
-                return new ReferenceException( "Unknown message: '" + messageID +"'");
+                return new ReferenceException( "Unknown message: '" + messageID + "'" );
             } else {
-                return new ReferenceException( "Unknown attribute: '" + messageID + '.' + attributeID +"'");
+                return new ReferenceException( "Unknown attribute: '" + messageID + '.' + attributeID + "'" );
             }
         }
 

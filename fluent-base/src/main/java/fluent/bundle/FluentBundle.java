@@ -21,6 +21,7 @@
  */
 package fluent.bundle;
 
+import fluent.bundle.resolver.ResolutionException;
 import fluent.bundle.resolver.Resolver;
 import fluent.bundle.resolver.Scope;
 import fluent.function.FluentFunctionException;
@@ -61,13 +62,16 @@ import static java.util.Objects.requireNonNullElse;
 ///    // Format a message
 ///    String hello = bundle.format("hello", Map.of("name", "World"));
 ///    // -> "Hello, World!"
-///  }
+///}
 ///
 /// Notes:
-///     - Formatting never throws for expected runtime issues. When a message/attribute is missing or
-///     a resolution error occurs, a fallback string is returned and the error can be observed through
-///     an optional error logger configured on the Builder.
-///     - FluentBundle instances are immutable and thread-safe once built; the Builder is not.
+/// - Formatting never throws for expected runtime issues. Formatting should only throw if null arguments are passed
+///     (not allowed) or if there is a serious, unrecoverable error. For 'normal' expected issues, such as missing
+///     message keys, attributes, variables, etc., simple diagnostic error text will be inserted into the rendered
+///     message. Generally, as much of the message that can be preserved will be rendered.
+/// - Optionally, a logger can be attached to the FluentBundle during construction to obtain more precise error
+///     information.
+/// - FluentBundle instances are immutable and thread-safe once built; the Builder is not.
 ///
 @NullMarked
 public class FluentBundle {
@@ -119,23 +123,9 @@ public class FluentBundle {
     }
 
     /// Create a Builder to build a new FluentBundle, using an existing FluentBundle as a base.
+    @SuppressWarnings( "unused" )
     public static Builder builderFrom(FluentBundle bundle, FluentFunctionCache cache) {
         return new Builder( bundle, cache );
-    }
-
-    /// error text for unknown message IDs
-    private static String unknownMessage(final String msgID) {
-        return "{Unknown message: '" + msgID + "'}";
-    }
-
-    /// error text for unknown attribute IDs
-    private static String unknownAttribute(final String msgID, final String attributeID) {
-        return "{Unknown attribute '" + attributeID + "' for message '" + msgID + "'}";
-    }
-
-    /// error text for messages without patterns
-    private static String unknownPattern(final String msgID) {
-        return "{No pattern specified for message: '" + msgID + "'}";
     }
 
     /// Bundle Locale
@@ -203,34 +193,33 @@ public class FluentBundle {
         requireNonNull( messageID );
         requireNonNull( args );
 
-        final Message message = messages.get( messageID );
+        final PatternOrError poe = getMessagePattern( messageID );
 
-        if (message == null) {
-            consumeError( messageID, null, () -> ReferenceException.unknownMessageOrAttribute( messageID, null ) );
-            return unknownMessage( messageID );
-        } else if (message.pattern() == null) {
-            consumeError( messageID, null, () -> ReferenceException.noValue( messageID ) );
-            return unknownPattern( messageID );
+        if (poe.pattern != null) {
+            return patternFormat( poe.pattern, args, messageID, null );
         } else {
-            return patternFormat( message.pattern(), args, messageID, null );
+            assert poe.exceptionSupplier != null;
+            try {
+                return '{' + poe.exceptionSupplier.get().getMessage() + '}';
+            } finally {
+                consumeError( messageID, null, poe.exceptionSupplier );
+            }
         }
     }
 
-    ///  Get the Pattern for a Message. Errors logged if not found, null if absent.
-    private @Nullable Pattern getMessagePattern(final String messageID) {
+    ///  Get the Pattern for a Message.
+    private PatternOrError getMessagePattern(final String messageID) {
         requireNonNull( messageID );
 
         final Message message = messages.get( messageID );
 
         if (message == null) {
-            consumeError( messageID, null, () -> ReferenceException.unknownMessageOrAttribute( messageID, null ) );
+            return PatternOrError.of( () -> ReferenceException.unknownMessageOrAttribute( messageID, null ) );
         } else if (message.pattern() == null) {
-            consumeError( messageID, null, () -> ReferenceException.noValue( messageID ) );
+            return PatternOrError.of( () -> ReferenceException.noValue( messageID ) );
         } else {
-            return message.pattern();
+            return PatternOrError.of( message.pattern() );
         }
-
-        return null;
     }
 
     ///  Format method for attributes.
@@ -250,21 +239,22 @@ public class FluentBundle {
         requireNonNull( attributeID );
         requireNonNull( args );
 
-        final Message message = messages.get( messageID );
-        if (message != null) {
-            final Attribute attribute = message.attribute( attributeID );
-            if (attribute != null) {
-                return patternFormat( attribute.pattern(), args, messageID, attributeID );
+        final PatternOrError poe = getAttributePattern( messageID, attributeID );
+
+        if (poe.pattern != null) {
+            return patternFormat( poe.pattern, args, messageID, attributeID );
+        } else {
+            assert poe.exceptionSupplier != null;
+            try {
+                return '{' + poe.exceptionSupplier.get().getMessage() + '}';
+            } finally {
+                consumeError( messageID, null, poe.exceptionSupplier );
             }
         }
-
-        // error: either Message or Attribute is missing
-        consumeError( messageID, null, () -> ReferenceException.unknownMessageOrAttribute( messageID, attributeID ) );
-        return unknownAttribute( messageID, attributeID );
     }
 
     ///  Get the Pattern for an Attribute
-    private @Nullable Pattern getAttributePattern(final String messageID, final String attributeID) {
+    private PatternOrError getAttributePattern(final String messageID, final String attributeID) {
         requireNonNull( messageID );
         requireNonNull( attributeID );
 
@@ -272,40 +262,40 @@ public class FluentBundle {
         if (message != null) {
             final Attribute attribute = message.attribute( attributeID );
             if (attribute != null) {
-                return attribute.pattern();
+                return PatternOrError.of( attribute.pattern() );
             }
         }
 
         // error: either Message or Attribute is missing
-        consumeError( messageID, null, () -> ReferenceException.unknownMessageOrAttribute( messageID, attributeID ) );
-        return null;
+        return PatternOrError.of( () -> ReferenceException.unknownMessageOrAttribute( messageID, attributeID ) );
     }
 
     ///  The simplest format() method.
     ///
-    ///  Gets the message with the given name, and displays it. If there is an error,
-    ///  the error message is output instead.
+    ///  Gets the message with the given name, and renders it. If there is an error,
+    ///  the error message (as a String) is output instead.
     ///
-    ///  This method should not throw in normal usage
+    ///  This method should not throw in normal usage.
     ///
     /// @param messageID The name of the message to format.
     /// @return the formatted message.
-    /// @throws NullPointerException if messageID is null
+    /// @throws NullPointerException if messageID is null.
     public String format(String messageID) {
         return format( messageID, Map.of() );
     }
 
+
     ///  The simplest format() method for attributes.
     ///
-    ///  Gets the message with the given name, and displays it. If there is an error,
-    ///  the error message is output instead.
+    ///  Gets the message with the given name, and renders it. If there is an error,
+    ///  the error message (as a String) is output instead.
     ///
-    ///  This method should not throw in normal usage
+    ///  This method should not throw in normal usage.
     ///
     /// @param messageID   Message ID
     /// @param attributeID Attribute ID containing the pattern to format.
     /// @return the formatted message.
-    /// @throws NullPointerException if messageID or attributeID
+    /// @throws NullPointerException if messageID or attributeID is null.
     public String format(String messageID, String attributeID) {
         return format( messageID, attributeID, Map.of() );
     }
@@ -329,11 +319,9 @@ public class FluentBundle {
 
 
     /// format-builder : WIP
-    // TODO: finalize
-    public FmtBldr fmtBuilder(final String messageID) {
-        return new FmtBldr( messageID );
+    public FmtBuilder fmtBuilder(final String messageID) {
+        return new FmtBuilder( messageID );
     }
-
 
 
     // format the pattern. The msgID and attrID are optional (can be null) and arw only for
@@ -352,13 +340,13 @@ public class FluentBundle {
         }
     }
 
+
     // TODO: document
     // public version of pattern format
     // e.g., to format a Term/Term attribute
     public String patternFormat(final Pattern pattern, final Map<String, Object> args) {
         return patternFormat( pattern, args, null, null );
     }
-
 
 
     /// Build a FluentBundle
@@ -380,6 +368,7 @@ public class FluentBundle {
         Map<String, Message> messages = new HashMap<>();
         boolean useIsolation = false;
         @Nullable Consumer<ErrorContext> logger = null;
+
 
         // Builder with Locale, Registry, and Cache
         private Builder(final Locale locale, final FluentFunctionRegistry registry, final FluentFunctionCache cache) {
@@ -408,6 +397,7 @@ public class FluentBundle {
         ///
         /// @param locale Locale
         /// @return Builder
+        @SuppressWarnings( "unused" )
         public Builder withLocale(final Locale locale) {
             this.locale = requireNonNull( locale );
             return this;
@@ -416,10 +406,12 @@ public class FluentBundle {
         /// Set whether this builder should use Unicode isolating characters
         ///
         /// For more information, see:
-        ///
         /// [Project Fluent](https://github.com/projectfluent/fluent.js/wiki/Unicode-Isolation)
         /// [unicode.org](https://unicode.org/reports/tr9/#Directional_Formatting_Characters)
         /// [W3C](https://www.w3.org/International/articles/inline-bidi-markup/#nomarkup)
+        ///
+        /// @return Builder
+        @SuppressWarnings( "unused" )
         public Builder withIsolation(final boolean value) {
             useIsolation = value;
             return this;
@@ -435,8 +427,8 @@ public class FluentBundle {
         ///
         /// @param resource FluentResource to add
         /// @return Builder
-        /// @throws RuntimeException if term or message entry already exists
-        public Builder addResource(final FluentResource resource) {
+        /// @throws FluentBundleException if term or message entry already exists.
+        public Builder addResource(final FluentResource resource) throws FluentBundleException {
             requireNonNull( resource );
 
             List<String> clashes = new ArrayList<>();
@@ -456,8 +448,7 @@ public class FluentBundle {
             }
 
             if (!clashes.isEmpty()) {
-                // TODO: perhaps custom exception rather than Runtime
-                throw new RuntimeException( "Duplicate Messages or Terms: " +
+                throw new FluentBundleException( "Duplicate Messages or Terms: " +
                         String.join( ", ", clashes ) );
             }
 
@@ -472,8 +463,12 @@ public class FluentBundle {
         /// Newly-added Terms and Messages will replace existing Terms or Messages with the
         /// same name.
         ///
+        /// Associated Comments for duplicated terms or messages are not added or replaced
+        /// (this only applies when comments are present, and we are parsing in extended mode).
+        ///
         /// @param resource FluentResource to add
         /// @return Builder
+        @SuppressWarnings( "unused" )
         public Builder addResourceOverriding(final FluentResource resource) {
             requireNonNull( resource );
             for (Entry entry : resource.entries()) {
@@ -492,6 +487,7 @@ public class FluentBundle {
         ///
         /// This replaces the existing FluentFunctionRegistry. A FluentBundle can have only a
         /// single FluentFunctionRegistry.
+        @SuppressWarnings( "unused" )
         public Builder withRegistry(final FluentFunctionRegistry registry) {
             this.registry = requireNonNull( registry );
             return this;
@@ -500,7 +496,9 @@ public class FluentBundle {
         ///  Set the function cache
         ///
         /// This replaces the existing FluentFunctionCache. A FluentBundle can have only a
-        /// single FluentFunctionCache.
+        /// single FluentFunctionCache, though the cache can be shared (if allowed; depends on cache architecture)
+        /// between multiple FluentBundles.
+        @SuppressWarnings( "unused" )
         public Builder withCache(final FluentFunctionCache cache) {
             this.cache = requireNonNull( cache );
             return this;
@@ -520,12 +518,17 @@ public class FluentBundle {
         /// Options.EMPTY can be used to remove any existing options, if present.
         ///
         /// {@snippet :
-        ///        // all calls to STRINGSORT() will be reversed, unless "order" is specified otherwise
         ///        FluentBundle.Builder builder;
         ///        // ...
+        ///        // all calls to STRINGSORT() will be reversed, unless "order" is specified otherwise
         ///        builder.withFunctionOptions("STRINGSORT", Options.of("order","reversed"));
         ///        // ...
         ///}
+        ///
+        /// @param functionName function that exists within the FLuentFunctionRegistry
+        /// @param options      function options
+        /// @return Builder
+        /// @throws IllegalArgumentException if the function name was not found in the FluentFunctionRegistry.
         ///
         public Builder withFunctionOptions(final String functionName, final Options options) {
             requireNonNull( functionName );
@@ -535,7 +538,7 @@ public class FluentBundle {
                 throw new IllegalArgumentException( String.format(
                         """
                                 Cannot find the function factory named '%s';\
-                                check spelling and make sure this was set in FluentFunctionRegistry.
+                                check spelling and make sure this function was set in the FluentFunctionRegistry.
                                 """, functionName ) );
             }
 
@@ -548,7 +551,7 @@ public class FluentBundle {
             return this;
         }
 
-        ///  Add a logger, that will log any Scope exceptions.
+        ///  Add a logger, that will log any exceptions that occur during message rendering.
         ///  If this is set to `null` (default), no logging will occur.
         public Builder withLogger(final @Nullable Consumer<ErrorContext> logger) {
             this.logger = logger;
@@ -567,6 +570,22 @@ public class FluentBundle {
 
     }
 
+    ///  custom tuple, really like a Result/Either
+    @NullMarked
+    private static class PatternOrError {
+        final @Nullable Pattern pattern;
+        final @Nullable Supplier<Exception> exceptionSupplier;
+
+        private PatternOrError(@Nullable final Pattern pattern, final @Nullable Supplier<Exception> exceptionSupplier) {
+            this.pattern = pattern;
+            this.exceptionSupplier = exceptionSupplier;
+        }
+
+        static PatternOrError of(@Nullable final Pattern pattern) {return new PatternOrError( pattern, null );}
+
+        static PatternOrError of(@Nullable final Supplier<Exception> exceptionSupplier) {return new PatternOrError( null, exceptionSupplier );}
+    }
+
     ///  Error Context information for error handlers / loggers.
     @NullMarked
     public record ErrorContext(
@@ -576,7 +595,8 @@ public class FluentBundle {
             List<Exception> exceptions              // exceptions that occured during processing
     ) {
         /// If messageID is not known, use this
-        public static final String UNSPECIFIED_PATTERN = "(Unspecified Pattern)";
+        public static final String UNSPECIFIED_PATTERN = "(Unspecified pattern)";
+        /// If attributeID is missing or not required
         public static final String NO_ATTRIBUTE = "no attribute";
 
 
@@ -602,56 +622,202 @@ public class FluentBundle {
         }
     }
 
-    /// Format Builder: **NOTE: this class is experimental**
-    public final class FmtBldr {
+
+    /// Fluent message formatting builder.
+    ///
+    /// A fluent, chainable helper created via [FluentBundle#fmt(String)] to format a single message
+    /// or one of its attributes with optional variables and well-defined fallback behavior.
+    ///
+    /// Typical usage:
+    /// {@snippet :
+    /// // Basic message with variables
+    ///
+    /// String s1 = bundle.fmtBuilder("welcome")
+    ///     .arg("user", "Ana")
+    ///     .format();
+    ///
+    /// // Format an attribute
+    /// String s2 = bundle.fmtBuilder("user-card")
+    ///     .attribute("title")
+    ///     .format();
+    ///
+    /// // Provide a constant fallback
+    /// String s3 = bundle.fmtBuilder("price")
+    ///     .arg("amount", 12)
+    ///     .formatOrElse("N/A");
+    ///
+    /// // Provide a computed fallback
+    /// String s4 = bundle.fmtBuilder("profile")
+    ///     .arg("id", 42)
+    ///     .formatOrElseGet(() -> computeDefaultProfile());
+    ///
+    /// // Convert rendering problems into your own exception
+    /// String s5 = bundle.fmtBuilder("checkout")
+    ///     .formatOrThrow(() -> new IllegalStateException("Cannot render checkout"));
+    ///}
+    ///
+    /// Notes:
+    /// - Fallback messages are not localized (though it is possible using a Supplier)
+    /// - `arg` and `args` methods do not support null values.
+    /// - Duplicate argument names overwrite previous values.
+    /// - All terminal methods (`format`, `formatOrElseGet`, `formatOrElse`, `formatOrThrow`) will trigger rendering.
+    /// - If a custom error consumer is configured on the bundle, all rendering exceptions and
+    ///   fallback failures are reported via that consumer.
+    @NullMarked
+    public final class FmtBuilder {
+        // Future considerations:
+        //  - Fancier chaining? (e.g., with or(), that could attempt a localized format a different way)
+        //  - Configurable fallback handlers? e.g., handler is invoked on error. Depending upon the error,
+        //      format could be re-attempted or a fallback string could be provided. E.g., if the message
+        //      key is missing a handler might provide a fallback string, but if a variable is missing
+        //      the handler could just leave things as-is (for example!).
+
         private final String msgID;
         @Nullable private String attrID = null;
-        private Map<String, Object> args = Map.of();
+        private final Map<String, Object> args = new HashMap<>();
 
-        private FmtBldr(final String msgID) {
+        private FmtBuilder(final String msgID) {
             this.msgID = msgID;
         }
 
-        public FmtBldr attribute(final @Nullable String attributeID) {
+
+        /// Use the given attribute ID for the message.
+        /// If null, do not use an attributeID.
+        ///
+        /// @param attributeID attribute name to format; when null, the base message is used
+        /// @return this builder for chaining
+        public FmtBuilder attribute(final @Nullable String attributeID) {
             this.attrID = attributeID;
             return this;
         }
 
-        // useful for when there is ONE argument; replaces any existing argument/arguments
-        public FmtBldr argument(final String argName, final Object argValue) {
-            this.args = Map.of( argName, argValue );
+        /// Supply a single variable to the message. Null values are not supported.
+        /// If the key `argName` already exists, it will be replaced.
+        ///
+        /// @param argName  variable name (non-null)
+        /// @param argValue variable value (non-null)
+        /// @return this builder for chaining
+        public FmtBuilder arg(final String argName, final Object argValue) {
+            requireNonNull( argName );
+            requireNonNull( argValue );
+            args.put( argName, argValue );
             return this;
         }
 
-        // for multiple arguments. will replace any existing arguments if present or called again
-        public FmtBldr arguments(Map<String, Object> argumentMap) {
-            this.args = Map.copyOf( argumentMap );
+        /// Supply a map of arguments to be used in the message. This method may be called more than
+        /// once, or in combination with [FmtBuilder#arg(String, Object)]. A duplicate key will replace
+        /// an existing key, if present.
+        ///
+        /// @param argumentMap map of variable names to values (non-null)
+        /// @return this builder for chaining
+        public FmtBuilder args(Map<String, Object> argumentMap) {
+            requireNonNull( argumentMap );
+            args.putAll( argumentMap );
             return this;
         }
 
+        /// Format the message.
+        ///
+        /// If exceptions occur during message rendering, use the String supplied here as a fallback.
+        ///
+        /// This method will also handle failure of the String supplier.
+        ///
+        /// This is a terminal operation.
+        ///
+        /// Exceptions will still be logged, including exceptions generated by the supplier, if so configured.
+        ///
+        /// @param fallbackSupplier supplier used to produce a fallback string when rendering fails (non-null)
+        /// @return the rendered message, or the supplied fallback if rendering fails
+        public String formatOrElseGet(final Supplier<String> fallbackSupplier) {
+            requireNonNull( fallbackSupplier );
 
-        public String orElseGet(final Supplier<String> fallback) {
-            final String fmt = tryFormat();
-            return (fmt == null)
-                    ? fallback.get()
-                    : fmt;
+            final PatternOrError poe = patternOrError();
+
+            if (poe.pattern == null) {
+                assert poe.exceptionSupplier != null;
+                return tryFallback( fallbackSupplier, null, poe.exceptionSupplier.get() );
+            }
+
+            // format the pattern.
+            // unlike patternFormat(), we want to know about exceptions here, so we can attempt fallback
+            final Scope scope = new Scope( FluentBundle.this, args );
+            final List<FluentValue<?>> resolved = Resolver.resolvePattern( poe.pattern, scope );
+            try {
+                final String renderedMessage = registry.reduce( resolved, scope );
+                if (scope.containsExceptions()) {
+                    return tryFallback( fallbackSupplier, scope, null );
+                } else {
+                    // rendering success!
+                    return renderedMessage;
+                }
+            } catch (FluentFunctionException e) {
+                scope.addException( e );
+                return tryFallback( fallbackSupplier, scope, e );
+            }
         }
 
-        public String orElse(final String fallback) {
-            final String fmt = tryFormat();
-            return (fmt == null)
-                    ? fallback
-                    : fmt;
+        /// Format the message.
+        ///
+        /// If exceptions occur during message rendering, use the String given here instead as a fallback.
+        /// The exceptions will still be logged, if so configured.
+        ///
+        /// @param fallback fallback string to return when rendering fails (non-null)
+        /// @return the rendered message, or the given fallback if rendering fails
+        public String formatOrElse(final String fallback) {
+            requireNonNull( fallback );
+            return formatOrElseGet( () -> fallback );
         }
 
-        public <X extends Throwable> String orElseThrow(final Supplier<? extends X> exceptionSupplier) throws X {
-            final String fmt = tryFormat();
-            if (fmt == null) {
+
+        /// Format the message.
+        ///
+        /// If exceptions occur during message rendering, throw the given Exception.
+        ///
+        /// Exceptions generated during message rendering will be logged, if so configured, but
+        /// the supplied exception here will not be.
+        ///
+        /// @param exceptionSupplier supplier of exceptions
+        /// @return the rendered message if no rendering errors occur
+        /// @throws X supplied exception
+        public <X extends Throwable> String formatOrThrow(final Supplier<? extends X> exceptionSupplier) throws X {
+            requireNonNull( exceptionSupplier );
+
+            final PatternOrError poe = patternOrError();
+
+            if (poe.pattern == null) {
+                assert poe.exceptionSupplier != null;
+                customConsumeErr( null, List.of( poe.exceptionSupplier.get() ) );
                 throw exceptionSupplier.get();
             }
-            return fmt;
+
+            // format the pattern.
+            // unlike patternFormat(), we want to know about exceptions here, so we can attempt fallback
+            final Scope scope = new Scope( FluentBundle.this, args );
+            final List<FluentValue<?>> resolved = Resolver.resolvePattern( poe.pattern, scope );
+            try {
+                final String renderedMessage = registry.reduce( resolved, scope );
+                if (scope.containsExceptions()) {
+                    throw exceptionSupplier.get();
+                } else {
+                    // rendering success!
+                    return renderedMessage;
+                }
+            } catch (FluentFunctionException e) {
+                scope.addException( e );
+                throw exceptionSupplier.get();
+            } finally {
+                if (scope.containsExceptions()) {
+                    customConsumeErr( scope, List.of() );
+                }
+            }
         }
 
+
+        /// Render the message to a String. No fallback.
+        ///
+        /// This is a terminal operation.
+        ///
+        /// @return the rendered message string
         public String format() {
             if (attrID == null) {
                 return FluentBundle.this.format( msgID, args );
@@ -660,30 +826,50 @@ public class FluentBundle {
             }
         }
 
-
-        private @Nullable String tryFormat() {
-            final Pattern pattern = (attrID == null)
-                    ? getMessagePattern( msgID )
-                    : getAttributePattern( msgID, attrID  );
-
-            if (pattern == null) {
-                //getAttributePattern / getMessagePattern logs an error if pattern not found
-                return null;
+        private PatternOrError patternOrError() {
+            if (attrID == null) {
+                return getMessagePattern( msgID );
+            } else {
+                return getAttributePattern( msgID, attrID );
             }
-
-            final Scope scope = new Scope( FluentBundle.this, args );
-            final List<FluentValue<?>> resolved = Resolver.resolvePattern( pattern, scope );
-            String formatted = null;
-            try {
-                formatted = registry.reduce( resolved, scope );
-            } catch (FluentFunctionException e) {
-                scope.addException( e );
-            } finally {
-                consumeError( msgID, attrID, scope );
-            }
-
-            return scope.containsExceptions() ? null : formatted;
         }
 
+
+        // this must only be called by tryFormat(), for failure cases
+        // if the fallback fails (e.g., supplier exception), we will handle that here
+        private String tryFallback(final Supplier<String> fallbackSupplier, final @Nullable Scope scope, final @Nullable Exception cause) {
+            List<Exception> causes = new ArrayList<>( 2 );
+            if (cause != null) {
+                causes.add( cause );
+            }
+
+            try {
+                return fallbackSupplier.get();
+            } catch (Exception e) {
+                causes.add( new ResolutionException.FallbackFailure( e ) );
+                final String attrDisplay = (attrID == null) ? "" : '.' + attrID;
+                // the fallback for the fallback :)
+                return String.format( "{Message '%s%s' fallback failure!}", msgID, attrDisplay );
+            } finally {
+                customConsumeErr( scope, causes );
+            }
+        }
+
+        private void customConsumeErr(@Nullable final Scope scope, final List<Exception> exceptions) {
+            if (errorConsumer != null) {
+                List<Exception> list = new ArrayList<>( exceptions );
+
+                if (scope != null) {
+                    list.addAll( scope.exceptions() );
+                }
+
+                final ErrorContext context = ErrorContext.of( msgID, attrID, locale(), list );
+                errorConsumer.accept( context );
+            }
+        }
+
+
     }
+
+
 }

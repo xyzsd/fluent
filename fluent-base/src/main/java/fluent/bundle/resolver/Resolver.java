@@ -43,7 +43,8 @@ import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 
-/// Resolver is the core of formatting in the resolver package. It walks Fluent AST nodes produced by the
+// yes this is AI-generated but cleaned up
+/// Resolver is the core of message rendering. It walks Fluent AST nodes produced by the
 /// parser and converts them into concrete FluentValue instances, and ultimately into user‑visible messages.
 ///
 /// Overview:
