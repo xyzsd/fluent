@@ -26,7 +26,6 @@ package test.ftl;
 
 import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
-import fluent.syntax.ast.Commentary;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import test.shared.FTLTestUtils;
@@ -35,17 +34,18 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class eofCommentTest {
+public class CRMultikeyTest {
 
-    static final String RESOURCE = "fixtures/eof_comment.ftl";
+    static final String RESOURCE = "fixtures/cr_multikey.ftl";
     static FluentResource resource;
     static FluentBundle bundle;
 
     @BeforeAll
     public static void parseFile() throws IOException {
         resource = FTLTestUtils.parseFile( RESOURCE );
-        bundle = FTLTestUtils.basicBundleSetup( resource, false );
+        bundle = FTLTestUtils.basicBundleSetup(resource, false);
     }
+
 
 
     @Test
@@ -53,36 +53,19 @@ public class eofCommentTest {
         assertEquals( 0, resource.errors().size() );
     }
 
+
     @Test
     public void verifyEntries() {
-        // comments count as entries too!
-        assertEquals( 2, resource.entries().size() );
+        assertEquals( 1, resource.entries().size() );
     }
 
     @Test
-    public void verifyResourceComment() {
-        final String EXPECTED = "NOTE: Disable final newline insertion when editing this file.";
-
-        resource.entries().stream()
-                .filter( Commentary.ResourceComment.class::isInstance )
-                .map( Commentary.ResourceComment.class::cast )
-                .map( Commentary.ResourceComment::text )
-                .filter( EXPECTED::equals )
-                .findFirst()
-                .orElseThrow( () -> new AssertionError( "Mismatch" ) );
+    public void testKey01() {
+        assertEquals(
+                "Value 01\rerr02 = Value 02\r\r\r### This entire file uses CR as EOL.\r",
+                FTLTestUtils.fmt( bundle, "key01" )
+        );
     }
 
 
-    @Test
-    public void verifyComment() {
-        final String EXPECTED = "No EOL";
-
-        resource.entries().stream()
-                .filter( Commentary.Comment.class::isInstance )
-                .map( Commentary.Comment.class::cast )
-                .map( Commentary.Comment::text )
-                .filter( EXPECTED::equals )
-                .findFirst()
-                .orElseThrow( () -> new AssertionError( "Mismatch" ) );
-    }
 }

@@ -35,7 +35,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class crMultlineValueTest {
+public class CRMultlineValueTest {
 
     static final String RESOURCE = "fixtures/cr_multilinevalue.ftl";
     static FluentResource resource;

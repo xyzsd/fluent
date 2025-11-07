@@ -22,62 +22,62 @@
  *
  */
 
-package test.ftl;import fluent.bundle.FluentBundle;
+package test.ftl;
+
+import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
+import fluent.syntax.ast.Commentary;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import test.shared.FTLTestUtils;
 
 import java.io.IOException;
 
-import static fluent.syntax.parser.FTLParseException.ErrorCode.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class crLFTest {
+public class EOFValueTest {
 
-    static final String RESOURCE = "fixtures/crlf.ftl";
+    static final String RESOURCE = "fixtures/eof_value.ftl";
     static FluentResource resource;
     static FluentBundle bundle;
 
     @BeforeAll
     public static void parseFile() throws IOException {
         resource = FTLTestUtils.parseFile( RESOURCE );
-        bundle = FTLTestUtils.basicBundleSetup(resource, false);
+        bundle = FTLTestUtils.basicBundleSetup( resource, false );
     }
-
 
 
     @Test
     public void verifyExceptions() {
-        // some exceptions can occur during parsing, depending upon the input;
-        // verify any exceptions that were raised are indeed present.
-        assertEquals( 2, resource.errors().size() );
-        assertTrue( FTLTestUtils.matchParseException( resource, E0020, 15 ) );
-        assertTrue( FTLTestUtils.matchParseException( resource, E0004, 18 ) );
+        assertEquals( 0, resource.errors().size() );
     }
 
     @Test
-    public void testKey01() {
-        assertEquals(
-                "Value 01",
-                FTLTestUtils.fmt( bundle, "key01" )
-        );
+    public void verifyEntries() {
+        // comments count as entries too!
+        assertEquals( 2, resource.entries().size() );
+    }
+
+
+    @Test
+    public void verifyResourceComment() {
+        final String EXPECTED = "NOTE: Disable final newline insertion when editing this file.";
+
+        resource.entries().stream()
+                .filter( Commentary.ResourceComment.class::isInstance )
+                .map( Commentary.ResourceComment.class::cast )
+                .map( Commentary.ResourceComment::text )
+                .filter( EXPECTED::equals )
+                .findFirst()
+                .orElseThrow( () -> new AssertionError( "Mismatch" ) );
     }
 
     @Test
-    public void testKey02() {
+    public void verifyMessage() {
         assertEquals(
-            "Value 02\nContinued\n\nand continued\n\nand continued",
-                FTLTestUtils.fmt( bundle, "key02" )
-        );
-    }
-
-    @Test
-    public void testKey02Attribute() {
-        assertEquals(
-                "Title",
-                FTLTestUtils.attr( bundle, "key02","title" )
+                "No EOL",
+                FTLTestUtils.fmt( bundle, "no-eol" )
         );
     }
 

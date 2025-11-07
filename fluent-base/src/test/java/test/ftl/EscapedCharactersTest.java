@@ -36,7 +36,7 @@ import static fluent.syntax.parser.FTLParseException.ErrorCode.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class escapedCharactersTest {
+public class EscapedCharactersTest {
 
     static final String RESOURCE = "fixtures/escaped_characters.ftl";
     static FluentResource resource;

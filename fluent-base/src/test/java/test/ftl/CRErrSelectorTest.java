@@ -22,12 +22,8 @@
  *
  */
 
-package test.ftl;
-
-import fluent.bundle.FluentBundle;
+package test.ftl;import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
-import fluent.syntax.ast.Commentary;
-import fluent.syntax.ast.Junk;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import test.shared.FTLTestUtils;
@@ -38,55 +34,32 @@ import static fluent.syntax.parser.FTLParseException.ErrorCode.E0004;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class eofJunkTest {
+public class CRErrSelectorTest {
 
-    static final String RESOURCE = "fixtures/eof_junk.ftl";
+    static final String RESOURCE = "fixtures/cr_err_selector.ftl";
     static FluentResource resource;
     static FluentBundle bundle;
 
     @BeforeAll
     public static void parseFile() throws IOException {
         resource = FTLTestUtils.parseFile( RESOURCE );
-        bundle = FTLTestUtils.basicBundleSetup( resource, false );
+        bundle = FTLTestUtils.basicBundleSetup(resource, false);
     }
+
 
 
     @Test
     public void verifyExceptions() {
+        // some exceptions can occur during parsing, depending upon the input;
+        // verify any exceptions that were raised are indeed present.
         assertEquals( 1, resource.errors().size() );
-        assertTrue( FTLTestUtils.matchParseException( resource, E0004, 3 ) );
+        assertTrue( FTLTestUtils.matchParseException( resource, E0004, 1 ) );
     }
 
     @Test
     public void verifyEntries() {
-        // comments count as entries too!
-        assertEquals( 1, resource.entries().size() );
+        // issing newline after -> : there are no entries.
+        assertEquals( 0, resource.entries().size() );
     }
-
-
-    @Test
-    public void verifyResourceComment() {
-        final String EXPECTED = "NOTE: Disable final newline insertion when editing this file.";
-
-        resource.entries().stream()
-                .filter( Commentary.ResourceComment.class::isInstance )
-                .map( Commentary.ResourceComment.class::cast )
-                .map( Commentary.ResourceComment::text )
-                .filter( EXPECTED::equals )
-                .findFirst()
-                .orElseThrow( () -> new AssertionError( "Mismatch" ) );
-    }
-
-    @Test
-    public void verifyJunk() {
-        final String EXPECTED = "000";
-
-        resource.junk().stream()
-                .findFirst()    // just one junk entry here
-                .map( Junk::content )
-                .filter( EXPECTED::equals )
-                .orElseThrow( () -> new AssertionError( "Mismatch" ) );
-    }
-
 
 }

@@ -30,13 +30,13 @@ import test.shared.FTLTestUtils;
 
 import java.io.IOException;
 
-import static fluent.syntax.parser.FTLParseException.ErrorCode.E0004;
+import static fluent.syntax.parser.FTLParseException.ErrorCode.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class crErrSelectorTest {
+public class CRLFTest {
 
-    static final String RESOURCE = "fixtures/cr_err_selector.ftl";
+    static final String RESOURCE = "fixtures/crlf.ftl";
     static FluentResource resource;
     static FluentBundle bundle;
 
@@ -52,14 +52,33 @@ public class crErrSelectorTest {
     public void verifyExceptions() {
         // some exceptions can occur during parsing, depending upon the input;
         // verify any exceptions that were raised are indeed present.
-        assertEquals( 1, resource.errors().size() );
-        assertTrue( FTLTestUtils.matchParseException( resource, E0004, 1 ) );
+        assertEquals( 2, resource.errors().size() );
+        assertTrue( FTLTestUtils.matchParseException( resource, E0020, 15 ) );
+        assertTrue( FTLTestUtils.matchParseException( resource, E0004, 18 ) );
     }
 
     @Test
-    public void verifyEntries() {
-        // issing newline after -> : there are no entries.
-        assertEquals( 0, resource.entries().size() );
+    public void testKey01() {
+        assertEquals(
+                "Value 01",
+                FTLTestUtils.fmt( bundle, "key01" )
+        );
+    }
+
+    @Test
+    public void testKey02() {
+        assertEquals(
+            "Value 02\nContinued\n\nand continued\n\nand continued",
+                FTLTestUtils.fmt( bundle, "key02" )
+        );
+    }
+
+    @Test
+    public void testKey02Attribute() {
+        assertEquals(
+                "Title",
+                FTLTestUtils.attr( bundle, "key02","title" )
+        );
     }
 
 }

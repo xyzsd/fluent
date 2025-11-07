@@ -26,6 +26,7 @@ package test.ftl;
 
 import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
+import fluent.syntax.ast.Commentary;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import test.shared.FTLTestUtils;
@@ -34,9 +35,9 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class eofEmptyTest {
+public class EOFCommentTest {
 
-    static final String RESOURCE = "fixtures/eof_empty.ftl";
+    static final String RESOURCE = "fixtures/eof_comment.ftl";
     static FluentResource resource;
     static FluentBundle bundle;
 
@@ -55,13 +56,33 @@ public class eofEmptyTest {
     @Test
     public void verifyEntries() {
         // comments count as entries too!
-        assertEquals( 0, resource.entries().size() );
+        assertEquals( 2, resource.entries().size() );
     }
 
     @Test
-    public void verifyNoJunk() {
-        assertEquals( 0, resource.junk().size() );
+    public void verifyResourceComment() {
+        final String EXPECTED = "NOTE: Disable final newline insertion when editing this file.";
+
+        resource.entries().stream()
+                .filter( Commentary.ResourceComment.class::isInstance )
+                .map( Commentary.ResourceComment.class::cast )
+                .map( Commentary.ResourceComment::text )
+                .filter( EXPECTED::equals )
+                .findFirst()
+                .orElseThrow( () -> new AssertionError( "Mismatch" ) );
     }
 
 
+    @Test
+    public void verifyComment() {
+        final String EXPECTED = "No EOL";
+
+        resource.entries().stream()
+                .filter( Commentary.Comment.class::isInstance )
+                .map( Commentary.Comment.class::cast )
+                .map( Commentary.Comment::text )
+                .filter( EXPECTED::equals )
+                .findFirst()
+                .orElseThrow( () -> new AssertionError( "Mismatch" ) );
+    }
 }

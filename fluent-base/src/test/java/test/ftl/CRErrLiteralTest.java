@@ -34,7 +34,7 @@ import static fluent.syntax.parser.FTLParseException.ErrorCode.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class crErrLiteralTest {
+public class CRErrLiteralTest {
 
     static final String RESOURCE = "fixtures/cr_err_literal.ftl";
     static FluentResource resource;

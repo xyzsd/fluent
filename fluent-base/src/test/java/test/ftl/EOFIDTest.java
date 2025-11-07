@@ -27,17 +27,20 @@ package test.ftl;
 import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
 import fluent.syntax.ast.Commentary;
+import fluent.syntax.ast.Junk;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import test.shared.FTLTestUtils;
 
 import java.io.IOException;
 
+import static fluent.syntax.parser.FTLParseException.ErrorCode.E0003;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class eofValueTest {
+public class EOFIDTest {
 
-    static final String RESOURCE = "fixtures/eof_value.ftl";
+    static final String RESOURCE = "fixtures/eof_id.ftl";
     static FluentResource resource;
     static FluentBundle bundle;
 
@@ -50,13 +53,14 @@ public class eofValueTest {
 
     @Test
     public void verifyExceptions() {
-        assertEquals( 0, resource.errors().size() );
+        assertEquals( 1, resource.errors().size() );
+        assertTrue( FTLTestUtils.matchParseException( resource, E0003, 0 ) );
     }
 
     @Test
     public void verifyEntries() {
         // comments count as entries too!
-        assertEquals( 2, resource.entries().size() );
+        assertEquals( 1, resource.entries().size() );
     }
 
 
@@ -74,11 +78,14 @@ public class eofValueTest {
     }
 
     @Test
-    public void verifyMessage() {
-        assertEquals(
-                "No EOL",
-                FTLTestUtils.fmt( bundle, "no-eol" )
-        );
+    public void verifyJunk() {
+        final String EXPECTED = "message-id";
+
+        resource.junk().stream()
+                .findFirst()    // just one junk entry here
+                .map( Junk::content )
+                .filter( EXPECTED::equals )
+                .orElseThrow( () -> new AssertionError( "Mismatch" ) );
     }
 
 }

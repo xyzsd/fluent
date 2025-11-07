@@ -34,13 +34,13 @@ import test.shared.FTLTestUtils;
 
 import java.io.IOException;
 
-import static fluent.syntax.parser.FTLParseException.ErrorCode.E0003;
+import static fluent.syntax.parser.FTLParseException.ErrorCode.E0005;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class eofIDTest {
+public class EOFIDEqualsTest {
 
-    static final String RESOURCE = "fixtures/eof_id.ftl";
+    static final String RESOURCE = "fixtures/eof_id_equals.ftl";
     static FluentResource resource;
     static FluentBundle bundle;
 
@@ -54,7 +54,7 @@ public class eofIDTest {
     @Test
     public void verifyExceptions() {
         assertEquals( 1, resource.errors().size() );
-        assertTrue( FTLTestUtils.matchParseException( resource, E0003, 0 ) );
+        assertTrue( FTLTestUtils.matchParseException( resource, E0005, 3 ) );
     }
 
     @Test
@@ -79,7 +79,7 @@ public class eofIDTest {
 
     @Test
     public void verifyJunk() {
-        final String EXPECTED = "message-id";
+        final String EXPECTED = "message-id =";
 
         resource.junk().stream()
                 .findFirst()    // just one junk entry here
@@ -87,5 +87,6 @@ public class eofIDTest {
                 .filter( EXPECTED::equals )
                 .orElseThrow( () -> new AssertionError( "Mismatch" ) );
     }
+
 
 }

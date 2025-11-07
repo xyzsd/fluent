@@ -26,21 +26,17 @@ package test.ftl;
 
 import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
-import fluent.syntax.ast.Commentary;
-import fluent.syntax.ast.Junk;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import test.shared.FTLTestUtils;
 
 import java.io.IOException;
 
-import static fluent.syntax.parser.FTLParseException.ErrorCode.E0005;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class eofIDEqualsTest {
+public class EOFEmptyTest {
 
-    static final String RESOURCE = "fixtures/eof_id_equals.ftl";
+    static final String RESOURCE = "fixtures/eof_empty.ftl";
     static FluentResource resource;
     static FluentBundle bundle;
 
@@ -53,39 +49,18 @@ public class eofIDEqualsTest {
 
     @Test
     public void verifyExceptions() {
-        assertEquals( 1, resource.errors().size() );
-        assertTrue( FTLTestUtils.matchParseException( resource, E0005, 3 ) );
+        assertEquals( 0, resource.errors().size() );
     }
 
     @Test
     public void verifyEntries() {
         // comments count as entries too!
-        assertEquals( 1, resource.entries().size() );
-    }
-
-
-    @Test
-    public void verifyResourceComment() {
-        final String EXPECTED = "NOTE: Disable final newline insertion when editing this file.";
-
-        resource.entries().stream()
-                .filter( Commentary.ResourceComment.class::isInstance )
-                .map( Commentary.ResourceComment.class::cast )
-                .map( Commentary.ResourceComment::text )
-                .filter( EXPECTED::equals )
-                .findFirst()
-                .orElseThrow( () -> new AssertionError( "Mismatch" ) );
+        assertEquals( 0, resource.entries().size() );
     }
 
     @Test
-    public void verifyJunk() {
-        final String EXPECTED = "message-id =";
-
-        resource.junk().stream()
-                .findFirst()    // just one junk entry here
-                .map( Junk::content )
-                .filter( EXPECTED::equals )
-                .orElseThrow( () -> new AssertionError( "Mismatch" ) );
+    public void verifyNoJunk() {
+        assertEquals( 0, resource.junk().size() );
     }
 
 
