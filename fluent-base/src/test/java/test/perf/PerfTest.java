@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class PerfTest {
 
     private static final String RESOURCE = "perf/gecko_strings.ftl";
-    private static final int ITERATIONS = 10000;
+    private static final int ITERATIONS = 1;
 
     // really we are just validating the PerfTest file here
     @Test

@@ -8,19 +8,22 @@ final class ScalarOps {
 
     static int skipToEOL(final byte[] array, final int startPos) {
         int pos = startPos;
-        while ((pos < array.length) && (array[pos] != '\n')) {
+        final int len = array.length;
+        while ((pos < len) && (array[pos] != '\n')) {
             pos++;
         }
+
         return pos;
     }
 
     static int skipBlank(final byte[] array, final int startPos) {
         int pos = startPos;
-        while (pos < array.length) {
+        final int len = array.length;
+        while (pos < len) {
             final byte b = array[pos];
             if (b == ' ' || b == '\n') {
                 pos++;
-            } else if (b == '\r' && (pos < (array.length - 1)) && (array[pos + 1] == (byte) '\n')) {
+            } else if (b == '\r' && (pos < (len - 1)) && (array[pos + 1] == (byte) '\n')) {
                 pos += 2;
             } else {
                 break;
@@ -31,7 +34,8 @@ final class ScalarOps {
 
     static int skipBlankInline(final byte[] array, final int startPos) {
         int pos = startPos;
-        while ((pos < array.length) && (array[pos] == ' ')) {
+        final int len = array.length;
+        while ((pos < len) && (array[pos] == ' ')) {
             pos++;
         }
         return pos;
@@ -41,7 +45,8 @@ final class ScalarOps {
     public static long skipBlankBlock(final byte[] array, final int startPos) {
         int count = 0;
         int pos = startPos;
-        while (pos < array.length) {
+        final int len = array.length;
+        while (pos < len) {
             final int start = pos;
 
             pos = skipBlankInline(array, pos);
@@ -49,7 +54,7 @@ final class ScalarOps {
             byte cb = array[pos];
             if (cb == '\n') {
                 pos++;
-            } else if (cb == '\r' && (pos < (array.length - 1)) && (array[pos + 1] == (byte) '\n')) {
+            } else if (cb == '\r' && (pos < (len - 1)) && (array[pos + 1] == (byte) '\n')) {
                 pos += 2;
             } else {
                 pos = start;
@@ -63,7 +68,8 @@ final class ScalarOps {
 
     public static int skipBlankBlockNLC(final byte[] array, final int startPos) {
         int pos = startPos;
-        while (pos < array.length) {
+        final int len = array.length;
+        while (pos < len) {
             final int start = pos;
 
             pos = skipBlankInline(array, pos);
@@ -71,7 +77,7 @@ final class ScalarOps {
             byte cb = array[pos];
             if (cb == '\n') {
                 pos++;
-            } else if (cb == '\r' && (pos < (array.length - 1)) && (array[pos + 1] == (byte) '\n')) {
+            } else if (cb == '\r' && (pos < (len - 1)) && (array[pos + 1] == (byte) '\n')) {
                 pos += 2;
             } else {
                 return start;
@@ -86,12 +92,13 @@ final class ScalarOps {
             return startPos;
         }
 
-        for (int i = (startPos + 1); i < array.length; i++) {
+        final int len = array.length;
+        for (int i = (startPos + 1); i < len; i++) {
             if (!CommonOps.isValidIDPart( array[i] )) {
                 return i;
             }
         }
-        return array.length;
+        return len;
     }
 
 

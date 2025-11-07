@@ -483,7 +483,7 @@ public class FTLParser {
 
         if (pattern == null) {
             // Attributes must have a Pattern.
-            // If we want to be lenient, we could return null here, and the attribute will be ignored.
+            // If we want to be lenient, we could return null here, and then ignore the attribute.
             throw parseException( ErrorCode.E0012, ps );
         } else {
             return new Attribute( id, pattern );
