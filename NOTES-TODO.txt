@@ -4,21 +4,19 @@ primary to-do list and notes/thoughts
 =====================================
 
 * EXAMPLES
-   done     - renaming built-in functions
-   done     - replacing implicit functions (e.g., DATETIME with TEMPORAL)
+   done    - renaming built-in functions
+   done    - replacing implicit functions (e.g., DATETIME with TEMPORAL)
    done    - simple implicit functions via lambdas
-   done      how to set default options for a function
+   done    - how to set default options for a function
+   done    - error handling examples (error handler for fluent bundle)
 
-      - how to select on a list (cannot!!) but show how it can be accomplished by splitting messages into
+    - how to select on a list (cannot!!) but show how it can be accomplished by splitting messages into
             formatting items and selection
 
-       **done**   - error handling examples (error handler for fluent bundle)
-
-        - locale selection and fallback example.
+    - locale selection and fallback example.
             have two locales, and show how to switch and what happens.
             e.g., english & french.
             see end of this document for additional info
-
 
 
 
@@ -33,9 +31,6 @@ primary to-do list and notes/thoughts
         - work on readme.md ****
 
 
-   * ** DONE ***CONSIDER jdk 21 target instead of 23 ?
-    since jdk 21 is LTS ...
-   * **DONE ** ERROR CONTEXT should be class, not record, incase we want to change it later
    todo * 'pattern' vs. 'skeleton' keyword for TEMPORAL/OTHER
 
     * OSSRH release
@@ -54,8 +49,7 @@ primary to-do list and notes/thoughts
 * FEATURE HIGHLIGHTS
     - experimental SIMD ...
     - list handling
-    - targeting jdk23, though could be modified for jdk21
-        (should compile if JDK21 preview features enabled; uses unnamed variables, which was finalized in jdk22)
+    - JDK21 compatible
 
 * Rendering Performance Optimizations (for next minor version)
     * Measurements: need good JMH tests for message rendering
