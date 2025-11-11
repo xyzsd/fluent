@@ -24,9 +24,12 @@ The 2.0 version is nearing release, and includes:
   - Built-in functions now have tests.
   - Docuementation improvements
   - New examples
+  - Single dependency (ICU).
     
 
 Introductory Example
+--------------------
+(note: this applies to version 0.72, and will be updated when the next version is released)
 --------------------
 Given the following example FTL:
 ```
