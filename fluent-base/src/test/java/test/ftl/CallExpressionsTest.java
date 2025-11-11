@@ -70,6 +70,9 @@ public class CallExpressionsTest {
                 .build();
     }
 
+    private static void accept(Options options) {
+        assertTrue( options.isEmpty() );
+    }
 
 
     @Test
@@ -144,7 +147,7 @@ public class CallExpressionsTest {
             assertEquals( 1, options.asInt( "x" ).getAsInt() );
             assertEquals( "Y", options.asString( "y" ).get() );
         } );
-        funFactory.setInjected( (_,_) -> List.of(FluentString.of("true_2"))  );
+        funFactory.setInjected( (_1,_2) -> List.of(FluentString.of("true_2"))  );
         assertEquals(
                 "true_2",
                 FTLTestUtils.fmt(bundle, "named-args")
@@ -156,7 +159,7 @@ public class CallExpressionsTest {
             assertEquals( 1, options.asInt( "x" ).getAsInt() );
             assertEquals( "Y", options.asString( "y" ).get() );
         } );
-        funFactory.setInjected( (_,_) -> List.of(FluentString.of("true_3"))  );
+        funFactory.setInjected( (_1,_2) -> List.of(FluentString.of("true_3"))  );
         assertEquals(
                 "true_3",
                 FTLTestUtils.fmt(bundle, "dense-named-args")
@@ -221,9 +224,7 @@ public class CallExpressionsTest {
     @Test
     public void whitespaceAroundArgs2() {
         funFactory.clear();
-        funFactory.setOptionsChecker( (options) -> {
-            assertTrue(  options.isEmpty());
-        } );
+        funFactory.setOptionsChecker( CallExpressionsTest::accept );
         funFactory.setInjected( (rp, scope) -> {
             assertEquals( 0, rp.positionalCount() );
             return List.of(FluentString.of("true_empty"));
@@ -234,9 +235,7 @@ public class CallExpressionsTest {
         );
 
         funFactory.clear();
-        funFactory.setOptionsChecker( (options) -> {
-            assertTrue(  options.isEmpty());
-        } );
+        funFactory.setOptionsChecker( (options) -> assertTrue(  options.isEmpty()) );
         funFactory.setInjected( (rp, scope) -> {
             assertEquals( 0, rp.positionalCount() );
             return List.of(FluentString.of("true_empty"));
@@ -343,12 +342,10 @@ public class CallExpressionsTest {
         );
 
         funFactory.clear();
-        funFactory.setOptionsChecker(  (options) -> {
-            assertEquals(
-                    1,
-                    options.asInt("x").getAsInt()
-            );
-        } );
+        funFactory.setOptionsChecker(  (options) -> assertEquals(
+                1,
+                options.asInt("x").getAsInt()
+        ) );
         funFactory.setInjected( (rp, scope) -> {
             assertEquals( 0, rp.positionalCount() );
             return List.of( FluentString.of( "true!" ) );
@@ -377,9 +374,7 @@ public class CallExpressionsTest {
         // setup for FUN("a",msg,x:1) in various forms
     private void funAMSGx1() {
         funFactory.clear();
-        funFactory.setOptionsChecker( (options) -> {
-            assertEquals( 1, options.asInt( "x" ).getAsInt() );
-        } );
+        funFactory.setOptionsChecker( (options) -> assertEquals( 1, options.asInt( "x" ).getAsInt() ) );
         funFactory.setInjected( (rp, scope) -> {
             assertEquals( 2, rp.positionalCount() );
             assertEquals( 1, rp.positional( 0 ).size() );
@@ -534,7 +529,7 @@ public class CallExpressionsTest {
             assertEquals( 2, options.asInt( "y" ).getAsInt() );
             assertEquals( 3, options.asInt( "z" ).getAsInt() );
         } );
-        funFactory.setInjected( (_,_) -> List.of(FluentString.of("ws_named_1"))  );
+        funFactory.setInjected( (_1,_2) -> List.of(FluentString.of("ws_named_1"))  );
         assertEquals(
                 "ws_named_1",
                 FTLTestUtils.fmt(bundle, "sparse-named-arg")
@@ -545,7 +540,7 @@ public class CallExpressionsTest {
             assertEquals( 1, options.size() );
             assertEquals( 1, options.asInt( "x" ).getAsInt() );
         } );
-        funFactory.setInjected( (_,_) -> List.of(FluentString.of("ws_named_2"))  );
+        funFactory.setInjected( (_1,_2) -> List.of(FluentString.of("ws_named_2"))  );
         assertEquals(
                 "ws_named_2",
                 FTLTestUtils.fmt(bundle, "unindented-colon")
@@ -556,7 +551,7 @@ public class CallExpressionsTest {
             assertEquals( 1, options.size() );
             assertEquals( 1, options.asInt( "x" ).getAsInt() );
         } );
-        funFactory.setInjected( (_,_) -> List.of(FluentString.of("ws_named_3"))  );
+        funFactory.setInjected( (_1,_2) -> List.of(FluentString.of("ws_named_3"))  );
         assertEquals(
                 "ws_named_3",
                 FTLTestUtils.fmt(bundle, "unindented-value")

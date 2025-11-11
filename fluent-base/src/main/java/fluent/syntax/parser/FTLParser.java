@@ -287,6 +287,7 @@ public class FTLParser {
     }
 
     /// Returns `true` if SIMD can be used (SIMD vector API)
+    @SuppressWarnings( "unused" )
     public static boolean isSIMDAvailable() {
         return canSIMD;
     }
@@ -644,7 +645,7 @@ public class FTLParser {
                     throw parseException( ErrorCode.E0017, ps );
                 }
             }
-            case PatternElement.Placeable _ -> throw parseException( ErrorCode.E0029, ps );
+            case PatternElement.Placeable __ -> throw parseException( ErrorCode.E0029, ps );
             default -> { /* do nothing */ }
         }
 

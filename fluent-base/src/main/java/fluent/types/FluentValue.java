@@ -72,7 +72,8 @@ public sealed interface FluentValue<T>
             case CharSequence s -> FluentString.of(s);
             case Number n -> FluentNumber.from(n);
             case TemporalAccessor t -> FluentTemporal.of(t);
-            case Collection<?> _, Map<?,?> _-> throw invalid(any);  // illegal!
+            case Map<?,?> __-> throw invalid(any);  // illegal!
+            case Collection<?> __ -> throw invalid(any);  // illegal!
             default -> FluentCustom.of(any);
         };
     }
@@ -109,7 +110,8 @@ public sealed interface FluentValue<T>
             case null -> List.of(FLUENT_NULL);
             case SequencedCollection<?> seq -> convertCollection(seq);
             // These could be passed in... but do not make sense. Must check AFTER SequencedCollection
-            case Collection<?> _, Map<?,?> _ -> throw new IllegalArgumentException("Only SequencedCollections are supported");
+            case Collection<?> __ -> throw new IllegalArgumentException("Only SequencedCollections are supported");
+            case Map<?, ?> __ -> throw new IllegalArgumentException("Only SequencedCollections are supported");
             // default (including singular items)
             default -> List.of( of( in ));
         };

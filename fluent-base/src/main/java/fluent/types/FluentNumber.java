@@ -46,8 +46,12 @@ public sealed interface FluentNumber<T extends Number> extends FluentValue<T> {
     static FluentNumber<?> from(final Number n) {
         Objects.requireNonNull(n);
         return switch(n) {
-            case Integer _, Long _, Short _, Byte _ -> new FluentLong(n.longValue());
-            case Double _, Float _ -> new FluentDouble(n.doubleValue());
+            case Long __ -> new FluentLong(n.longValue());
+            case Short __ -> new FluentLong(n.longValue());
+            case Integer __ -> new FluentLong(n.longValue());
+            case Byte __ -> new FluentLong(n.longValue());
+            case Double __ -> new FluentDouble(n.doubleValue());
+            case Float __ -> new FluentDouble(n.doubleValue());
             case BigDecimal bigDecimal -> new FluentBigDecimal(bigDecimal);
             case BigInteger bigInteger -> new FluentBigDecimal( new BigDecimal( bigInteger ) );
             default ->  throw new IllegalArgumentException( String.valueOf( n ) );

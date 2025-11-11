@@ -9,15 +9,17 @@ primary to-do list and notes/thoughts
    done    - simple implicit functions via lambdas
    done      how to set default options for a function
 
-        - how to select on a list (cannot!!) but show how it can be accomplished by splitting messages into
+      - how to select on a list (cannot!!) but show how it can be accomplished by splitting messages into
             formatting items and selection
 
-        - error handling examples (error handler for fluent bundle)
+       **done**   - error handling examples (error handler for fluent bundle)
 
         - locale selection and fallback example.
             have two locales, and show how to switch and what happens.
             e.g., english & french.
             see end of this document for additional info
+
+
 
 
     * wiki/readme for:
@@ -28,7 +30,13 @@ primary to-do list and notes/thoughts
         - why should not use for critical controls :)
         - feature highlights
         - explicitly note dependencies (just one)
+        - work on readme.md ****
 
+
+   * ** DONE ***CONSIDER jdk 21 target instead of 23 ?
+    since jdk 21 is LTS ...
+   * **DONE ** ERROR CONTEXT should be class, not record, incase we want to change it later
+   todo * 'pattern' vs. 'skeleton' keyword for TEMPORAL/OTHER
 
     * OSSRH release
     * release notification on reddit / also to fluent group (GH project) AFTER OSSRH release
@@ -39,6 +47,7 @@ primary to-do list and notes/thoughts
     * code improvements
         * SIMD blend overkill for skipBlankBlock
     * CRLF detection: determine best approach: load 2 vectors vs. shifting masks.
+        also performance tests with CRLF line endings
     * doc notes: scalar first, simd optional (scalar fallback).
         SIMD not always faster, and much slower startup.
 

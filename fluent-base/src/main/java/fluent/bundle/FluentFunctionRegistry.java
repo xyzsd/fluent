@@ -225,7 +225,7 @@ public final class FluentFunctionRegistry {
             case FluentString(String value) -> exp.matchOrDefault( value ).key();
 
             // errors: always return default key
-            case FluentError _ -> exp.defaultVariantKey();
+            case FluentError __ -> exp.defaultVariantKey();
 
             case FluentNumber<? extends Number> fluentNumber -> selectNumber( fluentNumber, exp, scope );
             case FluentTemporal fluentTemporal -> selectTemporal( fluentTemporal, exp, scope );

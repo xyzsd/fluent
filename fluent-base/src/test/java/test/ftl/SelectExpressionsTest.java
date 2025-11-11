@@ -81,7 +81,7 @@ public class SelectExpressionsTest {
     @Test
     public void newMessages() {
         fnFactoryBUILTIN.reset();
-        fnFactoryBUILTIN.setTransform(  (_,_) -> {} );
+        fnFactoryBUILTIN.setTransform(  (_1,_2) -> {} );
         fnFactoryBUILTIN.setResult("0");
         assertEquals(
                 "Zero",
@@ -89,7 +89,7 @@ public class SelectExpressionsTest {
         );
 
         fnFactoryBUILTIN.reset();
-        fnFactoryBUILTIN.setTransform(  (_,_) -> {} );
+        fnFactoryBUILTIN.setTransform(  (_1,_2) -> {} );
         fnFactoryBUILTIN.setResult("other");
         assertEquals(
                 "Other",
@@ -121,7 +121,7 @@ public class SelectExpressionsTest {
     @Test
     public void reducedWhitespace() {
         fnFactoryFOO.reset();
-        fnFactoryFOO.setTransform(  (_,_) -> {} );
+        fnFactoryFOO.setTransform(  (_1,_2) -> {} );
         fnFactoryFOO.setResult("doesn't-matter");
         assertEquals(
                 "",

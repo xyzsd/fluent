@@ -18,16 +18,15 @@ public class Hello {
 
     public static void main(String[] args) throws IOException {
 
-        // FTLStream handles the low-level operations
-        // FTLParser parses the FTLStream into the data model, as a FluentResource.
-        // The FTL file we load should be localised.
+        // FTLParser parses FTL into the data model, as a FluentResource.
+        // The FTL file we load should be localized.
         // NOTE: this can throw an IOException
         final FluentResource resource = FTLParser.parse(
                 // This is a simple and efficient way to get an FTL file as a resource
                  Thread.currentThread().getContextClassLoader(), "hello.ftl"
         );
 
-        // The FTLResource contains the data model (AST).
+        // The FluentResource contains the data model (AST).
         // It also contains any information about errors encountered during parsing.
         if (!resource.errors().isEmpty()) {
             System.err.printf("Encountered %d errors during parsing!\n", resource.errors().size());

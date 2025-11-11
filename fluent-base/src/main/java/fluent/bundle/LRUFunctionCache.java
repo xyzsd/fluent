@@ -81,7 +81,7 @@ public final class LRUFunctionCache implements FluentFunctionCache {
 
         if (factory.canCache()) {
             final CacheKey key = new CacheKey( factory.name(), options );
-            return (T) lruCache.computeIfAbsent( key, _ -> factory.create( locale, options ) );
+            return (T) lruCache.computeIfAbsent( key, __ -> factory.create( locale, options ) );
         }
 
         return factory.create( locale, options );

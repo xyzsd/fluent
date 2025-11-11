@@ -139,7 +139,7 @@ public sealed interface FluentFunction {
     /// Empty input is not allowed.
     static <T> Transform passthroughTransform(Class<T> cls, Function<T, ?> fn) {
         final var biConsumer = mapOrPassthrough( cls, fn );
-        return (param, _) -> {
+        return (param, __) -> {
             ensureInput( param );
             return param.positionals().mapMulti( biConsumer ).toList();
         };
