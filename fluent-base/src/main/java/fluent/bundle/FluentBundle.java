@@ -37,7 +37,6 @@ import java.util.function.Supplier;
 
 import static fluent.bundle.resolver.ResolutionException.ReferenceException;
 import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNullElse;
 
 
 /// FluentBundle is the primary API for formatting localized messages defined in Fluent (FTL) resources.
@@ -197,13 +196,14 @@ public class FluentBundle {
 
         if (poe.pattern != null) {
             return patternFormat( poe.pattern, args, messageID, null );
-        } else {
-            assert poe.exceptionSupplier != null;
+        } else if (poe.exceptionSupplier != null) {
             try {
                 return '{' + poe.exceptionSupplier.get().getMessage() + '}';
             } finally {
                 consumeError( messageID, null, poe.exceptionSupplier );
             }
+        } else {
+            throw new IllegalStateException();
         }
     }
 
@@ -243,13 +243,14 @@ public class FluentBundle {
 
         if (poe.pattern != null) {
             return patternFormat( poe.pattern, args, messageID, attributeID );
-        } else {
-            assert poe.exceptionSupplier != null;
+        } else if (poe.exceptionSupplier != null) {
             try {
                 return '{' + poe.exceptionSupplier.get().getMessage() + '}';
             } finally {
                 consumeError( messageID, null, poe.exceptionSupplier );
             }
+        } else {
+            throw new IllegalStateException();
         }
     }
 
@@ -304,7 +305,7 @@ public class FluentBundle {
     ///  Error handler for logging/etc.
     private void consumeError(final @Nullable String msgID, final @Nullable String attrID, final Scope scope) {
         if (errorConsumer != null && scope.containsExceptions()) {
-            final ErrorContext context = ErrorContext.of( msgID, attrID, locale(), scope.exceptions() );
+            final ErrorContext context = new ErrorContext( msgID, attrID, locale(), scope.exceptions() );
             errorConsumer.accept( context );
         }
     }
@@ -312,7 +313,7 @@ public class FluentBundle {
     ///  Error handler for a single exception w/o a Scope
     private void consumeError(final @Nullable String msgID, final @Nullable String attrID, Supplier<Exception> e) {
         if (errorConsumer != null) {
-            final ErrorContext context = ErrorContext.of( msgID, attrID, locale(), List.of( e.get() ) );
+            final ErrorContext context = new ErrorContext( msgID, attrID, locale(), List.of( e.get() ) );
             errorConsumer.accept( context );
         }
     }
@@ -588,37 +589,69 @@ public class FluentBundle {
 
     ///  Error Context information for error handlers / loggers.
     @NullMarked
-    public record ErrorContext(
-            String messageID,                       // message we are trying to format.
-            @Nullable String attributeID,           // message attribute (often null)
-            Locale locale,                          // bundle Locale
-            List<Exception> exceptions              // exceptions that occured during processing
-    ) {
-        /// If messageID is not known, use this
+    public static final class ErrorContext {
+        // This class COULD be a record, but is not because we may want to modify fields in future versions (even
+        // minor versions) without affecting binary compatibility
+        //
+        private final @Nullable String messageID;             // message we are trying to format (could be null)
+        private final @Nullable String attributeID;           // message attribute (often null)
+        private final Locale locale;                          // bundle Locale
+        private final List<Exception> exceptions;             // exceptions that occurred during processing
+
+        /// If messageID is not known
         public static final String UNSPECIFIED_PATTERN = "(Unspecified pattern)";
-        /// If attributeID is missing or not required
-        public static final String NO_ATTRIBUTE = "no attribute";
 
-
-        public ErrorContext {
-            requireNonNull( messageID );
-            requireNonNull( locale );
-            exceptions = List.copyOf( exceptions );
+        ///  Create an ErrorContext
+        public ErrorContext(@Nullable String messageID, @Nullable String attributeID, Locale locale,  List<Exception> exceptions) {
+            this.messageID = messageID;
+            this.attributeID = attributeID;
+            this.locale = requireNonNull( locale );
+            this.exceptions = List.copyOf( exceptions );
         }
 
-        ///  friendly attribute name, or NO_ATTRIBUTE if not set
-        public String attributeID() {
-            return requireNonNullElse( attributeID, NO_ATTRIBUTE );
+        /// Friendly-formatted entry name.
+        ///
+        /// If an attribute is set, this will be "messageID.attributeID".
+        /// If there is no attribute, this will return "messageID"
+        /// If there is no messageID set, this will return UNSPECIFIED_PATTERN
+        ///
+        public String entryName() {
+            if(messageID != null) {
+                final String attr = (attributeID != null) ? '.'+attributeID : "";
+                return messageID + attr;
+            }
+            return UNSPECIFIED_PATTERN;
         }
 
-        ///  Handles potentially null messageID, and labels it 'unknown pattern'
-        public static ErrorContext of(@Nullable String msgID, @Nullable String attrID, Locale locale, List<Exception> exceptions) {
-            return new ErrorContext(
-                    requireNonNullElse( msgID, UNSPECIFIED_PATTERN ),
-                    attrID,
-                    locale,
-                    exceptions
-            );
+        ///  message ID
+        public Optional<String> messageID() {
+            return Optional.ofNullable( messageID);
+        }
+
+        ///  attribute ID
+        public Optional<String> attributeID() {
+            return Optional.ofNullable( attributeID);
+        }
+
+        ///  Locale
+        public Locale locale() {
+            return locale;
+        }
+
+        ///  Exceptions
+        public List<Exception> exceptions() {
+            return exceptions;
+        }
+
+
+        @Override
+        public String toString() {
+            return "ErrorContext{" +
+                    "messageID='" + messageID + '\'' +
+                    ", attributeID='" + attributeID + '\'' +
+                    ", locale=" + locale +
+                    ", exceptions=" + exceptions +
+                    '}';
         }
     }
 
@@ -863,7 +896,7 @@ public class FluentBundle {
                     list.addAll( scope.exceptions() );
                 }
 
-                final ErrorContext context = ErrorContext.of( msgID, attrID, locale(), list );
+                final ErrorContext context = new ErrorContext( msgID, attrID, locale(), list );
                 errorConsumer.accept( context );
             }
         }
