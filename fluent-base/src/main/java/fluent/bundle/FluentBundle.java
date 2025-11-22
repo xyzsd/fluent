@@ -150,10 +150,11 @@ public class FluentBundle {
         return Optional.ofNullable( messages.get( id ) );
     }
 
-    /// Returns all Messages
+    /// Returns a Map of all Messages
     public Map<String, Message> messages() {
         return messages;
     }
+
 
     /// Returns the Term for the given id
     ///
