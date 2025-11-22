@@ -51,7 +51,7 @@ tasks.test {
 
 dependencies {
     api("org.jspecify:jspecify:1.0.0")
-    implementation("com.ibm.icu:icu4j:77.1")
+    implementation("com.ibm.icu:icu4j:78.1")
     //
     testImplementation("org.junit.jupiter:junit-jupiter:5.14.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.14.0")
