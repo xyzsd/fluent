@@ -70,9 +70,10 @@ import java.util.Locale;
 ///     for exact key matching.
 ///     
 ///   
-/// - **skeleton** (optional): An ICU "semantic skeleton".
-///     No other options may be specified other than **kind**. Skeletons provide rich, compact,
-///     and locale-aware formatting.
+/// - **skeleton** (optional): A "semantic skeleton", or pattern, which is defined in
+///     [Unicode Technical Standard #35, LDML part 3](https://www.unicode.org/reports/tr35/tr35-numbers.html#Contents).
+///     If a skeleton is specified, it is an error to specify any additional options other than **kind**.
+///     Skeletons provide rich, compact, and locale-aware formatting.
 ///
 /// - **style** (optional):
 ///     - `DECIMAL`: (Default) Standard decimal formatting.
@@ -164,6 +165,7 @@ public enum NumberFn implements FluentFunctionFactory<FluentFunction.Formatter<N
 
     /// Single enum constant representing the function name in FTL.
     NUMBER;
+
 
     // constant for percent scaling
     private static final BigDecimal BIG_DECIMAL_100 = new BigDecimal( 100 );
