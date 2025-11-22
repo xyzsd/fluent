@@ -51,6 +51,10 @@ public record Message(Identifier identifier, @Nullable Pattern pattern,
         }
     }
 
+    ///  True if this message has a pattern (for the base message only; attributes are not considered)
+    public boolean hasPattern() {
+        return (pattern != null);
+    }
 
     /// Find matching attribute, if any
     public @Nullable Attribute attribute(final String id) {

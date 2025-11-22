@@ -40,7 +40,7 @@ public class RenamedFunctions {
         // such that we use TEMPORAL instead of DATETIME.
         //
         // IN GENERAL, it is not advised to replace the default functions with functions of another name.
-        // Note that the options for DATETIME and TEMPORAL are quite different. TEMPORAL requires an 'as' or 'pattern'
+        // Note that the options for DATETIME and TEMPORAL are quite different. TEMPORAL requires an 'as' or 'skeleton'
         // option, and will output an error message if it is missing.
         //
         // this error will also occur when formatting temporal values WITHOUT the function (default/implicit).

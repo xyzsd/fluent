@@ -63,7 +63,7 @@ public class Hello {
                           Map.of(
                                   "userName", "Billy",      // userName, as above
                                   "photoCount", 1,          // photoCount
-                                  "userGener", "male"
+                                  "userGender", "male"
                           )
         );
         System.out.println( sharedPhotoMessage );

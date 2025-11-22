@@ -1,0 +1,10 @@
+# This is a very simple file. '#' at the beginning of a line is a comment.
+# Available locales (specified by BCP 47 language tags) are specified, one per line.
+# Whatever is listed as the first tag is also our root (undetermined) fallback locale.
+# Empty lines are ignored.
+#
+en
+en-GB
+fr
+
+# END OF FILE
