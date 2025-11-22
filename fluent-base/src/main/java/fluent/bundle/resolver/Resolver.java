@@ -336,7 +336,7 @@ public final class Resolver {
             } catch (FluentFunctionException e) {
                 // here, the error occurred in an implicit function or elsewhere
                 scope.addException( e );
-                return error( e, "???" );
+                return error( e, "selection on "+se.selector() );
             }
         }
 
