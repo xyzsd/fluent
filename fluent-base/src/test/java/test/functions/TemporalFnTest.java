@@ -62,13 +62,18 @@ public class TemporalFnTest {
     @Test
     public void invalid() {
         assertEquals(
-                "{TEMPORAL(): Missing required option 'pattern' or 'as'.}",
+                "{TEMPORAL(): Missing a required option (either 'skeleton' or 'as').}",
                 FTLTestUtils.fmt( bundle, "missing_required", Map.of( "temporal", DATE_AND_TIME ) )
         );
 
         assertEquals(
-                "{TEMPORAL(): Unknown pattern letter: b}",
+                "{TEMPORAL(): Skeleton (pattern) \"badpattern\": Unknown pattern letter: b}",
                 FTLTestUtils.fmt( bundle, "invalid_pattern", Map.of( "temporal", DATE_AND_TIME ) )
+        );
+
+        assertEquals(
+                "{TEMPORAL(): Must specify only one option, either 'skeleton' or 'as'; not both.}",
+                FTLTestUtils.fmt( bundle, "too_many_options", Map.of( "temporal", DATE_AND_TIME ) )
         );
 
         assertEquals(

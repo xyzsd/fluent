@@ -38,20 +38,22 @@ import java.util.Locale;
 import java.util.function.Supplier;
 
 /// ## TEMPORAL()
-/// Pattern-based formatter of time values.
+/// Formatter of time values, using semantic skeletons (in Unicode parlance), or pattern in Java parlance.
+/// For more information refer to
+/// [Unicode Technical Standard #35, LDML part 4](https://www.unicode.org/reports/tr35/tr35-dates.html#Contents).
 ///
-/// At least one pattern is required. Non-temporal values are passed through unchanged.
+/// Non-temporal values are passed through unchanged.
 ///
 /// ## Options
 /// - Specify one of `pattern` or `as` (mutually exclusive)
-/// - `pattern:` String pattern (skeleton) per DateTimeFormatter specification (e.g., "hh:mm").
+/// - `skeleton:` String pattern per DateTimeFormatter specification (e.g., "hh:mm").
 /// - `as:` One of the constants in [DateTimeFormatter] such as [DateTimeFormatter#ISO_DATE] or [DateTimeFormatter#RFC_1123_DATE_TIME]
 ///
 /// ## Examples
 /// {@snippet :
 ///     # given $temporal = ZonedDateTime.of(LocalDateTime.of(2025,9,10,11, 12, 13), ZoneId.of("UTC"))
 ///     TEMPORAL($temporal, as:"RFC_1123_DATE_TIME")    // "Wed, 10 Sep 2025 11:12:13 GMT"
-///     TEMPORAL($temporal, pattern:"yyyy-MM-dd")       // "2025-09-10"
+///     TEMPORAL($temporal, skeleton:"yyyy-MM-dd")      // "2025-09-10"
 /// }
 ///
 /// ## Notes
@@ -64,22 +66,25 @@ public enum TemporalFn implements FluentFunctionFactory<FluentFunction.Formatter
     TEMPORAL;
 
 
+    private static final String PATTERN_OPTION_NAME = "skeleton";  // keyword for pattern (skeleton)
+
+
     @Override
     public FluentFunction.Formatter<TemporalAccessor> create(final Locale locale, final Options options) {
         final DateTimeFormatter formatter;
 
-        if (options.has("pattern") &&  options.has("as") ) {
-            throw FluentFunctionException.of( "Must have either 'pattern' or 'as'; not both.");
-        } else if(!options.has("pattern") &&  !options.has("as") ) {
-            throw FluentFunctionException.of( "Missing required option 'pattern' or 'as'.");
-        } else if(options.has("pattern") ) {
-            final String pattern = options.asString( "pattern" )
+        if (options.has( PATTERN_OPTION_NAME ) &&  options.has("as") ) {
+            throw FluentFunctionException.of( "Must specify only one option, either '"+ PATTERN_OPTION_NAME +"' or 'as'; not both.");
+        } else if(!options.has( PATTERN_OPTION_NAME ) &&  !options.has("as") ) {
+            throw FluentFunctionException.of( "Missing a required option (either '"+ PATTERN_OPTION_NAME +"' or 'as').");
+        } else if(options.has( PATTERN_OPTION_NAME ) ) {
+            final String pattern = options.asString( PATTERN_OPTION_NAME )
                     .orElseThrow(); // should not happen
             try {
                 formatter = DateTimeFormatter.ofPattern( pattern ).withLocale( locale );
             } catch (IllegalArgumentException e) {
-                // invalid pattern
-                throw FluentFunctionException.of( e );
+                // invalid pattern. We add some information to clarify the error message.
+                throw FluentFunctionException.of( "Skeleton (pattern) \"%s\": %s", pattern, e.getMessage() );
             }
         } else {
             // 'as'
