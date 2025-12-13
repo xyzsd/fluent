@@ -67,13 +67,15 @@ public class ErrorHandling {
         );
         System.out.println( helloUser );
 
-        // But this message does not exist!
+        // Now, let's try a message which does not exist!
         // see what happens:
         final String helloRobot = bundle.format(
                 "hello-robot",              // the message key, defined in the FTL file, which is missing! oh no!
                 Map.of("userName", "Bender")    // our single item map
         );
-        System.out.println( helloRobot );         //{Unknown message: 'hello-robot'}, but also displays an error on System.err
+        // output: {Unknown message: 'hello-robot'},
+        // This will also display a message on System.err, since we defined a logger when creating the bundle (.withLogger())
+        System.out.println( helloRobot );
 
 
         // an alternative approach:

@@ -66,8 +66,8 @@ import static java.util.Objects.requireNonNull;
 /// Notes:
 /// - Formatting never throws for expected runtime issues. Formatting should only throw if null arguments are passed
 ///     (not allowed) or if there is a serious, unrecoverable error. For 'normal' expected issues, such as missing
-///     message keys, attributes, variables, etc., simple diagnostic error text will be inserted into the rendered
-///     message. Generally, as much of the message that can be preserved will be rendered.
+///     message keys, attributes, variables, etc., diagnostic error text will be inserted into the rendered
+///     message. In general, as much of the message that can be preserved will be rendered.
 /// - Optionally, a logger can be attached to the FluentBundle during construction to obtain more precise error
 ///     information.
 /// - FluentBundle instances are immutable and thread-safe once built; the Builder is not.
@@ -320,13 +320,17 @@ public class FluentBundle {
     }
 
 
-    /// format-builder : WIP
+    /// Format a message using a Builder pattern.
+    ///
+    /// Format builders can specify fallback options that apply, for example, if a message does
+    /// not exist.
     public FmtBuilder fmtBuilder(final String messageID) {
         return new FmtBuilder( messageID );
     }
 
 
-    // format the pattern. The msgID and attrID are optional (can be null) and arw only for
+
+    // format the pattern. The msgID and attrID are optional (can be null) and are only for
     // providing error context information.
     private String patternFormat(final Pattern pattern, final Map<String, ?> args,
                                  final @Nullable String msgID, final @Nullable String attrID) {
@@ -343,9 +347,11 @@ public class FluentBundle {
     }
 
 
-    // TODO: document
-    // public version of pattern format
-    // e.g., to format a Term/Term attribute
+
+    ///  Format a Message pattern.
+    ///
+    /// This is a lower-level format method that takes a Pattern as an argument.
+    /// This can be used to format Term / Term attributes as well.
     public String patternFormat(final Pattern pattern, final Map<String, Object> args) {
         return patternFormat( pattern, args, null, null );
     }
@@ -610,7 +616,7 @@ public class FluentBundle {
             this.exceptions = List.copyOf( exceptions );
         }
 
-        /// Friendly-formatted entry name.
+        /// Friendly formatted entry name.
         ///
         /// If an attribute is set, this will be "messageID.attributeID".
         /// If there is no attribute, this will return "messageID"
