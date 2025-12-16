@@ -32,6 +32,7 @@ import org.jspecify.annotations.Nullable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.foreign.MemorySegment;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -158,6 +159,9 @@ public class FTLParser {
     public static FluentResource parse(final ByteBuffer bb) {
         return parse( bb, ParseOptions.DEFAULT, Implementation.SCALAR );
     }
+
+
+
 
     /// Parse input from a classLoader-derived resource.
     ///
@@ -645,7 +649,7 @@ public class FTLParser {
                     throw parseException( ErrorCode.E0017, ps );
                 }
             }
-            case PatternElement.Placeable __ -> throw parseException( ErrorCode.E0029, ps );
+            case PatternElement.Placeable _ -> throw parseException( ErrorCode.E0029, ps );
             default -> { /* do nothing */ }
         }
 

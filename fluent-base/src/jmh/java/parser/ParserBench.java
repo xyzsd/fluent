@@ -82,6 +82,7 @@ skipToEOL
         blackhole.consume( parsedResource );
     }
 
+
     @Benchmark
     public void measureParserScalar(Blackhole blackhole) throws IOException {
         final ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();

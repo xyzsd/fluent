@@ -61,20 +61,18 @@ dependencies {
 
 
 jmh {
-    warmupIterations = 1
-    iterations = 3
-    fork = 2
+    warmupIterations = 3
+    iterations = 10
+    fork = 1
     jmhVersion = "1.37"
     jvmArgs = listOf("--add-modules jdk.incubator.vector")
+    jvmArgsAppend = listOf( "-XX:+UseSuperWord","-XX:+UnlockDiagnosticVMOptions","-XX:+PrintAssembly","-XX:CompileCommand=print,*FTLStream.*","-XX:CompileCommand=print,*StreamOpsSIMD.*","-XX:CompileCommand=print,*SIMDOps.*")
+
 }
 
 tasks.compileJava {
     options.encoding = "UTF-8"
     options.compilerArgs.add("-Xlint:all,-serial")
-    // no preview features used, BUT if using JDK21, need to enable preview features because
-    // we use "unnamed variables" (final delivery in JDK 22).
-    //options.compilerArgs.add("--enable-preview")
-    //
     // incubating features used: vector API (required for SIMD)
     options.compilerArgs.add("--add-modules")
     options.compilerArgs.add("jdk.incubator.vector")
@@ -89,7 +87,7 @@ java {
     //
 
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(23)
     }
 }
 

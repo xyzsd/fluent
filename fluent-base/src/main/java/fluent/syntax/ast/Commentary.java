@@ -36,16 +36,8 @@ public sealed interface Commentary extends Entry {
     record Comment(String text) implements Commentary {}
 
     ///  Double-Hash '##' comments (Group Comments), which are standalone
-    record GroupComment(String text) implements Commentary {
-        public GroupComment(Commentary c) {
-            this( c.text() );
-        }
-    }
+    record GroupComment(String text) implements Commentary {}
 
     ///  Triple-Hash '###' comments (Resource Comments), which are standalone
-    record ResourceComment(String text) implements Commentary {
-        public ResourceComment(Commentary c) {
-            this( c.text() );
-        }
-    }
+    record ResourceComment(String text) implements Commentary {}
 }

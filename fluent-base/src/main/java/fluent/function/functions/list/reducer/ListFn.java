@@ -94,8 +94,8 @@ public enum ListFn implements FluentFunctionFactory<FluentFunction.TerminalReduc
                 if (parameters instanceof ResolvedParameters.SingleItem(List<FluentValue<?>> list)) {
                     return switch (parameters.singleValue()) {
                         // pass through w/o copy
-                        case FluentString __ -> list;
-                        case FluentError __ -> list;
+                        case FluentString _ -> list;
+                        case FluentError _ -> list;
                         // format
                         default ->
                                 List.of( FluentString.of( scope.registry().implicitFormat( parameters.singleValue(), scope ) ) );

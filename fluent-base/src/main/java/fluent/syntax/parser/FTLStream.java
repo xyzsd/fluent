@@ -34,7 +34,6 @@ import java.nio.charset.StandardCharsets;
 ///
 @NullMarked
 final class FTLStream {
-
     // implementation
     private final FTLStreamOps ops;
 

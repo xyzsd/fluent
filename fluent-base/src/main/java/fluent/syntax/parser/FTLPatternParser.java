@@ -198,7 +198,7 @@ final class FTLPatternParser {
         CRLF,               // index 2
         PlaceableStart,     // index 3 '{' open brace
         // ERROR is only used by getTextSlice(). Should not occur anywhere else.
-        ERROR;              // index 4 '}' closed brace;
+        ERROR               // index 4 '}' closed brace;
 
         // not used currently
         // static final TextElementTermination[] VALUES = TextElementTermination.values();

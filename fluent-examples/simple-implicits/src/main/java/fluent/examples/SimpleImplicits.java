@@ -166,7 +166,7 @@ public class SimpleImplicits {
         }
 
         private enum PeopleField {
-            FIRSTNAME, LASTNAME, ROLE;
+            FIRSTNAME, LASTNAME, ROLE
         }
 
         record PeopleTransform(PeopleField field) implements FluentFunction.Transform {

@@ -51,11 +51,11 @@ import static java.util.Objects.requireNonNull;
 ///    // Build a bundle
 ///    FluentFunctionRegistry registry = FluentFunctionRegistry.withDefaults();
 ///    FluentFunctionCache cache = FluentFunctionCache.defaultCache();
-///    FluentResource res = Fluent.parse("hello = Hello, { $name }!\n");
+///    FluentResource resource = Fluent.parse("hello = Hello, { $name }!\n");
 ///
 ///    FluentBundle bundle = FluentBundle
 ///        .builder(Locale.US, registry, cache)
-///        .addResource(res)
+///        .addResource(resource)
 ///        .build();
 ///
 ///    // Format a message
@@ -164,7 +164,7 @@ public class FluentBundle {
         return Optional.ofNullable( terms.get( id ) );
     }
 
-    /// Returns all Terms
+    /// Returns a Map of all Terms
     public Map<String, Term> terms() {
         return terms;
     }

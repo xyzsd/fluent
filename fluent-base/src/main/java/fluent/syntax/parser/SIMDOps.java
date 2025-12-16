@@ -7,14 +7,14 @@ final class SIMDOps {
     //
     // note that some of these methods can be optimized further
     //
-    // Unlike SWAR, we don't need padding (due to indexInRange masking).
+    // Unlike SWAR (source no longer included), we don't need padding (due to indexInRange masking).
     //
     // NOTE: for CR-LF detection, we ignore the last lane in a vector, and iterate by species size minus 1.
     // this may impair cache/cache line performance. So we may need to think about an alternative scheme.
     // ALSO, consider using LUT instead of blend?
 
 
-    // suitable for upto 64 lanes (8*64=512 bits). Used to generate masks.
+    // suitable for up to 64 lanes (8*64=512 bits). Used to generate masks.
     private static final long LONG_FF = 0xFF_FF_FF_FF_FF_FF_FF_FFL;
     // vector species we are using
     private static final VectorSpecies<Byte> SPECIES = ByteVector.SPECIES_PREFERRED;
@@ -55,7 +55,7 @@ final class SIMDOps {
     /// Returns the first non-matching character that is nonconformant (usually indicating the end of the identifier).
     /// If the first non-matching character is equal to startIndex, then the identifier begins with an illegal character.
     static int getIdentifierEnd(final byte[] buf, final int startIndex) {
-        final int maxIndex = buf.length;    // if there is padding at end, must subtract here
+        final int maxIndex = buf.length;
         // first vector
         {
             final VectorMask<Byte> rangeMask = SPECIES.indexInRange( startIndex, maxIndex );
@@ -112,7 +112,7 @@ final class SIMDOps {
     ///  Find position of next LF in buffer, or return last position in buf.
     ///  Used for skipping comments
     static int nextLF(final byte[] buf, final int startIndex) {
-        final int maxIndex = buf.length;    // if there is padding at end, must subtract here (e.g., final int maxIndex = buf.length - PAD;)
+        final int maxIndex = buf.length;
         for (int i = startIndex; i < maxIndex; i += SPECIES.length()) {
             final VectorMask<Byte> rangeMask = SPECIES.indexInRange( i, maxIndex );
             final ByteVector in = ByteVector.fromArray( SPECIES, buf, i, rangeMask );
@@ -132,7 +132,7 @@ final class SIMDOps {
             //   so if (firstTrue() < SPECIES.length) then return (firstTrue() - 1) + firstLF
 
             // NOTE: while the above is an interesting thought exercise, this may not be useful in practice.
-            // this method if for skipping comments, and the extra effort may not be worthwhile.
+            // this method is for skipping comments, and the extra effort may not be worthwhile.
 
             if (isLF.anyTrue()) {
                 return isLF.firstTrue() + i;
@@ -143,7 +143,7 @@ final class SIMDOps {
 
     ///  Find the first non-space character (since line endings have LF or CRLF, this always stays on a single line)
     static int skipBlankInline(final byte[] buf, final int startIndex) {
-        final int maxIndex = buf.length;    // if there is padding at end, must subtract here (e.g., final int maxIndex = buf.length - PAD;)
+        final int maxIndex = buf.length;
         for (int i = startIndex; i < maxIndex; i += SPECIES.length()) {
             final VectorMask<Byte> rangeMask = SPECIES.indexInRange( i, maxIndex );
             final ByteVector in = ByteVector.fromArray( SPECIES, buf, i, rangeMask );
@@ -232,7 +232,7 @@ final class SIMDOps {
     /// returns a *packed long* storing the position and line count
     ///
     static long skipBlankBlock(final byte[] buf, final int startIndex) {
-        final int maxIndex = buf.length;    // if there is padding at end, must subtract here (e.g., final int maxIndex = buf.length - PAD;)
+        final int maxIndex = buf.length;
         final int increment = SPECIES.length();
 
         int lastLFindex = startIndex;
@@ -287,7 +287,7 @@ final class SIMDOps {
     ///  Customized matcher for FTLPatternParser.getTextSlice()
     ///  Returns a packed long consisting of position and ordinal
     static long nextTSChar(final byte[] buf, final int startIndex) {
-        final int maxIndex = buf.length;    // if there is padding at end, must subtract here (e.g., final int maxIndex = buf.length - PAD;)
+        final int maxIndex = buf.length;
         final int increment = SPECIES.length() - 1;
         for (int i = startIndex; i < maxIndex; i += increment) {
             final VectorMask<Byte> rangeMask = SPECIES.indexInRange( i, maxIndex );

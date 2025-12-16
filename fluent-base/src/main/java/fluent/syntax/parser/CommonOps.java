@@ -111,6 +111,7 @@ final class CommonOps {
                         (in == 95) ||
                         (in == 45)
         );
+
     }
 
     /// Conversion method for error messages, debugging, etc.
