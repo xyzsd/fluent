@@ -22,7 +22,8 @@
  *
  */
 
-package test.ftl;import fluent.bundle.FluentBundle;
+package test.ftl;
+import fluent.bundle.FluentBundle;
 import fluent.bundle.FluentResource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -44,13 +45,17 @@ public class TermParametersTest {
     public static void parseFile() throws IOException {
         resource = FTLTestUtils.parseFile( RESOURCE );
         bundle = FTLTestUtils.basicBundleSetup( resource, false );
+
+        System.out.println( resource.errors() );
+
     }
 
 
     @Test
     public void verifyExceptions() {
-        assertEquals( 1, resource.errors().size() );
+        assertEquals( 2, resource.errors().size() );
         assertTrue( FTLTestUtils.matchParseException( resource, E0031, 8 ) );
+        assertTrue( FTLTestUtils.matchParseException( resource, E0031, 20 ) );
     }
 
     @Test
@@ -74,6 +79,51 @@ public class TermParametersTest {
         assertEquals(
                 "Value",
                 FTLTestUtils.fmt( bundle, "key03")
+        );
+    }
+
+
+    // keys 201-206 (except failing parse key)
+
+
+    @Test
+    public void key201() {
+        assertEquals(
+                "Value",
+                FTLTestUtils.fmt( bundle, "key201")
+        );
+    }
+
+    @Test
+    public void key202() {
+        assertEquals(
+                "Value",
+                FTLTestUtils.fmt( bundle, "key202")
+        );
+    }
+
+    @Test
+    public void key203() {
+        assertEquals(
+                "Value",
+                FTLTestUtils.fmt( bundle, "key203")
+        );
+    }
+
+
+    @Test
+    public void key205() {
+        assertEquals(
+                "Value1",
+                FTLTestUtils.fmt( bundle, "key205")
+        );
+    }
+
+    @Test
+    public void key206() {
+        assertEquals(
+                "Value2",
+                FTLTestUtils.fmt( bundle, "key206")
         );
     }
 
