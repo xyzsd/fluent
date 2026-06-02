@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2025, xyzsd (Zach Del)
+ *  Copyright (C) 2025, 2026 xyzsd (Zach Del)
  *
  *  Licensed under either of:
  *
@@ -20,23 +20,24 @@
  *
  *
  */
-import com.vanniktech.maven.publish.SonatypeHost
 import com.vanniktech.maven.publish.JavaLibrary
 import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.SourcesJar
+import com.vanniktech.maven.publish.DeploymentValidation
 import com.github.spotbugs.snom.Confidence
 import com.github.spotbugs.snom.Effort
 
 plugins {
-    id("com.vanniktech.maven.publish") version "0.31.0"
-    // https://github.com/spotbugs/spotbugs-gradle-plugin
-    id("com.github.spotbugs") version "6.2.2"
+    id("com.vanniktech.maven.publish") version "0.36.0"
+    id("com.github.spotbugs") version "6.5.5"
     id("signing")
     id("java-library")
-    // https://github.com/melix/jmh-gradle-plugin
     id("me.champeau.jmh") version "0.7.3"
 }
 
-version = "2.0NG-SNAPSHOT"
+// TODO: -SNAPSHOT endings will not post to maven central
+// however, non-snapshots WILL post....
+version = "2.0-alpha"
 group = "net.xyzsd.fluent"
 
 repositories {
@@ -106,17 +107,31 @@ spotbugs {
     excludeFilter = file("spotbugs_exclude.xml")
 }
 
-mavenPublishing {
-    configure(JavaLibrary( JavadocJar.Javadoc(), true))
 
-    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+
+
+
+
+
+mavenPublishing {
+    project.logger.lifecycle("Publishing: enter.")
+    project.logger.lifecycle("Publishing: coordinates: "+project.group+":"+project.name+":"+project.version)
+
+    // for now, we will disable automatic release.
+    publishToMavenCentral(automaticRelease = false)
     signAllPublications()
 
-    //coordinates(groupId = project.group as String, "fluent-base", "0.72-SNAPSHOT")
+    configure( JavaLibrary(
+        javadocJar = JavadocJar.Javadoc(),
+        sourcesJar = SourcesJar.Sources()
+    ))
+
+    coordinates(groupId = project.group as String, project.name as String, project.version as String)
 
     pom {
+
         name.set("Project Fluent for Java")
-        description.set("A Java implementation of the Mozilla Project Fluent ")
+        description.set("A Java implementation of Mozilla Project Fluent")
         url.set("https://github.com/xyzsd/fluent")
         inceptionYear.set("2021")
 
@@ -148,6 +163,23 @@ mavenPublishing {
             url.set("https://github.com/xyzsd/fluent")
         }
     }
+    project.logger.lifecycle("Publishing: exit.")
+}
+
+
+signing {
+    project.logger.lifecycle("Signing: enter.")
+    val githubCI: Boolean = "true".equals(System.getenv("CI"))
+    if (githubCI) {
+        project.logger.lifecycle("Signing: Using Github CI environment.")
+        val signingKey: String? = System.getenv("SIGNING_KEY_PRIVATE")
+        val signingKeyPassphrase: String? = System.getenv("SIGNING_KEY_PASSPHRASE")
+        useInMemoryPgpKeys(signingKey, signingKeyPassphrase)
+    } else {
+        project.logger.lifecycle("Signing: Using local credentials.")
+        useGpgCmd()
+    }
+    project.logger.lifecycle("Signing: exit.")
 }
 
 
