@@ -9,20 +9,24 @@ and gender. Learn more about Project Fluent at [projectfluent.org][mozProjectFlu
 
 Status
 ------
-*UPDATE (November 2025)*
+*UPDATE (June 2026)*
 
-The 2.0 version is nearing release, and includes:
-  - Targets JDK21 or later
+Has been a long delay since the last announcement, but I plan to release at least a release-candidate version soon!
+
+Note that this is targetting JDK 23, mostly for Markdown format instead of Javadoc. However, I may be persuaded to have JDK 21 as a baseline.
+
+The 2.0 version is (still) nearing release, and includes:
+  - Targets JDK23 or later
+  - Complete set of FTL specification tests.
+  - The parser passes *all* FTL specification tests. This includes handling of LF and CRLF line endings, early terminations, etc.
+  - Built-in functions now have tests.
+  - Improved function implementations, some have been renamed
   - Improved Parser, with optional SIMD 
   - Markedly improved overall code structure
   - API improvements
   - Simpler implementation of custom functions
-  - Improved function implementations, some have been renamed
   - Still supports Lists (but not in Selectors)
-  - Complete set of FTL specification tests.
-  - The parser passes *all* FTL specification tests. This includes handling of LF and CRLF line endings, early terminations, etc.
-  - Built-in functions now have tests.
-  - Docuementation improvements
+  - Documentation improvements
   - New examples
   - Single dependency (ICU).
     
