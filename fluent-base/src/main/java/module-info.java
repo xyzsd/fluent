@@ -20,16 +20,16 @@
  *
  */
 
-
 ///  Fluent: An implementation of the Mozilla Fluent language localization framework.
 module net.xyzsd.fluent {
-    // static-transitive seems appropriate at this time;
+    // static-transitive: required at compile time, optional and runtime
     requires static transitive org.jspecify;
     // These are currently automatic modules ... careful
+    // This will result in a warning (could be suppressed with @SuppressWarnings("requires-automatic") )
     requires com.ibm.icu;
-    requires jdk.incubator.vector;
+    requires jdk.incubator.vector;      // also still incubating .... could consider making runtime-optional
     //
-    // We are exporting all for now.
+    // We are exporting everything for now.
     exports fluent.bundle;
     exports fluent.bundle.resolver;
     exports fluent.syntax.ast;
