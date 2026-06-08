@@ -89,7 +89,7 @@ public sealed interface FluentValue<T>
     /// @param <V> any type
     /// @return FluentValue created
     static <V> FluentValue<?> ofNullable(@Nullable final V any) {
-        return of( (any == null) ? FLUENT_NULL : any );
+        return (any == null) ? FLUENT_NULL : of(any);
     }
 
 

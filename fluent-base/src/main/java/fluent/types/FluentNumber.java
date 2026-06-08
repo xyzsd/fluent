@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2021-2025, xyzsd (Zach Del) 
+ *  Copyright (C) 2021-2025, xyzsd (Zach Del)
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -42,15 +42,15 @@ public sealed interface FluentNumber<T extends Number> extends FluentValue<T> {
     /// @param n Number type to convert to a FluentNumber
     /// @return FluentNumber best representing the given Number type
     /// @throws IllegalArgumentException for unknown Number types
-    /// @throws NullPointerException if Number is null
+    /// @throws NullPointerException     if Number is null
     static FluentNumber<?> from(final Number n) {
-        Objects.requireNonNull(n);
-        return switch(n) {
-            case Long _, Integer _,  Short _, Byte _-> new FluentLong(n.longValue());
-            case Double _, Float _ -> new FluentDouble(n.doubleValue());
-            case BigDecimal bigDecimal -> new FluentBigDecimal(bigDecimal);
+        Objects.requireNonNull( n );
+        return switch (n) {
+            case Long _, Integer _, Short _, Byte _ -> new FluentLong( n.longValue() );
+            case Double _, Float _ -> new FluentDouble( n.doubleValue() );
+            case BigDecimal bigDecimal -> new FluentBigDecimal( bigDecimal );
             case BigInteger bigInteger -> new FluentBigDecimal( new BigDecimal( bigInteger ) );
-            default ->  throw new IllegalArgumentException( String.valueOf( n ) );
+            default -> throw new IllegalArgumentException( String.valueOf( n ) );
         };
     }
 
@@ -75,19 +75,17 @@ public sealed interface FluentNumber<T extends Number> extends FluentValue<T> {
     }
 
 
-
-
-
-
     /// Type as BigDecimal
     BigDecimal asBigDecimal();
-
 
 
     // Concrete types ---------------------------------------------------
 
 
     record FluentLong(Long value) implements FluentNumber<Long> {
+        public FluentLong {
+            Objects.requireNonNull( value );
+        }
 
         @Override
         public BigDecimal asBigDecimal() {
@@ -96,6 +94,10 @@ public sealed interface FluentNumber<T extends Number> extends FluentValue<T> {
     }
 
     record FluentDouble(Double value) implements FluentNumber<Double> {
+        public FluentDouble {
+            Objects.requireNonNull( value );
+        }
+
         @Override
         public BigDecimal asBigDecimal() {
             return BigDecimal.valueOf( value );
@@ -103,6 +105,10 @@ public sealed interface FluentNumber<T extends Number> extends FluentValue<T> {
     }
 
     record FluentBigDecimal(BigDecimal value) implements FluentNumber<BigDecimal> {
+        public FluentBigDecimal {
+            Objects.requireNonNull( value );
+        }
+
         @Override
         public BigDecimal asBigDecimal() {
             return value;
