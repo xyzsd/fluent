@@ -117,10 +117,13 @@ public sealed interface FluentValue<T>
 
 
     //  Helper method. map(ofNullable()) also checks for (disallowed) nested collections
+    //  use loop for performance.
     private static List<FluentValue<?>> convertCollection(final Collection<?> collection) {
-        return collection.stream()
-                .<FluentValue<?>>map( FluentValue::ofNullable )
-                .toList();
+        final List<FluentValue<?>> out = new ArrayList<>( collection.size() );
+        for (Object value : collection) {
+            out.add( FluentValue.ofNullable( value ) );
+        }
+        return List.copyOf( out );
     }
 
     private static IllegalArgumentException invalid(final Object in) throws IllegalArgumentException {
