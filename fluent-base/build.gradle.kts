@@ -35,7 +35,7 @@ plugins {
     id("me.champeau.jmh") version "0.7.3"
 }
 
-version = "2.0-initial-SNAPSHOT"
+version = "2.0-rc.1"
 group = "net.xyzsd.fluent"
 
 repositories {
@@ -77,7 +77,7 @@ java {
     // maven-publish plugin currently being used WILL NOT name files correctly,
     // and publishing to maven central will fail (for subprojects)
     // (com.vanniktech.maven.publish)
-    //
+    // NOTE: the above may need to be re-verified with more recent versions
 
     toolchain {
         languageVersion = JavaLanguageVersion.of(23)
@@ -90,7 +90,7 @@ tasks.javadoc {
 }
 
 spotbugs {
-    // for now, we won't break the build on failures.
+    //  don't break the build on failures.
     ignoreFailures = true
     effort = Effort.MAX
     reportLevel = Confidence.LOW
@@ -98,12 +98,6 @@ spotbugs {
     omitVisitors = listOf("FormatStringChecker")
     excludeFilter = file("spotbugs_exclude.xml")
 }
-
-
-
-
-
-
 
 mavenPublishing {
     project.logger.lifecycle("Publishing: Coordinates: "+project.group+":"+project.name+":"+project.version)

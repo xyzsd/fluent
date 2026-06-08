@@ -20,10 +20,6 @@ java {
     }
 }
 
-tasks.compileJava {
-    options.compilerArgs.add("--enable-preview")
-}
-
 dependencies {
     // use local dependency first
     implementation(project(":fluent-base"))

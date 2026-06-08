@@ -65,4 +65,20 @@ public class SkipBlankBlockTest {
     }
 
 
+    @Test
+    public void skipBlankBlockTrailingSpacesTest() {
+        // using regular strings to make construction of this odd input very clear.
+        final String in =
+                "key = value\n   "+
+                "   "+
+                "\n   "+
+                "\r\n   ";
+
+        final FluentResource resource = FTLParser.parse( in, FTLParser.ParseOptions.DEFAULT );
+
+        // no errors
+        assertEquals( 0, resource.errors().size() );
+        // two entries (comment line ignored by parser (ignoreCommentsAndJunk is true)) but if NOT ignored, there would be 3 entries.
+        assertEquals( 1, resource.entries().size() );
+    }
 }

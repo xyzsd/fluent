@@ -20,10 +20,6 @@ java {
     }
 }
 
-tasks.compileJava {
-    options.compilerArgs.add("--enable-preview")
-}
-
 dependencies {
     implementation(project(":fluent-base"))
     // TODO:    add this line and test. if above is not present, use maven dependency

@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2021-2025, xyzsd (Zach Del) 
+ *  Copyright (C) 2021-2026, xyzsd (Zach Del) 
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -58,6 +58,8 @@ public record Message(Identifier identifier, @Nullable Pattern pattern,
 
     /// Find matching attribute, if any
     public @Nullable Attribute attribute(final String id) {
+        // Linear search. Generally, there are few attributes, so this is efficient.
+        // We could use a sorted list or map for larger attribute lists, if performance becomes an issue.
         for (final Attribute attr : attributes) {
             if (attr.name().equals( id )) {
                 return attr;

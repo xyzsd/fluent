@@ -28,7 +28,7 @@ module net.xyzsd.fluent {
     // This will result in a warning (could be suppressed with @SuppressWarnings("requires-automatic") )
     requires com.ibm.icu;
     //
-    // We are exporting everything for now.
+    // We export most everything, since core functionality could be useful to users.
     exports fluent.bundle;
     exports fluent.bundle.resolver;
     exports fluent.syntax.ast;

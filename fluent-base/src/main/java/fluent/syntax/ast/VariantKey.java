@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2021-2025, xyzsd (Zach Del) 
+ *  Copyright (C) 2021-2026, xyzsd (Zach Del) 
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
