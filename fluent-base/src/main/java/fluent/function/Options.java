@@ -435,11 +435,10 @@ public final class Options {
         }
 
 
-        /// Set an option via a named argument.
-        public Builder set(NamedArgument namedArgument) {
+        /// Set an option via a named argument. Internal use only
+        private void set(NamedArgument namedArgument) {
             // value.value else the wrong objects are put in the map
             map.put( namedArgument.name().name(), namedArgument.value().value() );
-            return this;
         }
 
 

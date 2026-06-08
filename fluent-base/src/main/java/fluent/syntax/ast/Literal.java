@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2021-2026, xyzsd (Zach Del) 
+ *  Copyright (C) 2021-2026, xyzsd (Zach Del)
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -24,17 +24,24 @@ package fluent.syntax.ast;
 
 import org.jspecify.annotations.NullMarked;
 
+import static java.util.Objects.requireNonNull;
+
 
 ///  Literals
+///
+///  Invalid literals will not be created by the parser. However, if Literals are created directly,
+///  they must be valid (non-null and not NaN or infinite).
 @NullMarked
 public sealed interface Literal<T> extends InlineExpression {
 
     T value();
 
-
+    /// StringLiteral: a literal String
     record StringLiteral(String value) implements Literal<String> {
 
-        /** Create the StringLiteral */
+        public StringLiteral {requireNonNull( value );}
+
+        /// Create the StringLiteral
         public static StringLiteral of(final String s) {
             return new StringLiteral( s );
         }
@@ -69,10 +76,23 @@ public sealed interface Literal<T> extends InlineExpression {
             return String.valueOf( value() );
         }
 
-        record LongLiteral(Long value) implements NumberLiteral<Long> {}
-        record DoubleLiteral(Double value) implements NumberLiteral<Double> {}
-    }
+        /// LongLiteral: no constraints
+        record LongLiteral(Long value) implements NumberLiteral<Long> {
+            public LongLiteral {requireNonNull( value );}
+        }
 
+        /// DoubleLiteral: constrained to be finite
+        record DoubleLiteral(Double value) implements NumberLiteral<Double> {
+
+            public DoubleLiteral {
+                requireNonNull( value );
+                if (value.isInfinite() || value.isNaN()) {
+                    throw new NumberFormatException( "NaN or infinite" );
+                }
+            }
+
+        }
+    }
 
 
 }
