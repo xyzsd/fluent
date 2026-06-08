@@ -248,7 +248,7 @@ public class FluentBundle {
             try {
                 return '{' + poe.exceptionSupplier.get().getMessage() + '}';
             } finally {
-                consumeError( messageID, null, poe.exceptionSupplier );
+                consumeError( messageID, attributeID, poe.exceptionSupplier );
             }
         } else {
             throw new IllegalStateException();
@@ -311,7 +311,7 @@ public class FluentBundle {
         }
     }
 
-    ///  Error handler for a single exception w/o a Scope
+    ///  Error handler for a single exception without a Scope
     private void consumeError(final @Nullable String msgID, final @Nullable String attrID, Supplier<Exception> e) {
         if (errorConsumer != null) {
             final ErrorContext context = new ErrorContext( msgID, attrID, locale(), List.of( e.get() ) );
