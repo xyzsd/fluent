@@ -67,18 +67,17 @@ public class FTLTestUtils {
         requireNonNull( fileName );
         System.out.println( "Input FTL: " + fileName );
 
-        final FTLParser.Implementation implementation = FTLParser.Implementation.SCALAR;
 
         return FTLParser.parse(
                 Thread.currentThread().getContextClassLoader(),
                 fileName,
-                FTLParser.ParseOptions.EXTENDED,
-                implementation );
+                FTLParser.ParseOptions.EXTENDED
+        );
     }
 
 
     // useful for debugging resource file
-    @SuppressWarnings( "unused" )
+    @SuppressWarnings("unused")
     public static void show(FluentResource resource) {
         System.out.println( "BEGIN" );
         resource.errors().forEach( System.out::println );
@@ -102,10 +101,9 @@ public class FTLTestUtils {
     }
 
     // bundle from string
-    @SuppressWarnings( "unused" )
+    @SuppressWarnings("unused")
     public static FluentBundle bundleFromString(final String in) {
-        final FluentResource resource = FTLParser.parse( in, FTLParser.ParseOptions.EXTENDED,
-                FTLParser.Implementation.SCALAR );
+        final FluentResource resource = FTLParser.parse( in, FTLParser.ParseOptions.EXTENDED );
         return basicBundleSetup( resource, false );
     }
 
@@ -263,7 +261,7 @@ public class FTLTestUtils {
         }
 
         ///  OPTIONAL: set 'creator' which can observe creation and check options
-        @SuppressWarnings( "unused" )
+        @SuppressWarnings("unused")
         public synchronized void setCreator(Consumer<Options> creator) {
             this.creator = requireNonNull( creator );
         }

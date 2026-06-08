@@ -39,8 +39,7 @@ public class MiscFTLTest {
 
     /// parse the given string
     private static FluentResource parse(String in) {
-        return FTLParser.parse( in, FTLParser.ParseOptions.EXTENDED,
-                FTLParser.Implementation.SCALAR );
+        return FTLParser.parse( in, FTLParser.ParseOptions.EXTENDED );
     }
 
 
@@ -227,14 +226,12 @@ public class MiscFTLTest {
                 message = This is a message.
                 """;
         // Comments NOT ignored -- 1 error
-        FluentResource resource = FTLParser.parse( in, FTLParser.ParseOptions.EXTENDED,
-                FTLParser.Implementation.SCALAR );
+        FluentResource resource = FTLParser.parse( in, FTLParser.ParseOptions.EXTENDED );
         assertEquals( 1, resource.errors().size() );
         assertTrue( FTLTestUtils.matchParseException( resource, E0003, 2 ) );
 
         // Comments ignored -- no errors.
-        resource = FTLParser.parse( in, FTLParser.ParseOptions.DEFAULT,
-                FTLParser.Implementation.SCALAR );
+        resource = FTLParser.parse( in, FTLParser.ParseOptions.DEFAULT );
         assertEquals( 0, resource.errors().size() );
     }
 
@@ -247,7 +244,7 @@ public class MiscFTLTest {
                 msg_bad_option_literal = |{BOOLEAN("This is a String", as:number)}|
                 """;
         // Comments NOT ignored -- 1 error
-        final FluentResource resource = FTLParser.parse(  in );
+        final FluentResource resource = FTLParser.parse( in );
         System.out.println( resource );
         assertEquals( 1, resource.errors().size() );
         assertTrue( FTLTestUtils.matchParseException( resource, E0032, 2 ) );

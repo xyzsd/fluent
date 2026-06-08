@@ -1,6 +1,6 @@
 package fluent.syntax.parser;
 
-
+/// Common operations used by FTLStream and FTLParser.
 final class CommonOps {
     // magic constants for scalar ASCII comparisons.
     private static final byte MAGIC_CAPS_ALPHA_OFFSET = ((byte) (-65 + Byte.MIN_VALUE)); // 'A' (uppercase A)
@@ -17,6 +17,7 @@ final class CommonOps {
     static final byte EOF = (byte) 0xFF;
 
     private CommonOps() {}
+
 
     ///  True if ASCII ('}','.','[', or '*').
     static boolean isLineStart(final byte b) {
@@ -172,19 +173,14 @@ final class CommonOps {
         return (int) (packedLong >> 32);   // Hi int
     }
 
-    ///  Given a packed long, return the low integer
-    private static int packedLow(final long packedLong) {
-        return (int) (packedLong & 0xFF_FF_FF_FFL);   // low int
-    }
-
-    ///  Given a packed long, return the low integer (used for the enum ordinal index in textslice)
-    static int unpackOrdinal(final long packedLong) {
-        return packedLow( packedLong );
-    }
-
     ///  Given a packed long, return the low integer (used for the line count)
     static int unpackLineCount(final long packedLong) {
         return packedLow( packedLong );
+    }
+
+    ///  Given a packed long, return the low integer
+    private static int packedLow(final long packedLong) {
+        return (int) (packedLong & 0xFF_FF_FF_FFL);   // low int
     }
 
     ///  Pack the given integers into a long.

@@ -34,9 +34,6 @@ import java.nio.charset.StandardCharsets;
 ///
 @NullMarked
 final class FTLStream {
-    // implementation
-    private final FTLStreamOps ops;
-
     // UTF8 octets
     private final byte[] seq;
 
@@ -45,8 +42,7 @@ final class FTLStream {
 
 
     ///  Constructor. No copy.
-    FTLStream(final FTLStreamOps ops, final byte[] array) {
-        this.ops = ops;
+    FTLStream(final byte[] array) {
         this.seq = array;
         this.pos = 0;
     }
@@ -182,7 +178,7 @@ final class FTLStream {
 
 
     int skipBlankBlock() {
-        final long packed = ops.skipBlankBlock( seq, pos );
+        final long packed = ScalarOps.skipBlankBlock( seq, pos );
         pos = CommonOps.unpackPosition( packed ); // set position
         return CommonOps.unpackLineCount( packed );
     }
@@ -190,17 +186,17 @@ final class FTLStream {
 
     //   pos = ops.skipBlankBlockNLC( seq,  size, pos );
     void skipBlankBlockNLC() {
-        pos = ops.skipBlankBlockNLC( seq, pos );
+        pos = ScalarOps.skipBlankBlockNLC( seq, pos );
     }
 
     void skipBlank() {
-        pos = ops.skipBlank( seq, pos );
+        pos = ScalarOps.skipBlank( seq, pos );
     }
 
 
     int skipBlankInline() {
         final int initialPos = pos;
-        pos = ops.skipBlankInline( seq, pos );
+        pos = ScalarOps.skipBlankInline( seq, pos );
         return (pos - initialPos);
     }
 
@@ -208,14 +204,14 @@ final class FTLStream {
     /// skip to the end of line (e.g., for skipping comments).
     /// This will skip to the end of a newline, ignoring a preceding '\r' if present.
     void skipToEOL() {
-        pos = ops.skipToEOL( seq, pos );
+        pos = SWAROps.skipToEOL( seq, pos );
     }
 
 
     /// this does NOT set the position, just finds the position of the end identifier
     /// or returns length()
     int getIdentifierEnd(int startIndex) {
-        return ops.getIdentifierEnd( seq, startIndex );
+        return SWAROps.getIdentifierEnd( seq, startIndex );
     }
 
 
@@ -292,6 +288,96 @@ final class FTLStream {
         return new FTLPatternParser.TextSlice( startPosition, position(),
                 textElementType, FTLPatternParser.TextElementTermination.EOF );
     }
+
+    // SWAR version. Not currently used but tests OK. Performance slower (15%) than scalar version.
+    // NOT currently used.
+    private FTLPatternParser.TextSlice getTextSliceSWAR() {
+        final int maxIndex = seq.length;
+        final int startPos = pos;
+        int i = startPos;
+
+        final int longLimit = maxIndex - Long.BYTES;
+        for (; i <= longLimit; i += Long.BYTES) {
+            final long combined = SWAROps.tsCombiner( seq, i );
+
+            if (combined != 0) {
+                final int lane = Long.numberOfTrailingZeros( combined ) >>> 3;
+                final int tempPos = i + lane;
+                final byte b = seq[tempPos];
+
+                final FTLPatternParser.TextElementTermination termination;
+                if (b == '\n') {
+                    termination = FTLPatternParser.TextElementTermination.LineFeed;
+                } else if (b == '\r') {
+                    // CRLF detection. LF could be next byte (so we must check bounds)
+                    if (tempPos + 1 < maxIndex && seq[tempPos + 1] == '\n') {
+                        termination = FTLPatternParser.TextElementTermination.CRLF;
+                    } else {
+                        // Bare CR; treat as a non-match and continue from following byte.
+                        i = tempPos + 1;
+                        continue;
+                    }
+                } else if (b == '{') {
+                    termination = FTLPatternParser.TextElementTermination.PlaceableStart;
+                } else {
+                    termination = FTLPatternParser.TextElementTermination.ERROR;
+                }
+
+                return getTS( startPos, tempPos, termination);
+            }
+        }
+
+        for (; i < maxIndex; i++) {
+            final byte b = seq[i];
+
+            if (b == '\n') {
+                return getTS( startPos, i, FTLPatternParser.TextElementTermination.LineFeed);
+            } else if (b == '\r') {
+                if (i + 1 < maxIndex && seq[i + 1] == '\n') {
+                    return getTS( startPos, i, FTLPatternParser.TextElementTermination.CRLF);
+                }
+            } else if (b == '{') {
+                return getTS( startPos, i, FTLPatternParser.TextElementTermination.PlaceableStart);
+            } else if (b == '}') {
+                return getTS( startPos, i, FTLPatternParser.TextElementTermination.ERROR);
+            }
+        }
+
+        return getTS( startPos, maxIndex, FTLPatternParser.TextElementTermination.EOF);
+    }
+
+    // helper for SWAR version
+    private FTLPatternParser.TextSlice getTS(final int startPos, final int terminatorPos, FTLPatternParser.TextElementTermination termination) {
+        // if we have only blanks leading up to the termination, it is 'blank'; otherwise, nonblank
+        final FTLPatternParser.TextElementType textElementType = SWAROps.isBlank( seq, startPos, terminatorPos )
+                ? FTLPatternParser.TextElementType.Blank
+                : FTLPatternParser.TextElementType.NonBlank;
+
+        return switch (termination) {
+            case LineFeed -> {
+                setPosition( terminatorPos + 1 );
+                yield new FTLPatternParser.TextSlice( startPos, terminatorPos + 1,
+                        textElementType, termination );
+            }
+            case CRLF -> {
+                setPosition( terminatorPos + 1 );
+                yield new FTLPatternParser.TextSlice( startPos, terminatorPos,
+                        textElementType, termination );
+            }
+            case PlaceableStart, EOF -> {
+                setPosition( terminatorPos );
+                yield new FTLPatternParser.TextSlice( startPos, terminatorPos,
+                        textElementType, termination );
+            }
+            case ERROR -> {
+                // unbalanced closing brace
+                setPosition( terminatorPos );
+                throw FTLParser.parseException( FTLParseException.ErrorCode.E0027, this );
+            }
+        };
+    }
+
+
 
 
     /// Parses a 4 or 6 byte hex sequence into a valid Unicode code point.

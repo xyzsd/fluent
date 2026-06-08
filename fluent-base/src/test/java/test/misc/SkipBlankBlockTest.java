@@ -35,31 +35,28 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class SkipBlankBlockTest {
 
 
-
-
     @Test
     public void attributeEarlyEOF_noEquals() {
         // using regular strings to make construction of this odd input very clear.
-        final String in =   "# many lines have blank spaces.\n\n\n\n"+
-                            "key01 = value01\n\n\n\n              \n"+
-                            "\n                                   \n"+  // many spaces between first and last \n
-                            "\n                                   \n"+  // many spaces between first and last \n
-                            "\n\n              \r\n\r\n                 \n"+  // many spaces between first and last \n
-                            "\n\n              \r\n\r\n                 \n"+  // many spaces between first and last \n
-                            "\n\n              \r\n\r\n                 \n"+  // many spaces between first and last \n
-                            "\n\n              \r\n\r\n                 \n"+  // many spaces between first and last \n
-                            "\n\n              \r\n\r\n                 \n"+  // many spaces between first and last \n
-                            "\n\n              \r\n\r\n                 \n"+  // many spaces between first and last \n
-                            "key02 = value02\n"+
-                            "\n\n              \r\n\r\n                 \n"+  // many spaces between first and last \n
-                            "\n\n              \r\n\r\n                 \n"+  // many spaces between first and last \n
-                            "\n\n              \r\n\r\n                 \n"+  // many spaces between first and last \n
-                            "\n\n              \r\n\r\n                 \n"+  // many spaces between first and last \n
-                            "\n\n              \r\n\r\n                 \n"+  // many spaces between first and last \n
-                            "\n\n              \r\n\r\n                 \n";  // many spaces between first and last \n
+        final String in = "# many lines have blank spaces.\n\n\n\n" +
+                "key01 = value01\n\n\n\n              \n" +
+                "\n                                   \n" +  // many spaces between first and last \n
+                "\n                                   \n" +  // many spaces between first and last \n
+                "\n\n              \r\n\r\n                 \n" +  // many spaces between first and last \n
+                "\n\n              \r\n\r\n                 \n" +  // many spaces between first and last \n
+                "\n\n              \r\n\r\n                 \n" +  // many spaces between first and last \n
+                "\n\n              \r\n\r\n                 \n" +  // many spaces between first and last \n
+                "\n\n              \r\n\r\n                 \n" +  // many spaces between first and last \n
+                "\n\n              \r\n\r\n                 \n" +  // many spaces between first and last \n
+                "key02 = value02\n" +
+                "\n\n              \r\n\r\n                 \n" +  // many spaces between first and last \n
+                "\n\n              \r\n\r\n                 \n" +  // many spaces between first and last \n
+                "\n\n              \r\n\r\n                 \n" +  // many spaces between first and last \n
+                "\n\n              \r\n\r\n                 \n" +  // many spaces between first and last \n
+                "\n\n              \r\n\r\n                 \n" +  // many spaces between first and last \n
+                "\n\n              \r\n\r\n                 \n";  // many spaces between first and last \n
 
-        final FluentResource resource = FTLParser.parse( in, FTLParser.ParseOptions.DEFAULT,
-                FTLParser.Implementation.SCALAR );
+        final FluentResource resource = FTLParser.parse( in, FTLParser.ParseOptions.DEFAULT );
 
         // no errors
         assertEquals( 0, resource.errors().size() );

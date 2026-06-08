@@ -185,7 +185,6 @@ final class FTLPatternParser {
     }
 
 
-
     // This enum tracks the reason for which a text slice ended.
     // It is used by the pattern to set the proper state for the next line.
     //

@@ -1,5 +1,9 @@
 package fluent.syntax.parser;
 
+import org.jspecify.annotations.NullMarked;
+
+/// Common operations used for parsing, with a conventional, scalar implementation.
+@NullMarked
 final class ScalarOps {
 
 

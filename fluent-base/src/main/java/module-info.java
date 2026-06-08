@@ -27,7 +27,6 @@ module net.xyzsd.fluent {
     // These are currently automatic modules ... careful
     // This will result in a warning (could be suppressed with @SuppressWarnings("requires-automatic") )
     requires com.ibm.icu;
-    requires jdk.incubator.vector;      // also still incubating .... could consider making runtime-optional
     //
     // We are exporting everything for now.
     exports fluent.bundle;

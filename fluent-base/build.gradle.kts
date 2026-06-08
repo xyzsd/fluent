@@ -35,9 +35,7 @@ plugins {
     id("me.champeau.jmh") version "0.7.3"
 }
 
-// TODO: -SNAPSHOT endings will not post to maven central
-// however, non-snapshots WILL post....
-version = "2.0-alpha"
+version = "2.0-initial-SNAPSHOT"
 group = "net.xyzsd.fluent"
 
 repositories {
@@ -47,7 +45,6 @@ repositories {
 
 tasks.test {
     useJUnitPlatform()
-    jvmArgs("--add-modules", "jdk.incubator.vector")
 }
 
 dependencies {
@@ -66,17 +63,12 @@ jmh {
     iterations = 10
     fork = 1
     jmhVersion = "1.37"
-    jvmArgs = listOf("--add-modules jdk.incubator.vector")
-    jvmArgsAppend = listOf( "-XX:+UseSuperWord","-XX:+UnlockDiagnosticVMOptions","-XX:+PrintAssembly","-XX:CompileCommand=print,*FTLStream.*","-XX:CompileCommand=print,*StreamOpsSIMD.*","-XX:CompileCommand=print,*SIMDOps.*")
 
 }
 
 tasks.compileJava {
     options.encoding = "UTF-8"
     options.compilerArgs.add("-Xlint:all,-serial")
-    // incubating features used: vector API (required for SIMD)
-    options.compilerArgs.add("--add-modules")
-    options.compilerArgs.add("jdk.incubator.vector")
 }
 
 java {
@@ -114,8 +106,7 @@ spotbugs {
 
 
 mavenPublishing {
-    project.logger.lifecycle("Publishing: enter.")
-    project.logger.lifecycle("Publishing: coordinates: "+project.group+":"+project.name+":"+project.version)
+    project.logger.lifecycle("Publishing: Coordinates: "+project.group+":"+project.name+":"+project.version)
 
     // for now, we will disable automatic release.
     publishToMavenCentral(automaticRelease = false)
@@ -163,12 +154,10 @@ mavenPublishing {
             url.set("https://github.com/xyzsd/fluent")
         }
     }
-    project.logger.lifecycle("Publishing: exit.")
 }
 
 
 signing {
-    project.logger.lifecycle("Signing: enter.")
     val githubCI: Boolean = "true".equals(System.getenv("CI"))
     if (githubCI) {
         project.logger.lifecycle("Signing: Using Github CI environment.")
@@ -179,7 +168,6 @@ signing {
         project.logger.lifecycle("Signing: Using local credentials.")
         useGpgCmd()
     }
-    project.logger.lifecycle("Signing: exit.")
 }
 
 

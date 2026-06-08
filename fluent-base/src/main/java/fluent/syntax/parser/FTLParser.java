@@ -61,7 +61,7 @@ import static java.util.Objects.requireNonNull;
 ///     may evolve in future releases.
 ///
 /// SIMD Notes: The SIMD parser uses the incubating vector class (`jdk.incubator.vector`). If it is not available,
-/// *even if specifically requested*, the parser will fall back to a less performant version.
+/// *even if specifically requested*, the parser will fall back to the scalar version..
 ///
 /// To ensure SIMD can be used, jdk.incubator.vector.package must be available and the following must be set:
 /// - runtime VM option `--add-modules jdk.incubator.vector`
@@ -88,8 +88,6 @@ public class FTLParser {
     ///  default initial size for attribute lists
     private static final int ATTRIBUTE_LIST_SIZE = 4;
 
-    ///  can we SIMD?
-    private static final boolean canSIMD = canSIMD();
 
     ///  The Logger
     private static final System.Logger logger = System.getLogger( "fluent.syntax.FTLParser" );
@@ -112,24 +110,12 @@ public class FTLParser {
         EXTENDED
     }
 
-    /// Select the Parser implementation.
-    ///
-    /// This defaults to AUTO, but a specific implementation can be chosen if desired. These options may be narrowed
-    /// or removed in a future release.
-    public enum Implementation {
-        /// Use the scalar implementation.
-        SCALAR,
-        /// Use the SIMD implementation, which depends on (incubating) vector package. This will fallback to
-        /// SCALAR if the vector package is not available.
-        SIMD,
-    }
-
 
     private FTLParser() {}
 
 
     public static FluentResource parse(final byte[] array) {
-        return parse( array, ParseOptions.DEFAULT, Implementation.SCALAR );
+        return parse( array, ParseOptions.DEFAULT );
     }
 
 
@@ -143,7 +129,7 @@ public class FTLParser {
     /// @return a FluentResource parsed from the given input.
     /// @throws IllegalArgumentException if the input is empty
     public static FluentResource parse(String in) {
-        return parse( in, ParseOptions.DEFAULT, Implementation.SCALAR );
+        return parse( in, ParseOptions.DEFAULT );
     }
 
     /// Create a stream from a ByteBuffer.
@@ -157,7 +143,7 @@ public class FTLParser {
     /// @throws java.nio.ReadOnlyBufferException if the buffer is backed by an array but is read-only
     /// @throws UnsupportedOperationException    if the buffer is not backed by an accessible array
     public static FluentResource parse(final ByteBuffer bb) {
-        return parse( bb, ParseOptions.DEFAULT, Implementation.SCALAR );
+        return parse( bb, ParseOptions.DEFAULT);
     }
 
 
@@ -179,7 +165,7 @@ public class FTLParser {
     /// @throws IOException           if an I/O error occurs while reading
     /// @throws FileNotFoundException if the resource cannot be found
     public static FluentResource parse(final ClassLoader classLoader, final String resource) throws IOException {
-        return parse( classLoader, resource, ParseOptions.DEFAULT, Implementation.SCALAR );
+        return parse( classLoader, resource, ParseOptions.DEFAULT );
     }
 
 
@@ -191,18 +177,16 @@ public class FTLParser {
     ///
     /// @param in             non-empty source text
     /// @param parseOptions     parse option
-    /// @param implementation   specific implementation
     /// @return a FluentResource parsed from the given input.
-    public static FluentResource parse(String in, ParseOptions parseOptions, Implementation implementation) {
+    public static FluentResource parse(String in, ParseOptions parseOptions) {
         requireNonNull( in );
         requireNonNull( parseOptions );
-        requireNonNull( implementation );
 
         if (in.isEmpty()) {
             return FluentResource.of();
         }
 
-        return parse( in.getBytes( StandardCharsets.UTF_8 ), parseOptions, implementation );
+        return parse( in.getBytes( StandardCharsets.UTF_8 ), parseOptions );
     }
 
     /// Create a stream from a ByteBuffer.
@@ -212,18 +196,16 @@ public class FTLParser {
     ///
     /// @param bb             a ByteBuffer whose remaining bytes contain UTF‑8 encoded FTL source
     /// @param parseOptions     parse option
-    /// @param implementation   specific implementation
     /// @return a FluentResource parsed from the given input.
     /// @throws java.nio.ReadOnlyBufferException if the buffer is backed by an array but is read-only
     /// @throws UnsupportedOperationException    if the buffer is not backed by an accessible array
-    public static FluentResource parse(final ByteBuffer bb, ParseOptions parseOptions, Implementation implementation) {
+    public static FluentResource parse(final ByteBuffer bb, ParseOptions parseOptions) {
         requireNonNull( bb );
         requireNonNull( parseOptions );
-        requireNonNull( implementation );
         if (bb.limit() == 0) {
             return FluentResource.of();
         }
-        return parse( bb.array(), parseOptions, implementation );
+        return parse( bb.array(), parseOptions );
     }
 
     /// Parse input from a classLoader-derived resource.
@@ -231,22 +213,20 @@ public class FTLParser {
     /// @param classLoader    a class loader (e.g., Thread.currentThread().getContextClassLoader())
     /// @param resource       the classpath resource to load
     /// @param parseOptions     parse option
-    /// @param implementation   specific implementation
     /// @return a FluentResource parsed from the given input.
     /// @throws IOException           if an I/O error occurs while reading
     /// @throws FileNotFoundException if the resource cannot be found
-    public static FluentResource parse(final ClassLoader classLoader, final String resource, ParseOptions parseOptions, Implementation implementation) throws IOException {
+    public static FluentResource parse(final ClassLoader classLoader, final String resource, ParseOptions parseOptions) throws IOException {
         requireNonNull( classLoader );
         requireNonNull( resource );
         requireNonNull( parseOptions );
-        requireNonNull( implementation );
 
         try (InputStream is = classLoader.getResourceAsStream( resource )) {
             if (is == null) {
                 throw new FileNotFoundException( resource );
             }
 
-            return parse( is.readAllBytes(), parseOptions, implementation );
+            return parse( is.readAllBytes(), parseOptions );
         }
     }
 
@@ -260,58 +240,20 @@ public class FTLParser {
     ///
     /// @param array          the UTF‑8 encoded bytes of FTL source
     /// @param parseOptions     parse option
-    /// @param implementation   specific implementation
     /// @return a FluentResource parsed from the given input.
-    public static FluentResource parse(final byte[] array, final ParseOptions parseOptions, final Implementation implementation) {
+    public static FluentResource parse(final byte[] array, final ParseOptions parseOptions) {
         requireNonNull( array );
         requireNonNull( parseOptions );
-        requireNonNull( implementation );
 
         // empty in, empty out
         if (array.length == 0) {
             return FluentResource.of();
         }
 
-        // decide implementation
-        final FTLStreamOps ops = switch (implementation) {
-            case SCALAR -> FTLStreamOps.SCALAR;
-            case SIMD -> {
-                if (canSIMD) {
-                    yield FTLStreamOps.SIMD;
-                } else {
-                    yield FTLStreamOps.SCALAR;
-                }
-            }
-        };
-
         return switch (parseOptions) {
-            case DEFAULT -> parseSimple( new FTLStream( ops, array ) );
-            case EXTENDED -> parseComplete( new FTLStream( ops, array ) );
+            case DEFAULT -> parseSimple( new FTLStream(  array ) );
+            case EXTENDED -> parseComplete( new FTLStream(  array ) );
         };
-    }
-
-    /// Returns `true` if SIMD can be used (SIMD vector API)
-    @SuppressWarnings( "unused" )
-    public static boolean isSIMDAvailable() {
-        return canSIMD;
-    }
-
-    private static boolean canSIMD() {
-        try {
-            // this will fail if either:
-            //  (a) there is no jdk.incubator.vector.ByteVector
-            //  (b) the runtime VM option is NOT set: "--add-modules jdk.incubator.vector"
-            Class.forName( "jdk.incubator.vector.ByteVector" );
-            if (logger != null) {
-                logger.log( System.Logger.Level.INFO, "SIMD Enabled." );
-            }
-            return true;
-        } catch (ClassNotFoundException e) {
-            if (logger != null) {
-                logger.log( System.Logger.Level.WARNING, "SIMD disabled. See documentation for more information." );
-            }
-            return false;
-        }
     }
 
 
@@ -859,7 +801,7 @@ public class FTLParser {
         final String name = identifier.name();
         // this works b/c we are working with ASCII (all identifiers characters are ASCII)
         // we only want to see if there are lowercase letters present; if so, flag it.
-        // CONSIDER: this could be vectorized but may not be worth it. profile results.
+        // CONSIDER: this could be vectorized (SWAR) but may not be worth it. profile results.
 
         for (int i = 0; i < name.length(); i++) {
             final byte b = (byte) name.charAt( i );

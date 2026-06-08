@@ -48,13 +48,14 @@ public class PerfTest {
             final FluentResource resource = FTLParser.parse(
                     Thread.currentThread().getContextClassLoader(),
                     RESOURCE,
-                    FTLParser.ParseOptions.DEFAULT,
-                    FTLParser.Implementation.SCALAR
+                    FTLParser.ParseOptions.DEFAULT
             );
+            System.out.println( resource.errors() );
             count += resource.entries().size();
             assertEquals( 493, resource.entries().size() );
             assertEquals( 0, resource.errors().size() );
         }
         System.out.println( count );
+
     }
 }
