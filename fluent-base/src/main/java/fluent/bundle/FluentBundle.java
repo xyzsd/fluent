@@ -483,7 +483,7 @@ public class FluentBundle {
                 if (entry instanceof Message msg) {
                     messages.put( msg.name(), msg );
                 } else if (entry instanceof Term term) {
-                    terms.putIfAbsent( term.name(), term );
+                    terms.put( term.name(), term );
                 }
                 // else Commentary, which we ignore
             }
@@ -665,7 +665,7 @@ public class FluentBundle {
 
     /// Fluent message formatting builder.
     ///
-    /// A fluent, chainable helper created via [FluentBundle#fmt(String)] to format a single message
+    /// A fluent, chainable helper created via to format a single message
     /// or one of its attributes with optional variables and well-defined fallback behavior.
     ///
     /// Typical usage:
