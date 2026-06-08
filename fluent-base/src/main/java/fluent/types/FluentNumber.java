@@ -33,6 +33,8 @@ import java.util.Objects;
 ///
 /// All numeric types are converted into a Long, Double, or BigDecimal as appropriate.
 ///
+/// Float and Double values may be finite or non-finite (NaN, Infinity).
+///
 /// @param <T>
 @NullMarked
 public sealed interface FluentNumber<T extends Number> extends FluentValue<T> {
@@ -75,9 +77,6 @@ public sealed interface FluentNumber<T extends Number> extends FluentValue<T> {
     }
 
 
-    /// Type as BigDecimal
-    BigDecimal asBigDecimal();
-
 
     // Concrete types ---------------------------------------------------
 
@@ -86,32 +85,17 @@ public sealed interface FluentNumber<T extends Number> extends FluentValue<T> {
         public FluentLong {
             Objects.requireNonNull( value );
         }
-
-        @Override
-        public BigDecimal asBigDecimal() {
-            return BigDecimal.valueOf( value );
-        }
     }
 
     record FluentDouble(Double value) implements FluentNumber<Double> {
         public FluentDouble {
             Objects.requireNonNull( value );
         }
-
-        @Override
-        public BigDecimal asBigDecimal() {
-            return BigDecimal.valueOf( value );
-        }
     }
 
     record FluentBigDecimal(BigDecimal value) implements FluentNumber<BigDecimal> {
         public FluentBigDecimal {
             Objects.requireNonNull( value );
-        }
-
-        @Override
-        public BigDecimal asBigDecimal() {
-            return value;
         }
     }
 

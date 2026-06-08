@@ -47,6 +47,11 @@ public class NumsortFnTest {
             new BigDecimal( "8319481938746134.89177777" ),
             new BigDecimal( "0.00000000000000000000013579" ),   // this will print as 0 unless we specify different formatting
               139584.832934, -3819.3819);
+
+    static final List<Number> NONFINITE = List.of(
+            Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NaN, 38, -381, 0.0d,
+            new BigDecimal( "8319481938746134.89177777" ), Double.NaN, Double.POSITIVE_INFINITY );
+
     static final String RESOURCE = "functions/numsort_fn.ftl";
     static FluentResource resource;
     static FluentBundle bundle;
@@ -79,7 +84,7 @@ public class NumsortFnTest {
     public void invalid() {
         // NO passthrough!
         assertEquals(
-                "|{NUMSORT(): Expected FluentNumber<>, not non-numeric FluentValue: 'FluentString[value=string]'}|",
+                "|{NUMSORT(): Expected a FluentNumber<>, but encountered a non-numeric FluentValue: 'FluentString[value=string]'}|",
                 fmt(  "numsort_invalid", NUMBERZ)
         );
 
@@ -109,6 +114,14 @@ public class NumsortFnTest {
         assertEquals(
                 "|8,319,481,938,746,134.891778, 139,584.832934, 38, 0, 0, -381, -3,819.3819|",
                 fmt(  "numsort_descending", NUMBERZ)
+        );
+    }
+
+    @Test
+    public void sortWithNonfinite() {
+        assertEquals(
+                "|-∞, -381, 0, 38, 8,319,481,938,746,134.891778, ∞, ∞, NaN, NaN|",
+                fmt(  "numsort_ascending", NONFINITE)
         );
     }
 

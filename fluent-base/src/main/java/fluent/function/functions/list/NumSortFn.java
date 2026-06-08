@@ -29,9 +29,7 @@ import fluent.types.FluentValue;
 import org.jspecify.annotations.NullMarked;
 
 import java.math.BigDecimal;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 /// ## NUMSORT()
 /// Locale-aware Number sorting
@@ -47,10 +45,14 @@ import java.util.Locale;
 /// Options:
 /// - `order`: either `"ascending"` (the default) or `"descending"`
 ///
+/// Implementation note: finite numeric values will be converted to BigDecimals. Non-finite values will always
+/// remain Non-finite values of Double. For natural ordering, NaN is considered greater than positive infinity.
+///
+///
 /// ## Examples
 /// {@snippet :
 ///     NUMSORT(3,2,1, order:"ascending")  // '1,2,3'
-/// }
+///}
 ///
 /// NUMSORT() will error on non-numeric input; for example, `NUMSORT(3, 2, 1, "barf")` will result in an error.
 @NullMarked
@@ -58,7 +60,8 @@ public enum NumSortFn implements FluentFunctionFactory<FluentFunction.Transform>
 
     // TODO: consider a passthrough version, perhaps selectable by an option flag. Numbers would be extracted from the
     //       input list and sorted. Then, output this list along with non-numeric values from the original input.
-    // TODO: PERFORMANCE: consider single-value numeric input case; no need to sort.
+    //       The question would be where to place the non-numeric values in the output list.
+    //
 
     NUMSORT;
 
@@ -68,7 +71,7 @@ public enum NumSortFn implements FluentFunctionFactory<FluentFunction.Transform>
         final SortOrder order = options.asEnum( SortOrder.class, "order" )
                 .orElse( SortOrder.ASCENDING );
 
-        return switch(order) {
+        return switch (order) {
             case ASCENDING -> NumSorter.NS_ASCENDING;
             case DESCENDING -> NumSorter.NS_DESCENDING;
         };
@@ -81,27 +84,73 @@ public enum NumSortFn implements FluentFunctionFactory<FluentFunction.Transform>
     }
 
 
-    private record NumSorter(Comparator<BigDecimal> comparator) implements FluentFunction.Transform {
-        static final NumSorter NS_ASCENDING = new NumSorter(Comparator.naturalOrder());
-        static final NumSorter NS_DESCENDING = new NumSorter(Comparator.reverseOrder());
+    private record NumSorter(boolean reverse) implements FluentFunction.Transform {
+        static final NumSorter NS_ASCENDING = new NumSorter( false );
+        static final NumSorter NS_DESCENDING = new NumSorter( true );
 
         @Override
         public List<FluentValue<?>> apply(ResolvedParameters parameters, Scope scope) {
-            return parameters.positionals()
-                    .map( NumSorter::toBigDecimal )
-                    .sorted( comparator )
-                    .<FluentValue<?>>map( FluentNumber.FluentBigDecimal::new )
-                    .toList();
-        }
-
-        private static BigDecimal toBigDecimal(FluentValue<?> in) {
-            if(in instanceof FluentNumber<?> fluentNumber) {
-                return fluentNumber.asBigDecimal();
+            // singlet? no need to sort.
+            if (parameters.isSingle()) {
+                return parameters.firstPositional();
             }
 
-            throw FluentFunctionException.of(
-                    "Expected FluentNumber<>, not non-numeric FluentValue: '%s'", in
-            );
+            // count nonfinite values and ignore for now; then then add back to list.
+            int nNegInf = 0;
+            int nPosInf = 0;
+            int nNaN = 0;
+
+            final List<FluentValue<?>> input = parameters.positionals().toList();
+            final List<BigDecimal> bigDecimals = new ArrayList<>( input.size() );
+
+            for (FluentValue<?> v : input) {
+                switch (v.value()) {
+                    case BigDecimal bd -> bigDecimals.add( bd );
+                    case Long l -> bigDecimals.add( BigDecimal.valueOf( l ) );
+                    case Double d when Double.isFinite( d ) -> bigDecimals.add( BigDecimal.valueOf( d ) );
+                    case Double d when Double.isInfinite( d ) -> {
+                        if (Double.isInfinite( d ) && d > 0) {
+                            nPosInf++;
+                        } else {
+                            nNegInf++;
+                        }
+                    }
+                    case Double d when Double.isNaN( d ) -> nNaN++;
+                    default -> throw FluentFunctionException.of(
+                            "Expected a FluentNumber<>, but encountered a non-numeric FluentValue: '%s'", v
+                    );
+                }
+            }
+
+            bigDecimals.sort( Comparator.naturalOrder() );
+
+            final List<FluentValue<?>> output = new ArrayList<>(input.size());
+
+            // arrange items in natural order, as per JDK Double.compare() (which for natural ordering places
+            // NaN after positive infinity; we keep that approach here.
+
+            for (int i = 0; i < nNegInf; i++) {
+                output.add( FluentNumber.of( Double.NEGATIVE_INFINITY) );
+            }
+
+            for (BigDecimal bd : bigDecimals) {
+                output.add( FluentNumber.of( bd ) );
+            }
+
+            for (int i = 0; i < nPosInf; i++) {
+                output.add( FluentNumber.of( Double.POSITIVE_INFINITY) );
+            }
+
+            for (int i = 0; i < nNaN; i++) {
+                output.add( FluentNumber.of( Double.NaN) );
+            }
+
+            // reverse the order if requested.
+            if (reverse) {
+                Collections.reverse( output );
+            }
+
+            return output;
         }
     }
 
