@@ -54,6 +54,9 @@ final class ScalarOps {
             final int start = pos;
 
             pos = skipBlankInline(array, pos);
+            if (pos >= len) {
+                break;
+            }
 
             byte cb = array[pos];
             if (cb == '\n') {
@@ -77,7 +80,10 @@ final class ScalarOps {
             final int start = pos;
 
             pos = skipBlankInline(array, pos);
-
+            if (pos >= len) {
+                break;
+            }
+            
             byte cb = array[pos];
             if (cb == '\n') {
                 pos++;

@@ -34,8 +34,8 @@ import java.nio.ByteOrder;
 /// vast majority of the time. Scalar functions are also faster than SWAR for these small widths.
 ///
 /// References:
-///     - http://www.0x80.pl
-///     - https://lemire.me
+///     - [0x80.pl](http://www.0x80.pl)
+///     - [lemire.me](https://lemire.me)
 ///     - and others
 ///
 @NullMarked
@@ -56,9 +56,9 @@ final class SWAROps {
     private static final long UNDERSCORE_MASK = broadcast( '_' );
     private static final long HYPHEN_MASK = broadcast( '-' );
     private static final long LC_A = broadcast( 'a' );
-    private static final long LC_Z = broadcast( 'z' + 1 );
+    private static final long AFTER_LC_Z = broadcast( 'z' + 1 );
     private static final long DIGIT_0 = broadcast( '0' );
-    private static final long DIGIT_9 = broadcast( '9' + 1 );
+    private static final long AFTER_DIGIT_9 = broadcast( '9' + 1 );
 
 
     // extends byte b across all lanes (e.g., to create a mask).
@@ -113,7 +113,7 @@ final class SWAROps {
         int i = startIndex;
 
         final int longLimit = array.length - Long.BYTES;
-        for (; i < longLimit; i += Long.BYTES) {
+        for (; i <= longLimit; i += Long.BYTES) {
             final long word = (long) LONG_LE.get( array, i );
             final long lnFeeds = eqByteMask( word, LF_MASK );
 
@@ -144,8 +144,8 @@ final class SWAROps {
             final long word = (long) LONG_LE.get( array, i );
 
             final long folded = word | ASCII_CASE_MASK;
-            final long alphabetic = asciiRangeMask( folded, LC_A, LC_Z );
-            final long digits = asciiRangeMask( word, DIGIT_0, DIGIT_9 );
+            final long alphabetic = asciiRangeMask( folded, LC_A, AFTER_LC_Z );
+            final long digits = asciiRangeMask( word, DIGIT_0, AFTER_DIGIT_9 );
             final long underscores = eqByteMask( word, UNDERSCORE_MASK );
             final long hyphens = eqByteMask( word, HYPHEN_MASK );
 
@@ -224,12 +224,12 @@ final class SWAROps {
             }
         }
 
-        // todo: use scalarops here
+        // remember: limit is not end of array, but 'endPos'
         while (i < endPos) {
             final byte b = array[i];
             if (b == ' ' || b == '\n') {
                 i++;
-            } else if (b == '\r' && i < (array.length - 1) && array[i + 1] == (byte) '\n') {
+            } else if (b == '\r' && i < (endPos - 1) && array[i + 1] == (byte) '\n') {
                 i += 2;
             } else {
                 break;
