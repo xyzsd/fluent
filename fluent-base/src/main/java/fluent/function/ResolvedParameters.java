@@ -110,6 +110,8 @@ public sealed interface ResolvedParameters {
     /// Stream all positional arguments, in order.
     Stream<FluentValue<?>> positionals();
 
+    // TODO: probably should deprecate; positionalCount() _will_ be inaccurate if we have a list-of-lists
+    //          currently only used by tests, and isSingle() is what we generally want to know
     ///  Number of positional arguments (always >= 0)
     int positionalCount();
 
@@ -253,6 +255,7 @@ public sealed interface ResolvedParameters {
             return list.stream().flatMap( List::stream );
         }
 
+        /// NOTE: this does not flatten the list, so if it is a list of lists, the count will NOT be correct.
         @Override
         public int positionalCount() {
             return list.size();
