@@ -28,6 +28,7 @@ import fluent.bundle.FluentResource;
 import fluent.syntax.parser.*;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import test.shared.TestLog;
 
 import java.io.IOException;
 
@@ -43,7 +44,7 @@ public class PerfTest {
     @Tag("performance")
     @Test
     public void parseAndVerifyBundle() throws IOException {
-        System.out.println( "Input FTL: " + RESOURCE );
+        TestLog.println( "Input FTL: " + RESOURCE );
 
         int count = 0;
         for (int i = 0; i < ITERATIONS; i++) {
@@ -53,12 +54,12 @@ public class PerfTest {
                     RESOURCE,
                     FTLParser.ParseOptions.DEFAULT
             );
-            System.out.println( resource.errors() );
+            TestLog.println( resource.errors() );
             count += resource.entries().size();
             assertEquals( 493, resource.entries().size() );
             assertEquals( 0, resource.errors().size() );
         }
-        System.out.println( count );
+        TestLog.println( count );
 
     }
 }

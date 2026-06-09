@@ -28,6 +28,7 @@ import fluent.bundle.FluentResource;
 import fluent.syntax.parser.FTLParser;
 import org.junit.jupiter.api.Test;
 import test.shared.FTLTestUtils;
+import test.shared.TestLog;
 
 import static fluent.syntax.parser.FTLParseException.ErrorCode.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -245,7 +246,7 @@ public class MiscFTLTest {
                 """;
         // Comments NOT ignored -- 1 error
         final FluentResource resource = FTLParser.parse( in );
-        System.out.println( resource );
+        TestLog.println( resource );
         assertEquals( 1, resource.errors().size() );
         assertTrue( FTLTestUtils.matchParseException( resource, E0032, 2 ) );
     }

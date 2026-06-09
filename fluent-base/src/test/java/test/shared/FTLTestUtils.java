@@ -55,9 +55,9 @@ public class FTLTestUtils {
 
     /// Error Logger for testing (to stderr)
     static final Consumer<FluentBundle.ErrorContext> TEST_ERROR_LOGGER = (ec) -> {
-        System.err.printf( "ERROR encountered during formatting of message '%s' (%s), locale %s; [%d errors]:\n",
+        TestLog.errPrintf( "ERROR encountered during formatting of message '%s' (%s), locale %s; [%d errors]:\n",
                 ec.messageID(), ec.attributeID(), ec.locale(), ec.exceptions().size() );
-        ec.exceptions().forEach( e -> System.err.println( "  " + e ) );
+        ec.exceptions().forEach( e -> TestLog.errPrintln( "  " + e ) );
     };
 
 
@@ -65,7 +65,7 @@ public class FTLTestUtils {
 
     public static FluentResource parseFile(String fileName) throws IOException {
         requireNonNull( fileName );
-        System.out.println( "Input FTL: " + fileName );
+        TestLog.println( "Input FTL: " + fileName );
 
 
         return FTLParser.parse(
@@ -79,13 +79,15 @@ public class FTLTestUtils {
     // useful for debugging resource file
     @SuppressWarnings("unused")
     public static void show(FluentResource resource) {
-        System.out.println( "BEGIN" );
-        resource.errors().forEach( System.out::println );
-        System.out.println( "-----" );
-        resource.entries().forEach( System.out::println );
-        System.out.println( "-----" );
-        resource.junk().forEach( System.out::println );
-        System.out.println( "END\n" );
+        if (TestLog.isVerbose()) {
+            System.out.println( "\nBEGIN: FluentResource" );
+            resource.errors().forEach( System.out::println );
+            System.out.println( "-----" );
+            resource.entries().forEach( System.out::println );
+            System.out.println( "-----" );
+            resource.junk().forEach( System.out::println );
+            System.out.println( "END\n" );
+        }
     }
 
 
@@ -95,7 +97,7 @@ public class FTLTestUtils {
                 .stream()
                 .anyMatch( e -> (e.errorCode() == errorCode) && (e.line() == line) );
         if (!match) {
-            System.err.println( "EXPECTED ParseException NOT FOUND: " + errorCode + " @ line " + line );
+            TestLog.errPrintln( "EXPECTED ParseException NOT FOUND: " + errorCode + " @ line " + line );
         }
         return match;
     }
@@ -156,7 +158,7 @@ public class FTLTestUtils {
         assertNotNull( attrib );
 
         final String formatted = bndl.format( msgID, attrib );
-        System.out.println( "attr(" + msgID + "." + attrib + ") '" + formatted + "'" );
+        TestLog.println( "attr(" + msgID + "." + attrib + ") '" + formatted + "'" );
         return formatted;
     }
 
@@ -166,7 +168,7 @@ public class FTLTestUtils {
         assertNotNull( args );
 
         final String formatted = bndl.format( msgID, args );
-        System.out.println( "fmt(" + msgID + ") '" + formatted + "'" );
+        TestLog.println( "fmt(" + msgID + ") '" + formatted + "'" );
         return formatted;
     }
 
@@ -180,7 +182,7 @@ public class FTLTestUtils {
                 .map( Term::value )
                 .map( pattern -> bndl.patternFormat( pattern, args ) )
                 .orElseThrow( () -> new IllegalArgumentException( "term(" + termID + ") not found." ) );
-        System.out.println( "term(" + termID + ") '" + formatted + "'" );
+        TestLog.println( "term(" + termID + ") '" + formatted + "'" );
         return formatted;
     }
 
@@ -195,7 +197,7 @@ public class FTLTestUtils {
                 .map( Attribute::pattern )
                 .map( pattern -> bndl.patternFormat( pattern, args ) )
                 .orElseThrow( () -> new IllegalArgumentException( "term(" + termID + "." + attrID + ") not found." ) );
-        System.out.println( "term(" + termID + "." + attrID + ") '" + formatted + "'" );
+        TestLog.println( "term(" + termID + "." + attrID + ") '" + formatted + "'" );
         return formatted;
     }
 

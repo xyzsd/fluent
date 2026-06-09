@@ -45,9 +45,6 @@ public class TermParametersTest {
     public static void parseFile() throws IOException {
         resource = FTLTestUtils.parseFile( RESOURCE );
         bundle = FTLTestUtils.basicBundleSetup( resource, false );
-
-        System.out.println( resource.errors() );
-
     }
 
 

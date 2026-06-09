@@ -34,6 +34,7 @@ import fluent.syntax.parser.FTLParseException;
 import fluent.types.FluentNumber;
 import fluent.types.FluentString;
 import org.junit.jupiter.api.Test;
+import test.shared.TestLog;
 
 import java.util.List;
 import java.util.Locale;
@@ -46,20 +47,20 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 /// High-level tests of functionality
 ///
 /// NOTE: Watch leading alignment in multi-line text blocks!
+///
+/// Using TestLog for verbose output.
 class FTLParserSmokeTest {
 
-    static final boolean SHOW_TEST_RESULTS = true;
-
     static final Consumer<FluentBundle.ErrorContext> ERROR_LOGGER = (ec) -> {
-        System.err.printf( "ERROR encountered during formatting of message '%s' (%s), locale %s; [%d errors]:\n",
+        TestLog.errPrintf( "ERROR encountered during formatting of message '%s' (%s), locale %s; [%d errors]:\n",
                 ec.messageID(), ec.attributeID(), ec.locale(), ec.exceptions().size() );
-        ec.exceptions().forEach( e -> System.err.println( "  " + e ) );
+        ec.exceptions().forEach( e -> TestLog.errPrintln( "  " + e ) );
     };
 
     private static FluentBundle parse(String in) {
         final FluentResource parse = FTLParser.parse( in );
         if (parse.hasErrors()) {
-            System.err.println( "errors on parse: " + parse.errors() );
+            TestLog.errPrintln( "errors on parse: " + parse.errors() );
         }
 
         final FluentFunctionRegistry registry = FluentFunctionRegistry.builder()
@@ -82,9 +83,7 @@ class FTLParserSmokeTest {
 
         FluentBundle bundle = parse( in );
         final String formatted = bundle.format( id, args );
-        if (SHOW_TEST_RESULTS) {
-            System.out.println( "msg() '" + formatted + "'" );
-        }
+        TestLog.println( "msg() '" + formatted + "'" );
         return formatted;
     }
 
@@ -94,23 +93,19 @@ class FTLParserSmokeTest {
 
         FluentBundle bundle = parse( in );
         final String formatted = bundle.format( msgID, attribID, Map.of() );
-        if (SHOW_TEST_RESULTS) {
-            System.out.println( "msg() '" + formatted + "'" );
-        }
+        TestLog.println( "msg() '" + formatted + "'" );
         return formatted;
     }
 
     private static void printMsg(String result, List<Exception> errors) {
-        if (SHOW_TEST_RESULTS) {
-            if (errors.isEmpty()) {
-                System.out.println( "msg() '" + result + "' (no errors)" );
-            } else {
-                System.out.printf( "msg() '%s' %d error(s): %s\n",
-                        result,
-                        errors.size(),
-                        errors
-                );
-            }
+        if (errors.isEmpty()) {
+            TestLog.println( "msg() '" + result + "' (no errors)" );
+        } else {
+            TestLog.printf( "msg() '%s' %d error(s): %s\n",
+                    result,
+                    errors.size(),
+                    errors
+            );
         }
     }
 
@@ -137,9 +132,7 @@ class FTLParserSmokeTest {
                 output
 
         );
-        if (SHOW_TEST_RESULTS) {
-            System.out.printf( "highLevel: '%s'\n", output );
-        }
+        TestLog.printf( "highLevel: '%s'\n", output );
     }
 
     @Test
@@ -152,9 +145,7 @@ class FTLParserSmokeTest {
 
                 output
         );
-        if (SHOW_TEST_RESULTS) {
-            System.out.printf( "highLevel: '%s'\n", output );
-        }
+        TestLog.printf( "highLevel: '%s'\n", output );
     }
 
     @Test
@@ -201,7 +192,7 @@ class FTLParserSmokeTest {
     void blankUnicodeTest() {
         // These tests use string concatenation because triple-quotes strip trailing whitespace
         String thinSpace = String.valueOf( Character.toChars( 0x2009 ) );
-        System.out.println("  thinSpace = "+Character.toChars( 0x2009 ).length);
+        TestLog.println( "  thinSpace = " + Character.toChars( 0x2009 ).length );
         assertEquals(
                 thinSpace,
                 msg( "quote =" + thinSpace, "quote" )
