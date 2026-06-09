@@ -44,6 +44,7 @@ gradle-app.setting
 ### misc ###
 .notes
 .todo
+.notes.txt
 
 /.idea/
 
