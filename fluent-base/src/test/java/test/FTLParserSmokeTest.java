@@ -46,6 +46,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /// High-level tests of functionality
 ///
+/// This remains a pretty-good test of FTL functionality, and was the first test suite created before the
+/// FTL test fixtures were implemented.
+///
 /// NOTE: Watch leading alignment in multi-line text blocks!
 ///
 /// Using TestLog for verbose output.
