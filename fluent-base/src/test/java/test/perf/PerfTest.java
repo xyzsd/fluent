@@ -26,18 +26,21 @@ package test.perf;
 
 import fluent.bundle.FluentResource;
 import fluent.syntax.parser.*;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+// Not really a performance test (see JMH test), but can be used for simple parser performance testing
 public class PerfTest {
 
     private static final String RESOURCE = "perf/gecko_strings.ftl";
     private static final int ITERATIONS = 1;
 
     // really we are just validating the PerfTest file here
+    @Tag("performance")
     @Test
     public void parseAndVerifyBundle() throws IOException {
         System.out.println( "Input FTL: " + RESOURCE );

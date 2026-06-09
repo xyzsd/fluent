@@ -154,7 +154,7 @@ final class FTLPatternParser {
                             // NOTE: we use a boolean flag to reduce potential for malicious/invalid Unicode
                             int endIndex = end - 1;       // 'end' is exclusive, 'endIndex' is inclusive
                             boolean priorIsNewline = false;
-                            while (start < endIndex) {
+                            while (endIndex > start) {
                                 final byte b = ps.at( endIndex );
                                 if (b == ' ' || (priorIsNewline && b == '\r')) {
                                     endIndex--;

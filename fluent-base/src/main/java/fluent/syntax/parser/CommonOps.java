@@ -139,7 +139,7 @@ final class CommonOps {
                 } else {
                     // nonprintable (and not specially handled above)
                     // this will yield something like '<0x03>'
-                    yield String.format( "<%#02x>", in );
+                    yield String.format( "<%#02x>", (0xFF &in) );
                 }
             }
         };
