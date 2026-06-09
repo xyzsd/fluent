@@ -237,19 +237,26 @@ public final class Options {
                 .map( value -> matchEnum( enumClass, value ) );
     }
 
-    /// Get the pattern of an option, as an int.
+    /// Get the pattern of an option, as an OptionalInt.
     ///
     /// If the pattern is absent, return an empty OptionalInt.
     ///
-    /// If the pattern is present return the pattern as an Integer. This is performed as per
-    /// JLS 5.1.3 narrowing conventions (out-of-range integer values will either be Integer.MAX_VALUE
-    /// or Integer.MIN_VALUE).
+    /// If the pattern is a number but not within the range of an Integer, throw an exception.
     ///
     /// @param optionName option name (case-sensitive)
     /// @return option pattern (as above)
+    /// @throws FluentFunctionException if the pattern is not within the valid integer range
     public OptionalInt asInt(final String optionName) {
-        return asType( optionName, Long.class, null ).map( l -> OptionalInt.of( l.intValue() ) ).orElse( OptionalInt.empty() );
+        return asType( optionName, Long.class, null )
+                .map( l -> {
+                    if (l < Integer.MIN_VALUE || l > Integer.MAX_VALUE) {
+                        throw typeError( optionName, "Integer within range", l );
+                    }
+                    return OptionalInt.of( l.intValue() );
+                } )
+                .orElse( OptionalInt.empty() );
     }
+
 
     /// Get the pattern of an option, as a double.
     ///
