@@ -50,17 +50,17 @@ public record FluentResource(List<Entry> entries, List<FTLParseException> errors
         junk = List.copyOf(junk);
     }
 
-    // an Empty FluentResource
+    /// Create an Empty FluentResource
     public static FluentResource of() {
         return new FluentResource( List.of(), List.of(), List.of() );
     }
 
-    /// True if there are errors
+    /// Returns true if this resource contains parse errors.
     public boolean hasErrors() {
         return !errors.isEmpty();
     }
 
-    /// True if there is 'Junk'
+    /// Returns true if this resource contains 'Junk'.
     public boolean hasJunk() {
         return !junk.isEmpty();
     }

@@ -26,10 +26,10 @@ import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
 
-/// The Error type.
+/// A Fluent value representing a recoverable formatting error.
 ///
-/// This is used instead of throwing an Exception in order to preserve more of the message,
-/// if possible.
+/// FluentError is used instead of throwing an exception so that rendering can
+/// preserve as much of the message as possible.
 @NullMarked
 public record FluentError(String value) implements FluentValue<String> {
 

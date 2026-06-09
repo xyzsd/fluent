@@ -24,7 +24,7 @@ public class ErrorHandling {
         @Override
         public void accept(FluentBundle.ErrorContext errorContext) {
             // one would most likely call the logging framework here.
-            System.err.printf("Error occurred parsing: message %s for bundle locale %s\n", errorContext.entryName(), errorContext.locale());
+            System.err.printf("Error occurred message rendering: message %s for bundle locale %s\n", errorContext.entryName(), errorContext.locale());
             errorContext.exceptions().forEach( System.err::println );
         }
     }
@@ -42,7 +42,7 @@ public class ErrorHandling {
         if (!resource.errors().isEmpty()) {
             // Note that messages that do not parse successfully will not be added to the resource, but messages
             // that DO parse correctly will be. So if a message is missing, it could be because it did not parse
-            // correclty.
+            // correctly.
             System.err.printf("Encountered %d errors during parsing!\n", resource.errors().size());
             resource.errors().forEach(System.err::println);
             System.exit(1);

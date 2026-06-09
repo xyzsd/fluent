@@ -98,7 +98,7 @@ public class FluentBundle {
     }
 
 
-    ///  for diagnostics
+    /// Returns a diagnostic String representation of this bundle.
     @Override
     public String toString() {
         return "FluentBundle{" +
@@ -113,26 +113,32 @@ public class FluentBundle {
 
     /// Create a Builder to build a new FluentBundle.
     ///
-    /// Uses the default cache if no cache specified.
-    ///
     /// @param locale Locale for the bundle to be built
+    /// @param registry function registry for resolving functions
+    /// @param cache function cache to use
     /// @return Builder
     public static Builder builder(Locale locale, FluentFunctionRegistry registry, final FluentFunctionCache cache) {
         return new Builder( locale, registry, cache );
     }
 
-    /// Create a Builder to build a new FluentBundle, using an existing FluentBundle as a base.
+
+    /// Constructs a new Builder instance initialized with the specified FluentBundle
+    /// and FluentFunctionCache.
+    ///
+    /// @param bundle the FluentBundle instance from which to initialize the Builder
+    /// @param cache the FluentFunctionCache to be used by the Builder
+    /// @return a Builder instance initialized with the provided FluentBundle and FluentFunctionCache
     @SuppressWarnings( "unused" )
     public static Builder builderFrom(FluentBundle bundle, FluentFunctionCache cache) {
         return new Builder( bundle, cache );
     }
 
-    /// Bundle Locale
+    /// Returns the Locale of this bundle.
     public Locale locale() {
         return locale;
     }
 
-    /// Bundle unicode isolation setting
+    /// Returns whether Unicode isolation is enabled for this bundle.
     public boolean useIsolation() {
         return useIsolation;
     }
@@ -150,13 +156,13 @@ public class FluentBundle {
         return Optional.ofNullable( messages.get( id ) );
     }
 
-    /// Returns a Map of all Messages
+    /// Returns an immutable Map of all messages by message ID.
     public Map<String, Message> messages() {
         return messages;
     }
 
 
-    /// Returns the Term for the given id
+    /// Returns the Term for the given ID
     ///
     /// Use [#patternFormat(Pattern, Map, String, String)]
     public Optional<Term> term(final String id) {
@@ -164,23 +170,23 @@ public class FluentBundle {
         return Optional.ofNullable( terms.get( id ) );
     }
 
-    /// Returns a Map of all Terms
+    /// Returns an immutable Map of all Terms
     public Map<String, Term> terms() {
         return terms;
     }
 
-    ///  Get the cache
+    ///  Returns the function cache used by this bundle.
     public FluentFunctionCache cache() {
         return cache;
     }
 
-    ///  Get the registry.
+    ///  Returns the function registry used by this bundle.
     public FluentFunctionRegistry registry() {return registry;}
 
 
-    ///  Format method for Messages.
+    ///  Formats a Message.
     ///
-    ///  Gets the message with the given name, and displays it. If there is an error,
+    ///  Gets the message with the given ID and renders (formats) it. If there is an error,
     ///  the error message is output instead.
     ///
     ///  This method should not throw in normal usage
@@ -223,9 +229,9 @@ public class FluentBundle {
         }
     }
 
-    ///  Format method for attributes.
+    ///  Formats an attribute
     ///
-    ///  Gets the message with the given name, and displays it. If there is an error,
+    ///  Gets the message with the given ID and renders (formats) it. If there is an error,
     ///  the error message is output instead.
     ///
     ///  This method should not throw in normal usage
@@ -361,9 +367,6 @@ public class FluentBundle {
     ///
     /// If required parameters are not set, an exception will be thrown during build.
     ///
-    /// If Functions are to be added, replaced, or removed outside a FluentFunctionFactory, the factory must
-    /// be set in this Builder prior to adding/replacing/removing functions.
-    ///
     /// Builders can be re-used. Builders are not guaranteed to be threadsafe.
     ///
     @NullMarked
@@ -431,7 +434,7 @@ public class FluentBundle {
         /// This can be used multiple times, to add multiple resources.
         ///
         /// If a Term or Message in the resource added collides with a Term or Message already added, a
-        /// ReferenceException will be thrown.
+        /// FluentBundleException will be thrown.
         ///
         /// @param resource FluentResource to add
         /// @return Builder
@@ -533,7 +536,7 @@ public class FluentBundle {
         ///        // ...
         ///}
         ///
-        /// @param functionName function that exists within the FLuentFunctionRegistry
+        /// @param functionName function that exists within the FluentFunctionRegistry
         /// @param options      function options
         /// @return Builder
         /// @throws IllegalArgumentException if the function name was not found in the FluentFunctionRegistry.
@@ -665,7 +668,7 @@ public class FluentBundle {
 
     /// Fluent message formatting builder.
     ///
-    /// A fluent, chainable helper created via to format a single message
+    /// A fluent, chainable helper created via FluentBundle#fmtBuilder(String) to format a single message
     /// or one of its attributes with optional variables and well-defined fallback behavior.
     ///
     /// Typical usage:

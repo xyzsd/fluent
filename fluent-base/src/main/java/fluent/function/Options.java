@@ -31,10 +31,10 @@ import java.util.function.Function;
 
 import static java.util.Objects.requireNonNull;
 
-/// An immutable name-pattern mapping, with a restricted set of allowed mapped values.
+/// An immutable name-value mapping, with a restricted set of allowed mapped values.
 ///
-/// Option Names are Strings, and matched exactly (so they are case-sensitive). Matching
-/// locale for option names is always Locale.ROOT.
+/// Option names are Strings and are matched exactly; matching is case-sensitive.
+/// Where option names are normalized internally, Locale.ROOT is used.
 ///
 /// Values may be String, Long, or Double types only. Values are *not* FluentValues; values
 /// are not formatted, resolved, or changed.
@@ -191,61 +191,61 @@ public final class Options {
         }
     }
 
-    /// Get the pattern (value) of an option, as a String.
+    /// Get the value of an option, as a String.
     ///
-    /// If the pattern is absent, return an empty Optional.
+    /// If the value is absent, return an empty Optional.
     ///
     ///
-    /// If the pattern is present, but not a String, throw an exception.
+    /// If the value is present, but not a String, throw an exception.
     /// (for example: FUNCTION(name: 37) option "name" is a number; whereas FUNCTION(name: "37")
     /// option "name" would be a String)
     ///
-    /// Otherwise, return the pattern.
+    /// Otherwise, return the value.
     ///
     /// @param optionName option name (case-sensitive)
-    /// @return option pattern (as above)
+    /// @return option value (as above)
     public Optional<String> asString(final String optionName) {
         return asType( optionName, String.class, null );
     }
 
-    /// Get the pattern (value) of an option, as a Boolean.
+    /// Get the value of an option, as a Boolean.
     ///
-    /// If the pattern is absent, return an empty Optional.
+    /// If the value is absent, return an empty Optional.
     ///
-    /// If the pattern is "true" or "false" (case-insensitive), return the appropriate Boolean pattern.
+    /// If the value is "true" or "false" (case-insensitive), return the appropriate Boolean value.
     /// Otherwise, throw an exception.
     ///
     /// @param optionName option name (case-sensitive)
-    /// @return option pattern (as above)
+    /// @return option value (as above)
     public Optional<Boolean> asBoolean(final String optionName) {
         return asType( optionName, String.class, "Boolean" ).map( s -> parseBoolStrict( optionName, s ) );
     }
 
-    /// Get the pattern (value) of an option, if it matches an existing Enum type
+    /// Get the value of an option, if it matches an existing Enum type
     ///
-    /// If the pattern is absent, return an empty Optional.
+    /// If the value is absent, return an empty Optional.
     ///
-    /// If the pattern matches an enum constant, return the enum. Otherwise, throw an exception.
+    /// If the value matches an enum constant, return the enum. Otherwise, throw an exception.
     ///
     /// NOTE: a case-insensitive match is used to evaluate enums, since the convention for
     /// option format is lower case or camel case, but enum constants are typically upper case.
     ///
     /// @param optionName option name (case-sensitive)
-    /// @return option pattern (as above)
+    /// @return option value (as above)
     public <E extends Enum<E>> Optional<E> asEnum(final Class<E> enumClass, final String optionName) {
         return asType( optionName, String.class, "Enumerated String" )
                 .map( value -> matchEnum( enumClass, value ) );
     }
 
-    /// Get the pattern (value) of an option, as an OptionalInt.
+    /// Get the value of an option, as an OptionalInt.
     ///
-    /// If the pattern is absent, return an empty OptionalInt.
+    /// If the value is absent, return an empty OptionalInt.
     ///
-    /// If the pattern is a number but not within the range of an Integer, throw an exception.
+    /// If the value is a number but not within the range of an Integer, throw an exception.
     ///
     /// @param optionName option name (case-sensitive)
-    /// @return option pattern (as above)
-    /// @throws FluentFunctionException if the pattern is not within the valid integer range
+    /// @return option value (as above)
+    /// @throws FluentFunctionException if the value is not within the valid integer range
     public OptionalInt asInt(final String optionName) {
         return asType( optionName, Long.class, null )
                 .map( l -> {
@@ -258,22 +258,22 @@ public final class Options {
     }
 
 
-    /// Get the pattern (value) of an option, as an OptionalDouble.
+    /// Get the value of an option, as an OptionalDouble.
     ///
-    /// If the pattern is absent, return an empty OptionalDouble.
+    /// If the value is absent, return an empty OptionalDouble.
     ///
     /// @param optionName option name (case-sensitive)
-    /// @return option pattern (as above)
+    /// @return option value (as above)
     public OptionalDouble asDouble(final String optionName) {
         return asType( optionName, Double.class, null ).map( OptionalDouble::of ).orElse( OptionalDouble.empty() );
     }
 
-    /// Get the pattern (value) of an option, as an OptionalLong.
+    /// Get the value of an option, as an OptionalLong.
     ///
-    /// If the pattern is absent, return an empty OptionalLong.
+    /// If the value is absent, return an empty OptionalLong.
     ///
     /// @param optionName option name (case-sensitive)
-    /// @return option pattern (as above)
+    /// @return option value (as above)
     public OptionalLong asLong(final String optionName) {
         return asType( optionName, Long.class, null ).map( OptionalLong::of ).orElse( OptionalLong.empty() );
     }
@@ -281,7 +281,7 @@ public final class Options {
     /// Returns the given option, if present, as a String, Long, or Double depending upon its form.
     ///
     /// @param optionName option name (case-sensitive)
-    /// @return the pattern of the option, or an empty optional
+    /// @return the value of the option, or an empty optional
     public Optional<?> asRaw(final String optionName) {
         return Optional.ofNullable( opts.get( optionName ) );
     }
@@ -294,7 +294,10 @@ public final class Options {
     /// Only String values are supported. Non-String values will be converted to Strings
     /// via String.valueOf().
     ///
-    /// If null is returned, an empty optional will be returned by this method.
+    /// If the optionName is not found, this Optional will be empty.
+    ///
+    /// If the optionName is found, the given function fn will be applied to the value. If the function
+    /// returns null, or throws an exception, this method will throw a FluentFunctionException.
     ///
     /// @param optionName option name (case-sensitive)
     /// @param fn         Function converting the data to the given type
@@ -310,9 +313,11 @@ public final class Options {
         // overloads for Function<Long,R> and Function<Double,R>
 
         try {
-            // todo: decide if returning an empty optional or NPE/FFE is better...
             return Optional.of( fn.apply( String.valueOf( val ) ) );
+        } catch (FluentFunctionException e) {
+            throw e;
         } catch (Exception e) {
+            // this includes NullPointerExceptions in case of fn.apply() -> null
             throw FluentFunctionException.of( e );
         }
     }
@@ -357,15 +362,15 @@ public final class Options {
         private Builder() {}
 
 
-        /// Set an option pattern (value) as a String. Null values are not allowed.
+        /// Set an option value as a String. Null values are not allowed.
         ///
         /// If a prior option with this name already exists, it will be
-        /// replaced with the new pattern.
+        /// replaced with the new value.
         ///
         /// @param name  option name
-        /// @param value option pattern
+        /// @param value option value
         /// @return Builder
-        /// @throws NullPointerException if name or pattern is null
+        /// @throws NullPointerException if name or value is null
         public Builder set(String name, String value) {
             requireNonNull( name );
             requireNonNull( value );
@@ -373,26 +378,26 @@ public final class Options {
             return this;
         }
 
-        /// Set an option pattern (value) as a boolean.
+        /// Set an option value as a boolean.
         ///
         /// If a prior option with this name already exists, it will be
-        /// replaced with the new pattern.
+        /// replaced with the new value.
         ///
         /// @param name  option name
-        /// @param value option pattern
+        /// @param value option value
         /// @return Builder
         /// @throws NullPointerException if name is null
         public Builder set(String name, boolean value) {
             return set( name, Boolean.toString( value ) );
         }
 
-        /// Set an option pattern (value) as a long.
+        /// Set an option value as a long.
         ///
         /// If a prior option with this name already exists, it will be
-        /// replaced with the new pattern.
+        /// replaced with the new value.
         ///
         /// @param name  option name
-        /// @param value option pattern
+        /// @param value option value
         /// @return Builder
         /// @throws NullPointerException if name is null
         public Builder set(String name, long value) {
@@ -401,16 +406,16 @@ public final class Options {
             return this;
         }
 
-        /// Set an option pattern (value) as a double. The pattern must be finite.
+        /// Set an option value as a double. The value must be finite.
         ///
         /// If a prior option with this name already exists, it will be
-        /// replaced with the new pattern.
+        /// replaced with the new value.
         ///
         /// @param name  option name
-        /// @param value option pattern
+        /// @param value option value
         /// @return Builder
         /// @throws NullPointerException     if name is null
-        /// @throws IllegalArgumentException if pattern is not finite.
+        /// @throws IllegalArgumentException if value is not finite.
         public Builder set(String name, double value) {
             requireNonNull( name );
             if (!Double.isFinite( value )) {

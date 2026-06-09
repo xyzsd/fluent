@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-/// This breaks out Pattern parsing from the main parser, to improve code clarity
+/// This separates Pattern parsing from the main parser to improve code clarity
 @NullMarked
 final class FTLPatternParser {
 
@@ -43,7 +43,7 @@ final class FTLPatternParser {
 
 
     // parse a pattern
-    // NOTE: Profiling indicates that method dominates parsing time (expectedly)
+    // NOTE: Profiling indicates that this method dominates parsing time (expectedly)
     static @Nullable Pattern getPattern(final FTLStream ps) {
         List<PEPlaceholder> elements = new ArrayList<>( 4 );
         int lastNonBlank = -1;
