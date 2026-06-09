@@ -141,7 +141,7 @@ public class FluentBundle {
     ///  If none were set, this will return `Options.EMPTY`
     public Options options(final String id) {
         requireNonNull( id );
-        return defaultOptions.getOrDefault( requireNonNull( id ), Options.EMPTY );
+        return defaultOptions.getOrDefault( id, Options.EMPTY );
     }
 
     /// Returns the Message for the given id
