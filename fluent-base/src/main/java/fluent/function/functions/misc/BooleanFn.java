@@ -40,7 +40,7 @@ import java.util.function.Function;
 /// Non-booleans are passed through.
 ///
 /// ## Options
-/// -**as**: `string` (default) or `number`. If `number` is use,d the value is converted to a 0 or 1 as a FluentLong.
+/// -**as**: `string` (default) or `number`. If `number` is used the value is converted to a 0 or 1 as a FluentLong.
 /// This value could be further manipulated, for example, such as adjusting it with the
 /// [OFFSET][fluent.function.functions.numeric.OffsetFn] function.
 ///

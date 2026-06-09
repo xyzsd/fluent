@@ -33,8 +33,8 @@ import static java.util.Objects.requireNonNull;
 
 /// An immutable name-pattern mapping, with a restricted set of allowed mapped values.
 ///
-/// Option Names are String values, and matched exactly (so they are case-sensitive). Matching
-/// locale is Locale.ROOT.
+/// Option Names are Strings, and matched exactly (so they are case-sensitive). Matching
+/// locale for option names is always Locale.ROOT.
 ///
 /// Values may be String, Long, or Double types only. Values are *not* FluentValues; values
 /// are not formatted, resolved, or changed.
@@ -174,7 +174,7 @@ public final class Options {
     /// Merges the current options with 'toMerge', returning a new Options.
     ///
     /// Any option in toMerge with the same name as in the current set will override (replace)
-    /// the pattern within the new Options returned.
+    /// the values in the new Options object returned.
     ///
     /// Implementation note: this is optimized for cases where one--or both--of the Options may be empty.
     public Options mergeOverriding(final Options toMerge) {
@@ -191,7 +191,7 @@ public final class Options {
         }
     }
 
-    /// Get the pattern of an option, as a String.
+    /// Get the pattern (value) of an option, as a String.
     ///
     /// If the pattern is absent, return an empty Optional.
     ///
@@ -208,7 +208,7 @@ public final class Options {
         return asType( optionName, String.class, null );
     }
 
-    /// Get the pattern of an option, as a Boolean.
+    /// Get the pattern (value) of an option, as a Boolean.
     ///
     /// If the pattern is absent, return an empty Optional.
     ///
@@ -221,7 +221,7 @@ public final class Options {
         return asType( optionName, String.class, "Boolean" ).map( s -> parseBoolStrict( optionName, s ) );
     }
 
-    /// Get the pattern of an option, if it matches an existing Enum type
+    /// Get the pattern (value) of an option, if it matches an existing Enum type
     ///
     /// If the pattern is absent, return an empty Optional.
     ///
@@ -237,7 +237,7 @@ public final class Options {
                 .map( value -> matchEnum( enumClass, value ) );
     }
 
-    /// Get the pattern of an option, as an OptionalInt.
+    /// Get the pattern (value) of an option, as an OptionalInt.
     ///
     /// If the pattern is absent, return an empty OptionalInt.
     ///
@@ -258,7 +258,7 @@ public final class Options {
     }
 
 
-    /// Get the pattern of an option, as a double.
+    /// Get the pattern (value) of an option, as an OptionalDouble.
     ///
     /// If the pattern is absent, return an empty OptionalDouble.
     ///
@@ -268,9 +268,9 @@ public final class Options {
         return asType( optionName, Double.class, null ).map( OptionalDouble::of ).orElse( OptionalDouble.empty() );
     }
 
-    /// Get the pattern of an option, as a long.
+    /// Get the pattern (value) of an option, as an OptionalLong.
     ///
-    /// If the pattern is absent, return an empty Optional.
+    /// If the pattern is absent, return an empty OptionalLong.
     ///
     /// @param optionName option name (case-sensitive)
     /// @return option pattern (as above)
@@ -357,7 +357,7 @@ public final class Options {
         private Builder() {}
 
 
-        /// Set an option pattern as a String. Null values are not allowed.
+        /// Set an option pattern (value) as a String. Null values are not allowed.
         ///
         /// If a prior option with this name already exists, it will be
         /// replaced with the new pattern.
@@ -373,7 +373,7 @@ public final class Options {
             return this;
         }
 
-        /// Set an option pattern as a boolean.
+        /// Set an option pattern (value) as a boolean.
         ///
         /// If a prior option with this name already exists, it will be
         /// replaced with the new pattern.
@@ -386,7 +386,7 @@ public final class Options {
             return set( name, Boolean.toString( value ) );
         }
 
-        /// Set an option pattern as a double.
+        /// Set an option pattern (value) as a long.
         ///
         /// If a prior option with this name already exists, it will be
         /// replaced with the new pattern.
@@ -401,7 +401,7 @@ public final class Options {
             return this;
         }
 
-        /// Set an option pattern as a double. The pattern must be finite.
+        /// Set an option pattern (value) as a double. The pattern must be finite.
         ///
         /// If a prior option with this name already exists, it will be
         /// replaced with the new pattern.
@@ -420,7 +420,7 @@ public final class Options {
             return this;
         }
 
-        /// Add all options, replacing any existing options with the same name.
+        /// Add all options, replacing any existing options with the same name with the new values.
         ///
         /// @param options Options to merge
         /// @return Builder
