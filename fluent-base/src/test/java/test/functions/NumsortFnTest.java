@@ -132,4 +132,21 @@ public class NumsortFnTest {
                 fmt(  "numsort_combo", NUMBERZ)
         );
     }
+
+    @Test
+    public void readmeExample() {
+        final List<Number> list = List.of(
+                3184, 538754, 1734.3489, 193547.37771, 0L, 0.0d,
+                new BigDecimal( "193547.37772" ),
+                new BigDecimal( "-10.000001000" ),
+                new BigDecimal( ".00000120" ),
+                Double.POSITIVE_INFINITY,
+                Double.NEGATIVE_INFINITY
+        );
+
+        assertEquals(
+                "|∞, 538,754.00, 193,547.37772, 193,547.37771, 3,184.00, 1,734.3489, 0.0000012, 0.00, 0.00, -10.000001, -∞|",
+                FTLTestUtils.fmt( bundle, "numsort_example", Map.of("list", list) )
+        );
+    }
 }

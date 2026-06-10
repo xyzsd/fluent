@@ -10,6 +10,9 @@ numsort_default = |{NUMSORT($value)}|
 numsort_ascending = |{NUMSORT($value, order:"ascending")}|
 numsort_descending = |{NUMSORT($value, order:"descending")}|
 
+# readme.md example, but with vertical bars just to demarcate output clearly
+numsort_example = |{ NUMBER(NUMSORT($list, order:"descending"), minimumFractionDigits:2, useGrouping:"true") }|
+
 
 # combo
 # we want to control formatting of the displayed numbers
