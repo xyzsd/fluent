@@ -65,7 +65,6 @@ public final class Scope {
     private Options termParameters = Options.EMPTY;
 
 
-    // TODO: remove errors here; create a list/store exception
     ///  Scope constructor.
     public Scope(final FluentBundle bundle, final Map<String, ?> args) {
         this.bundle = bundle;
@@ -78,16 +77,19 @@ public final class Scope {
     // todo: consider converting lazily/as-needed. if an argument ends up not being accessed
     //       then no conversion necessary. Should values be memoized?
     /*
-        lookup : would convert
-            could memoize via keeping a Hashmap in scope()
-            using computeIfAbsent. does not need to be threadsafe.
+        lookup : would convert on demand
+            use computeIfAbsent()
+            does not need to be threadsafe.
+            either create an empty HashMap<>(), and write to it as needed (would need to keep a reference to
+                    original args Map<String,?> in scope. OR copy the raw map, and insert converted
+                    entries as accessed. But would need to check type.
      */
     /// Convert raw arguments values to FluentValues
     private static Map<String, List<FluentValue<?>>> remap(final Map<String, ?> raw) {
+        // fast path
         if (raw.isEmpty()) {
             return Map.of();
         }
-
         return raw.entrySet().stream()
                 .collect( Collectors.toMap(
                                 Map.Entry::getKey,
