@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (C) 2021-2026, xyzsd (Zach Del) 
+ *  Copyright (C) 2021-2026, xyzsd (Zach Del)
  *  Licensed under either of:
  *
  *    Apache License, Version 2.0
@@ -29,6 +29,8 @@ import fluent.types.FluentValue;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Stream;
@@ -40,7 +42,7 @@ import static java.util.Objects.requireNonNull;
 /// Typically, these originate from a CallArguments AST node.
 ///
 @NullMarked
-public sealed interface ResolvedParameters {
+public sealed interface ResolvedParameters extends Iterable<FluentValue<?>> {
 
     ///  Constant: No positional arguments
     ResolvedParameters EMPTY = new Empty();
@@ -61,7 +63,7 @@ public sealed interface ResolvedParameters {
             case 0 -> EMPTY;
             case 1 -> {
                 final List<FluentValue<?>> list = Resolver.resolveExpression( callArgs.positionals().getFirst(), scope );
-                yield (list.size() == 1) ? new SingleItem( list ) : new SingleList(list);
+                yield (list.size() == 1) ? new SingleItem( list ) : new SingleList( list );
             }
             default -> new Multi( callArgs.positionals().stream()
                     .map( expression -> Resolver.resolveExpression( expression, scope ) ).toList() );
@@ -92,7 +94,7 @@ public sealed interface ResolvedParameters {
         requireNonNull( value );
         requireNonNull( scope );
 
-        return new SingleItem( List.of(value) );
+        return new SingleItem( List.of( value ) );
     }
 
 
@@ -104,23 +106,18 @@ public sealed interface ResolvedParameters {
     /// If there is none, throw NoSuchElementException
     List<FluentValue<?>> firstPositional() throws NoSuchElementException;
 
-    ///  `false` if there  is at least one positional argument with one pattern.
+    ///  `false` if there is at least one positional argument with one value.
     default boolean isEmpty() {return false;}
 
     /// Stream all positional arguments, in order.
     Stream<FluentValue<?>> positionals();
 
-    // TODO: probably should deprecate; positionalCount() _will_ be inaccurate if we have a list-of-lists
-    //          currently only used by tests, and isSingle() is what we generally want to know
-    ///  Number of positional arguments (always >= 0)
-    int positionalCount();
-
-    /// true if single argument with single pattern (not a list); just one FluentValue<?>
+    /// True if single argument with single value (not a list); just one FluentValue<?>
     default boolean isSingle() {
         return false;
     }
 
-    /// if isSingle() == true, single, this returns a pattern, otherwise; no such element exception
+    /// if isSingle() == true, this returns a single FluentValue<?>; otherwise, throws a NoSuchElementException
     default FluentValue<?> singleValue() throws NoSuchElementException {
         throw new NoSuchElementException();
     }
@@ -146,15 +143,15 @@ public sealed interface ResolvedParameters {
         }
 
         @Override
-        public int positionalCount() {
-            return 0;
+        public Iterator<FluentValue<?>> iterator() {
+            return Collections.emptyIterator();
         }
     }
 
     ///  Single positional, with a list containing a single item.
     ///
     /// This is the most common type of Positional. This is a separate
-    /// implementation, for purposed of stricter typing.
+    /// implementation, for stricter typing.
     record SingleItem(List<FluentValue<?>> list) implements ResolvedParameters {
         // we use a list, since we can avoid a copy for common usage (assuming
         // immutable lists are used)
@@ -184,11 +181,6 @@ public sealed interface ResolvedParameters {
         }
 
         @Override
-        public int positionalCount() {
-            return 1;
-        }
-
-        @Override
         public boolean isSingle() {
             return true;
         }
@@ -196,6 +188,11 @@ public sealed interface ResolvedParameters {
         @Override
         public FluentValue<?> singleValue() throws NoSuchElementException {
             return list.getFirst();
+        }
+
+        @Override
+        public Iterator<FluentValue<?>> iterator() {
+            return list.iterator();
         }
     }
 
@@ -224,12 +221,12 @@ public sealed interface ResolvedParameters {
         }
 
         @Override
-        public int positionalCount() {
-            return 1;
+        public Iterator<FluentValue<?>> iterator() {
+            return list.iterator();
         }
     }
 
-    ///  Multiple positional arguments, each which may contain one or more items.
+    /// Multiple positional arguments, each of which consists of a List containing one or more items.
     record Multi(List<List<FluentValue<?>>> list) implements ResolvedParameters {
         public Multi {
             requireNonNull( list );
@@ -255,10 +252,29 @@ public sealed interface ResolvedParameters {
             return list.stream().flatMap( List::stream );
         }
 
-        /// NOTE: this does not flatten the list, so if it is a list of lists, the count will NOT be correct.
+        /// Flattens contained lists (if present)
         @Override
-        public int positionalCount() {
-            return list.size();
+        public Iterator<FluentValue<?>> iterator() {
+            return new Iterator<>() {
+                private final Iterator<List<FluentValue<?>>> outer = list.iterator();
+                private Iterator<FluentValue<?>> inner = Collections.emptyIterator();
+
+                @Override
+                public boolean hasNext() {
+                    while (!inner.hasNext() && outer.hasNext()) {
+                        inner = outer.next().iterator();
+                    }
+                    return inner.hasNext();
+                }
+
+                @Override
+                public FluentValue<?> next() {
+                    if (!hasNext()) {
+                        throw new NoSuchElementException();
+                    }
+                    return inner.next();
+                }
+            };
         }
     }
 

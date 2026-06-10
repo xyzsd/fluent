@@ -29,9 +29,11 @@ import fluent.bundle.LRUFunctionCache;
 import fluent.function.FluentFunction;
 import fluent.function.FluentFunctionFactory;
 import fluent.function.Options;
+import fluent.function.ResolvedParameters;
 import fluent.types.FluentError;
 import fluent.types.FluentNumber;
 import fluent.types.FluentString;
+import fluent.types.FluentValue;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeAll;
@@ -42,6 +44,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.ResourceBundle;
 import java.util.function.Consumer;
 
 import static fluent.syntax.parser.FTLParseException.ErrorCode.*;
@@ -114,7 +117,7 @@ public class CallExpressionsTest {
         // positionals
         funFactory.clear();
         funFactory.setInjected( (rp, scope) -> {
-            assertEquals( 3, rp.positionalCount() );
+            assertEquals( 3, positionalCount(rp) );
             assertEquals( 1, rp.positional( 0 ).size() );
             assertEquals( 1, rp.positional( 1 ).size() );
             assertEquals( 1, rp.positional( 2 ).size() );
@@ -171,7 +174,7 @@ public class CallExpressionsTest {
             assertEquals( "Y", options.asString( "y" ).get() );
         } );
         funFactory.setInjected( (rp, scope) -> {
-            assertEquals( 3, rp.positionalCount() );
+            assertEquals( 3,positionalCount(rp) );
             assertEquals( 1, rp.positional( 0 ).size() );
             assertEquals( 1, rp.positional( 1 ).size() );
             assertEquals( 1, rp.positional( 2 ).size() );
@@ -226,7 +229,7 @@ public class CallExpressionsTest {
         funFactory.clear();
         funFactory.setOptionsChecker( CallExpressionsTest::accept );
         funFactory.setInjected( (rp, scope) -> {
-            assertEquals( 0, rp.positionalCount() );
+            assertEquals( 0, positionalCount(rp) );
             return List.of(FluentString.of("true_empty"));
         });
         assertEquals(
@@ -237,7 +240,7 @@ public class CallExpressionsTest {
         funFactory.clear();
         funFactory.setOptionsChecker( (options) -> assertTrue(  options.isEmpty()) );
         funFactory.setInjected( (rp, scope) -> {
-            assertEquals( 0, rp.positionalCount() );
+            assertEquals( 0, positionalCount(rp) );
             return List.of(FluentString.of("true_empty"));
         });
         assertEquals(
@@ -250,7 +253,7 @@ public class CallExpressionsTest {
     public void whitespaceAroundArgs3Unindented() {
         funFactory.clear();
         funFactory.setInjected( (rp, scope) -> {
-            assertEquals( 1, rp.positionalCount() );
+            assertEquals( 1, positionalCount(rp) );
             assertEquals( 1, rp.positional( 0 ).size() );
             assertEquals(
                     FluentNumber.of(1L),
@@ -266,7 +269,7 @@ public class CallExpressionsTest {
 
         funFactory.clear();
         funFactory.setInjected( (rp, scope) -> {
-            assertEquals( 1, rp.positionalCount() );
+            assertEquals( 1, positionalCount(rp) );
             assertEquals( 1, rp.positional( 0 ).size() );
             assertEquals(
                     FluentString.of("a"),
@@ -282,7 +285,7 @@ public class CallExpressionsTest {
 
         funFactory.clear();
         funFactory.setInjected( (rp, scope) -> {
-            assertEquals( 1, rp.positionalCount() );
+            assertEquals( 1, positionalCount(rp) );
             assertEquals( 1, rp.positional( 0 ).size() );
             assertEquals(
                     FluentError.of( "{Unknown message: 'msg'}" ),
@@ -298,7 +301,7 @@ public class CallExpressionsTest {
 
         funFactory.clear();
         funFactory.setInjected( (rp, scope) -> {
-            assertEquals( 1, rp.positionalCount() );
+            assertEquals( 1, positionalCount(rp) );
             assertEquals( 1, rp.positional( 0 ).size() );
             assertEquals(
                     FluentError.of( "{Unknown term: -msg}" ),
@@ -313,7 +316,7 @@ public class CallExpressionsTest {
 
         funFactory.clear();
         funFactory.setInjected( (rp, scope) -> {
-            assertEquals( 1, rp.positionalCount() );
+            assertEquals( 1, positionalCount(rp) );
             assertEquals( 1, rp.positional( 0 ).size() );
             assertEquals(
                     FluentError.of( "{Unknown variable: $var}" ),
@@ -328,7 +331,7 @@ public class CallExpressionsTest {
 
         funFactory.clear();
         funFactory.setInjected( (rp, scope) -> {
-            assertEquals( 1, rp.positionalCount() );
+            assertEquals( 1, positionalCount(rp) );
             assertEquals( 1, rp.positional( 0 ).size() );
             assertEquals(
                     FluentError.of( "{Unknown function: OTHER()}" ),
@@ -347,7 +350,7 @@ public class CallExpressionsTest {
                 options.asInt("x").getAsInt()
         ) );
         funFactory.setInjected( (rp, scope) -> {
-            assertEquals( 0, rp.positionalCount() );
+            assertEquals( 0, positionalCount(rp) );
             return List.of( FluentString.of( "true!" ) );
         } );
         assertEquals(
@@ -357,7 +360,7 @@ public class CallExpressionsTest {
 
         funFactory.clear();
         funFactory.setInjected( (rp, scope) -> {
-            assertEquals( 1, rp.positionalCount() );
+            assertEquals( 1, positionalCount(rp) );
             assertEquals( 1, rp.positional( 0 ).size() );
             assertEquals(
                     FluentError.of( "{Unknown message: 'x'}" ),
@@ -376,7 +379,7 @@ public class CallExpressionsTest {
         funFactory.clear();
         funFactory.setOptionsChecker( (options) -> assertEquals( 1, options.asInt( "x" ).getAsInt() ) );
         funFactory.setInjected( (rp, scope) -> {
-            assertEquals( 2, rp.positionalCount() );
+            assertEquals( 2, positionalCount(rp) );
             assertEquals( 1, rp.positional( 0 ).size() );
             assertEquals( 1, rp.positional( 1 ).size() );
 
@@ -400,7 +403,7 @@ public class CallExpressionsTest {
     public void optionalTrailingComma() {
         funFactory.clear();
         funFactory.setInjected( (rp, scope) -> {
-            assertEquals( 1, rp.positionalCount() );
+            assertEquals( 1, positionalCount(rp) );
             assertEquals( 1, rp.positional( 0 ).size() );
 
             assertEquals(
@@ -417,7 +420,7 @@ public class CallExpressionsTest {
 
         funFactory.clear();
         funFactory.setInjected( (rp, scope) -> {
-            assertEquals( 3, rp.positionalCount() );
+            assertEquals( 3, positionalCount(rp) );
             assertEquals( 1, rp.positional( 0 ).size() );
             assertEquals( 1, rp.positional( 1 ).size() );
             assertEquals( 1, rp.positional( 2 ).size() );
@@ -446,7 +449,7 @@ public class CallExpressionsTest {
 
         funFactory.clear();
         funFactory.setInjected( (rp, scope) -> {
-            assertEquals( 3, rp.positionalCount() );
+            assertEquals( 3, positionalCount(rp) );
             assertEquals( 1, rp.positional( 0 ).size() );
             assertEquals( 1, rp.positional( 1 ).size() );
             assertEquals( 1, rp.positional( 2 ).size() );
@@ -475,7 +478,7 @@ public class CallExpressionsTest {
 
         funFactory.clear();
         funFactory.setInjected( (rp, scope) -> {
-            assertEquals( 2, rp.positionalCount() );
+            assertEquals( 2, positionalCount(rp) );
             assertEquals( 1, rp.positional( 0 ).size() );
             assertEquals( 1, rp.positional( 1 ).size() );
 
@@ -498,7 +501,7 @@ public class CallExpressionsTest {
 
         funFactory.clear();
         funFactory.setInjected( (rp, scope) -> {
-            assertEquals( 2, rp.positionalCount() );
+            assertEquals( 2, positionalCount(rp) );
             assertEquals( 1, rp.positional( 0 ).size() );
             assertEquals( 1, rp.positional( 1 ).size() );
 
@@ -614,4 +617,15 @@ public class CallExpressionsTest {
     }
 
 
+    public static int positionalCount(ResolvedParameters rp) {
+        int count1 = (int) rp.positionals().count();
+        int count2 = 0;
+        for(FluentValue<?> v : rp) {
+            count2++;
+        }
+
+        // verify implementation for foreach
+        assertEquals( count1, count2 );
+        return count1;
+    }
 }
