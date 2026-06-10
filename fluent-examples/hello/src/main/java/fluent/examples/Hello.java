@@ -93,6 +93,14 @@ public class Hello {
             )
         );
 
+        // a two-item list. Default formatting.
+        System.out.println(
+                bundle.format(
+                        "hello-user",
+                        Map.of("userName", List.of("Willy", "Lilly"))
+                )
+        );
+
         // What if we want an 'and' between the last two names (English locale assumed)?
         // We will use the "hello-all-users" message.
         // One name:
