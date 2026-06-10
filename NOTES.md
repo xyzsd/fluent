@@ -17,9 +17,17 @@
       * could implement an alternate non-ICU4J dependent formatter, as an option
 
 ## Roadmap 
+* ?JDK 21 version
+  * could consider a JDK21 compatible version as well. Not too much would have to be changed 
+    if we exclude the Javadoc format.
+  
 * Parser Considerations
     * Consider eliminating FTLStream class, and only using static methods
        * all methods would require (byte[], int offset)
+
+* Structure / Performance
+  * fluent.bundle.resolver.Scope: lazily convert arguments; could be more
+    performant
 
 * Rendering Performance 
     * Measurements: first, we need good benchmarks (JMH) for message rendering
