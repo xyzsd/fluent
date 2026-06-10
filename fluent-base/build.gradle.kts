@@ -23,7 +23,6 @@
 import com.vanniktech.maven.publish.JavaLibrary
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.SourcesJar
-import com.vanniktech.maven.publish.DeploymentValidation
 import com.github.spotbugs.snom.Confidence
 import com.github.spotbugs.snom.Effort
 
@@ -35,7 +34,7 @@ plugins {
     id("me.champeau.jmh") version "0.7.3"
 }
 
-version = "2.0-rc.1"
+version = "2.0"
 group = "net.xyzsd.fluent"
 
 repositories {
@@ -111,7 +110,7 @@ mavenPublishing {
         sourcesJar = SourcesJar.Sources()
     ))
 
-    coordinates(groupId = project.group as String, project.name as String, project.version as String)
+    coordinates(groupId = project.group as String, project.name, project.version as String)
 
     pom {
 
