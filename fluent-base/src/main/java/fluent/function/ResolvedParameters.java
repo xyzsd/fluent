@@ -44,6 +44,10 @@ import static java.util.Objects.requireNonNull;
 @NullMarked
 public sealed interface ResolvedParameters extends Iterable<FluentValue<?>> {
 
+    // TODO: more profiling
+    //       consider 'single item' just holding a single FluentValue instead of a List<FluentValue<?>>
+    //       since *usually* functions are not nested
+
     ///  Constant: No positional arguments
     ResolvedParameters EMPTY = new Empty();
 
