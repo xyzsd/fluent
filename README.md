@@ -9,31 +9,18 @@ and gender. Learn more about Project Fluent at [projectfluent.org][mozProjectFlu
 
 Status
 ------
-*UPDATE (June 2026)*
+The 2.0 release is now available!
 
-Has been a long delay since the last announcement, but I plan to release at least a release-candidate version soon!
+The 2.0 version has marked improvements in the code base, with an improved API, test coverage, and examples.  
+A single dependency remains (ICU). All FTL parser specification tests pass, including handling of LF and CRLF line 
+endings (and intermixed variants), early terminations, and general aberrant and hostile test cases. 
+New, and better-tested built-in functions are included. It also much easier to create, add, or rename existing functions. 
 
-Note that this is targetting JDK 23, mostly for Markdown format instead of Javadoc. However, I may be persuaded to have JDK 21 as a baseline.
+The 2.0 version targets JDK 23, though without too much work JDK 21 could be an additional target.
 
-The 2.0 version is (still) nearing release, and includes:
-  - Targets JDK23 or later
-  - Complete set of FTL specification tests.
-  - The parser passes *all* FTL specification tests. This includes handling of LF and CRLF line endings, early terminations, etc.
-  - Built-in functions now have tests.
-  - Improved function implementations, some have been renamed
-  - Improved Parser, with optional SIMD 
-  - Markedly improved overall code structure
-  - API improvements
-  - Simpler implementation of custom functions
-  - Still supports Lists (but not in Selectors)
-  - Documentation improvements
-  - New examples
-  - Single dependency (ICU).
-    
+   
 
 Introductory Example
---------------------
-(note: this applies to version 0.72, and will be updated when the next version is released)
 --------------------
 Given the following example FTL:
 ```
@@ -53,104 +40,129 @@ shared-photos =
 ```
 We can use it as follows:
 ```java
-// read the FTL and parse it into the data model
-FluentResource resource = FTLParser.parse( FTLStream.of( Files.readString("hello.ftl") ) );
+// Setup the function registry. This is the simplest way to set it up, but will only include
+// the required built-in functions. The function registry can be shared by different bundles / different locales.
+final FluentFunctionRegistry registry = FluentFunctionRegistry.builder().build();
 
-// create the FluentBundle, which is used to manipulate the data model and perform localization
-FluentBundle bundle = FluentBundle.builder( Locale.US, ICUFunctionFactory.INSTANCE )
+// Read the FTL (which is localized) and parse it into the data model (AST).
+FluentResource resource = FTLParser.parse(  Thread.currentThread().getContextClassLoader(), "hello.ftl" );
+if (!resource.errors().isEmpty()) {
+        // The FluentResource also contains errors encountered during parsing.
+        System.err.printf("Encountered %d errors during parsing!\n", resource.errors().size());
+        resource.errors().forEach(System.err::println);
+}
+
+// Create the FluentBundle, which is Locale-dependent. 
+// The FluentBundle is what we use to manipulate the data model and render localized messages.
+final FluentBundle bundle = FluentBundle.builder( Locale.US, registry, LRUFunctionCache.of() )
         .addResource( resource )
         .build();
 
-// The format() method is the simplest way to format a message.
+// Now let's render some messages!
+// Variables in the FTL message are substituted using name-value pairs stored in a Map.
+// A Map<String, ?> provides the parameters to substitute.
+//
+// This is the simplest way to format a localized message.
+// Say hello to the user, "Billy".
 final String helloUser = bundle.format(
-        "hello-user",                       // the message name 
-        Map.of( "userName", "Billy" )       // Map of parameters to substitute
-        );
+        "hello-user",               // the message key, as defined in the FTL file
+        Map.of("userName", "Billy") // our single item map
+);
 System.out.println( helloUser );        // output: "Hello, Billy!"
 
-// The following examples using the same message, but with different parameters.
- 
-// output: "Anne added a new photo to her stream."
-Map<String, ?> args1 = Map.of(
-        "userName", "Anne",
-        "userGender", "female",
-        "photoCount", 1
-        );
-System.out.println( bundle.format("shared-photos", args1) ); 
 
-// output: "Billy added 5 new photos to his stream."
-Map<String, ?> args2 = Map.of(
-        "userName", "Billy",
-        "userGender", "male",
-        "photoCount", 5
-        );
-System.out.println( bundle.format("shared-photos", args2) ); 
+// Now, let's try a more complex message, which uses a selector and 3 variables.
+// output: "Billy added a new photo to his stream."
+final String sharedPhotoMessage = bundle.format(
+        "shared-photos",    // the message key, defined in the FTL file
+        Map.of(
+                "userName", "Billy",      // userName, as above
+                "photoCount", 1,          // photoCount
+                "userGender", "male"
+        )
+);
+System.out.println( sharedPhotoMessage );
 
+// Another example using the same message, but with different parameters.
 // output: "Chris added 10 new photos to their stream."
-Map<String, ?> args3 = Map.of(
+Map<String, ?> arguments = Map.of(
         "userName", "Chris",
         "userGender", "unspecified",
         "photoCount", 10
-        );
-System.out.println( bundle.format("shared-photos", args3) ); 
-        
+);
+System.out.println( bundle.format("shared-photos", arguments) );
 ```
 
-Differences from *fluent-rs* and *fluent.js*
---------------------------------------------
-### DATETIME()
-There is no DATETIME() function. Instead, use TEMPORAL().
-The TEMPORAL() function supports pattern-based formatting in addition to predefined localized forms.
+### Support for parameters containing lists 
+There is built-in support for `SequencedCollection` (which includes `List` and `SortedSet` among others, but for
+purposes of discussion we will refer to any such collection as a list). The `SequencedCollection` type is 
+required to ensure output stability.
 
-### NUMBER()
-Most options of the NUMBER() function are supported. To match a number in a select clause as a String, rather than 
-as a plural form (*consider this carefully*), type="string" must be specified.
+Note that selection over lists is not supported. This can be worked around; see the `list-selection` example for details.
 
-See the NUMBER() function documentation (NumberFn) for more information.
+Lists can be heterogeneous (e.g., mix of numbers and strings), but not all functions can handle heterogeneous lists.
+Refer to the fluent function documentation for details.
 
-### Support for parameters containing lists
-Initial support has been added for parameters contained in a `List<?>` or a `Set<?>`. 
-Lists can be heterogeneous. Functions can be nested and will be applied to each item. By default, the resultant list
-will be comma-separated. However, using the JOIN() function, conjunctions and alternative delimiters are
-supported. To preserve ordering, use `List` instead of  `Set`, or sort with STRINGSORT() or NUMSORT().
-
-Support for lists extends to select statements as well; the select will apply to each item in the list. 
-Note that there is currently no notion of or way to capture the item currently being iterated on in a select clause. 
-Therefore, the use of lists in clauses with multiple select statements can be tricky.
-
-Using the example FTL in the introduction:
-```java
-final String helloUser = bundle.format(
-        "hello-user",                       
-            Map.of( "userName", List.of("Billy","Silly","Willy" ) )   
-        );
-System.out.println( helloUser );        // output: "Hello, Billy, Silly, Willy!"
-```
-
-Though when lists are expected, the formatting can be customized:
+From the FTL used above, here is a simple example:
 
 ```
-# modified FTL from introductory example
-hello-user = Hello, { JOIN($userName, separator:", ", junction:", and ", pairSeparator:" and ") }!
-```
-
-Now:
-```java
-// output: "Hello, Billy, Silly, and Willy!
+// example output here assumes Locale.US 
+// 3-item list
 System.out.println(
         bundle.format(
-            "hello-user",                       
-            Map.of( "userName", List.of("Billy","Silly","Willy" ) )   
-        )
-    );
+        "hello-user",
+        Map.of("userName", List.of("Billy", "Willy", "Lilly"))
+    )
+);
+// output: "Hello, Billy, Willy, Lilly!" 
 
-// output: "Hello, Betty and Yeti!
+// 2-item list
 System.out.println(
         bundle.format(
-            "hello-user",
-            Map.of( "userName", List.of("Betty","Yeti" ) )
-        )
-    );
+        "hello-user",
+        Map.of("userName", List.of("Willy", "Lilly"))
+    )
+);
+// output: "Hello, Willy, Lilly!" 
+```
+
+The list output can be customized using CLDR-localized list formatting. For `Locale.US`, items are separated
+with commas by default (for any list size). However, list formatting can be customized using the built-in LIST 
+function.
+
+Given this FTL:
+```
+hello-all-users = Hello, { LIST($users, type:"and", width:"wide") }!
+```
+We now get the following output:
+```
+// example output here assumes Locale.US 
+// 3-item list
+System.out.println(
+        bundle.format(
+        "hello-all-users",
+        Map.of("userName", List.of("Billy", "Willy", "Lilly"))
+    )
+);
+// output: "Hello, Billy, Willy, and Lilly!" 
+
+// 2-item list
+System.out.println(
+        bundle.format(
+        "hello-all-users",
+        Map.of("userName", List.of("Willy", "Lilly"))
+    )
+);
+// output: "Hello, Willy and Lilly!" 
+```
+Similarly, for the following FTL, but using bundle localization `Locale.FRANCE`:
+```
+hello-all-users = Bonjour, { LIST($users, type:"and", width:"wide") }!
+```
+Output: (using above code). Note that the conjunction is automatically localized to 'et'. 
+```
+Bonjour, Billy, Willy et Lilly! 
+Bonjour, Willy et Lilly!
 ```
 
 ### Supported Types
@@ -161,53 +173,52 @@ During parameter substitution, the following types are supported:
       * `double` (and narrower floating types)
       * `BigDecimal` (and `BigInteger`)
          * useful to retain precision, particularly trailing zeros
-   * TemporalAdjuster implementations
+   * `TemporalAccessor` implementations (e.g., `LocalDateTime`, etc.)
 
-Custom types can be added as needed.
+Custom types can be added as needed. For a simple example, refer to `BooleanFn` and associated tests.
 
-### Built-in functions
-Fluent depends on *[cldr-plural-rules][cldrPlurals]* or *[ICU][icuPlurals]* for language pluralization rules.
-Either `fluent-functions-cldr` or `fluent-functions-icu` must be used along with the `fluent-base` package.
-Both can be used simultaneously, though not within the same FluentBundle.
+Differences from *fluent.js*
+--------------------------------------------
+### DATETIME()
+DATETIME as implemented here does not try to re-implement JavaScript's Intl.DateTime. For more precise formatting,
+use the TEMPORAL() function insetead, which supports pattern-based (semantic skeleton) formatting in addition 
+to predefined forms.
 
-A number of additional functions are included. More functions can be easily added, and existing functions can 
-removed or changed. 
+### Functions
+A number of additional functions are included. More functions can be easily added, and existing functions can
+removed or changed.
 
-Functions currently include:
-   - NUMBER()
-      - handles localization of numeric values and pluralization (cardinal and ordinal forms).
-      - `useGrouping`, `minimumIntegerDigits`, `minimumFractionDigits`, `maximumFractionDigits`, 
-        `minimumSignificantDigits`, and `maximumSignificantDigits` are supported.
-      - when converting a number to its plural form, formatting is ignored and the number is used
-        in its original form. If precise control over leading/trailing digits is needed, use a BigDecimal.
-      - `style` can be used to display currency or percentages. 
-      - `type` used to specify pluralization
-   - TEMPORAL()
-      - Currently used instead of DATETIME(). Implementing DATETIME in a manner similar to `Intl.DateTimeFormat`
-        is complex but could be considered in the future.
-   - JOIN()
-      - Used to format lists. See multi-item lists above.
-   - COUNT()
-      - Count the number of items in a list.
-   - NUMSORT()
-      - Sort a list of numbers ascending or descending.
-   - STRINGSORT()
-      - Sort Strings
-   - ABS()
-      - Absolute value of a number
-   - IADD()
-      - Add an integer (or long) to an integer (or long)
-   - COMPACT()
-      - format a number using the localized compact representation
-        for example `COMPACT(10000)` would become `10K`
-   - CURRENCY()
-      - format a number using the localized currency representation
-   - DECIMAL()
-      - format a number using a number-format pattern
-   - SIGN()
-      - sign of a number; e.g., `SIGN(5)` becomes `"positive"`
-   - CASE()
-      - localized conversion of Strings to upper or lower case.
+Baseline (implicit) functions:
+- NUMBER()
+  - handles localization of numeric values and pluralization (cardinal and ordinal forms). Provides formatting
+    using custom patterns / semantic skeletons.
+- LIST()
+  - handles custom formatting of lists
+- DATETIME()
+  - simple formatting of Date and Time values.
+
+Additional functions:
+  - COUNT()
+    - counts the number of arguments supplied to the function
+  - NUMSORT()
+    - sorts numerical arguments
+  - STRINGSORT()
+    - sorts string arguments
+  - BOOLEAN()
+    - formats Boolean values to strings ('true' or 'false') or numbers ('0' or '1')
+  - ABS()
+    - absolute value
+  - OFFSET()
+    - offset all integral values by a specific amount
+  - SIGN()
+    - determine the sign of a numeric value, as a string. For decimal values, also 
+      handles NaN and infinities.
+  - CASE()
+    - case conversion
+  - TEMPORAL()
+    - `TemporalAccessor` formatting using predefined patterns or custom patterns (semantic skeletons)
+  - XTEMPORAL()
+    - extract a field from a `TemporalAccessor` (for example, the hour field from `LocalDateTime`, as a numeric value).
 
 
 Function Composition
@@ -221,68 +232,52 @@ example = { NUMBER(NUMSORT($list, order:"descending"), minimumFractionDigits:2, 
 and associated code:
 
 ```java
-...
+// ... assumes FluentResourceBundle 'bundle' already created ...
 
 final List<Number> NUMLIST = List.of(
         3184, 538754, 1734.3489, 193547.37771, 0L, 0.0d, 
         new BigDecimal( "193547.37772" ), 
         new BigDecimal( "-10.000001000" ), 
-        new BigDecimal( ".00000120" )
+        new BigDecimal( ".00000120" ),
+        Double.POSITIVE_INFINITY, 
+        Double.NEGATIVE_INFINITY
         );
 
 String result = bundle.format( "example", Map.of( "$list", NUMLIST ) );
 System.out.println(result);
 ```
 
-`result` will be `538,754.00, 193,547.378, 193,547.378, 3,184.00, 1,734.349, 0.00, 0.00, 0.00, -10.00`.
+`result` will be `∞, 538,754.00, 193,547.37772, 193,547.37771, 3,184.00, 1,734.3489, 0.0000012, 0.00, 0.00, -10.000001, -∞`.
+
+
+### Dependencies
+Fluent depends on *[ICU][icuPlurals]* for language pluralization rules and also (currently) number and list formatting.
+
 
 Documentation
 -------------
-Available for [download][dlMavenCentral_base], (functions: [download here][dlMavenCentral_functions_icu]).
-
-Online:
-- [fluent-base][docsOnlineBase]
-- [fluent-functions-cldr][docsOnlineCLDR]
-- [fluent-functions-icu][docsOnlineICU]
+Available for [download][dlMavenCentral_base] or [online][docsOnlineBase].
 
 Download
 --------
-[Download][dlJAR] the latest JARs or depend via Maven:
+[Download][dlJAR] the latest JAR or depend via Maven:
 
 ```xml
 <dependency>
    <groupId>net.xyzsd.fluent</groupId>
    <artifactId>fluent-base</artifactId>
-   <version>0.72</version>
+   <version>2.0</version>
    <type>module</type>
 </dependency>
 ```
-```xml
-<dependency>
-    <groupId>net.xyzsd.fluent</groupId>
-    <artifactId>fluent-functions-cldr</artifactId>
-    <version>0.72</version>
-</dependency>
-```
-```xml
-<dependency>
-    <groupId>net.xyzsd.fluent</groupId>
-    <artifactId>fluent-functions-icu</artifactId>
-    <version>0.72</version>
-</dependency>
 
-```
 or Gradle:
 ```kotlin
-implementation("net.xyzsd.fluent:fluent-base:0.72")
-implementation("net.xyzsd.fluent:fluent-functions-cldr:0.72")
-implementation("net.xyzsd.fluent:fluent-functions-icu:0.72")
+implementation("net.xyzsd.fluent:fluent-base:2.0")
 ```
 
-Only one of the `fluent-functions-...` packages is required along with `fluent-base`.
-
 ### Working with `-SNAPSHOT` Versions
-Snapshot versions may be available from Maven central repository. 
+Snapshot versions may be available from the Central Repository. 
 
 The specific snapshot must be specifically requested. Please note that -SNAPSHOT releases
 are for development only, may not be stable, and will be automatically removed 90 days after
@@ -298,7 +293,6 @@ repositories {
         // Only search this repository for the specific dependency
         content {
             includeModule("net.xyzsd.fluent", "fluent-base")
-            includeModule("net.xyzsd.fluent", "fluent-functions-icu")
         }
     }
 
@@ -308,13 +302,11 @@ repositories {
 and then in the dependencies section specify the snapshot:
 ```kotlin
 dependencies {
-    implementation("net.xyzsd.fluent:fluent-base:0.72-SNAPSHOT")
+    implementation("net.xyzsd.fluent:fluent-base:2.0-SNAPSHOT")
     // ... etc.
     // ...
 }
 ```
-
-
 
 Acknowledgements
 ----------------
@@ -322,14 +314,14 @@ Portions of this project are based on `fluent-rs`.
 
 License
 -------
-Copyright 2021, 2025 xyzsd
+Copyright 2021, 2025, 2026 xyzsd
 
 Licensed under either of
 
  * Apache License, Version 2.0
-   (see LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0)
+   (see LICENSE-APACHE or [apache.org](http://www.apache.org/licenses/LICENSE-2.0)
  * MIT license
-   (see LICENSE-MIT) or http://opensource.org/licenses/MIT)
+   (see LICENSE-MIT) or [opensource.org](http://opensource.org/licenses/MIT)
 
 at your option.
 
@@ -339,7 +331,4 @@ at your option.
 [mozProjectFluent]:  https://projectfluent.org/
 [dlJAR]: https://github.com/xyzsd/fluent/releases
 [dlMavenCentral_base]: https://central.sonatype.com/artifact/net.xyzsd.fluent/fluent-base/versions
-[dlMavenCentral_functions_icu]: https://central.sonatype.com/artifact/net.xyzsd.fluent/fluent-functions-icu/versions
 [docsOnlineBase]: https://javadoc.io/doc/net.xyzsd.fluent/fluent-base/latest/index.html
-[docsOnlineCLDR]: https://javadoc.io/doc/net.xyzsd.fluent/fluent-functions-cldr
-[docsOnlineICU]: https://javadoc.io/doc/net.xyzsd.fluent/fluent-functions-icu
