@@ -40,6 +40,9 @@ import java.util.List;
 ///
 /// Lists may be empty.
 ///
+/// @param entries A List of AST entries (messages, terms, variables, etc.)
+/// @param errors Parse errors, if any.
+/// @param junk Unparseable sections of the input.
 @NullMarked
 public record FluentResource(List<Entry> entries, List<FTLParseException> errors, List<Junk> junk) {
 

@@ -52,18 +52,9 @@ import static java.util.Objects.requireNonNull;
 /// inspect diagnostics without throwing, unless a fatal error occurs (e.g., IOException reading a file, byte stream or
 /// when loading loading a resource).
 ///
-/// Parsing behavior can be customized via:
-/// - [ParseOptions] — choose between `DEFAULT` (skip comments and junk for a smaller,
-///     faster AST) and `EXTENDED` (include comments and junk, useful for tooling and tests).
-/// - [Implementation] — select the parsing backend: `AUTO` (default),
-///     `SCALAR` , `SWAR` , or `SIMD`. These options primarily affect performance characteristics and
-///     may evolve in future releases.
-///
-/// SIMD Notes: The SIMD parser uses the incubating vector class (`jdk.incubator.vector`). If it is not available,
-/// *even if specifically requested*, the parser will fall back to the scalar version..
-///
-/// To ensure SIMD can be used, jdk.incubator.vector.package must be available and the following must be set:
-/// - runtime VM option `--add-modules jdk.incubator.vector`
+/// Parsing behavior is controlled by [ParseOptions]:
+/// - `DEFAULT` - skips comments and 'junk' (unparseable sections) for a smaller, faster AST.
+/// - `EXTENDED` - include comments and junk, which is useful for tooling, tests, and debugging.
 ///
 ///
 /// Example usage:
