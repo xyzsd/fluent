@@ -184,7 +184,7 @@ Differences from *fluent.js*
 --------------------------------------------
 ### DATETIME()
 DATETIME as implemented here does not try to re-implement JavaScript's Intl.DateTime. For more precise formatting,
-use the TEMPORAL() function insetead, which supports pattern-based (semantic skeleton) formatting in addition 
+use the TEMPORAL() function instead, which supports pattern-based (semantic skeleton) formatting in addition 
 to predefined forms.
 
 ### Functions
