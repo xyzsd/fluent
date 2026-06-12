@@ -40,16 +40,17 @@ shared-photos =
 ```
 We can use it as follows:
 ```java
-// Setup the function registry. This is the simplest way to set it up, but will only include
-// the required built-in functions. The function registry can be shared by different bundles / different locales.
+// Setup the function registry. This is the simplest way to set it up, though optional
+// functions will not be included. The function registry can be shared by different
+// bundles with different locales.
 final FluentFunctionRegistry registry = FluentFunctionRegistry.builder().build();
 
-// Read the FTL (which is localized) and parse it into the data model (AST).
+// Read the FTL (the localized translation resource) and parse it into the data model (AST).
 FluentResource resource = FTLParser.parse(  Thread.currentThread().getContextClassLoader(), "hello.ftl" );
 if (!resource.errors().isEmpty()) {
         // The FluentResource also contains errors encountered during parsing.
         System.err.printf("Encountered %d errors during parsing!\n", resource.errors().size());
-        resource.errors().forEach(System.err::println);
+        resource.errors().forEach( System.err::println );
 }
 
 // Create the FluentBundle, which is Locale-dependent. 
@@ -58,7 +59,9 @@ final FluentBundle bundle = FluentBundle.builder( Locale.US, registry, LRUFuncti
         .addResource( resource )
         .build();
 
+
 // Now let's render some messages!
+//
 // Variables in the FTL message are substituted using name-value pairs stored in a Map.
 // A Map<String, ?> provides the parameters to substitute.
 //
